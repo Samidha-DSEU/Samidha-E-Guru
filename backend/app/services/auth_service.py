@@ -5,15 +5,75 @@ from fastapi import HTTPException, status
 from app.models.auth import User, Role, Profile, LearnerProfile, VolunteerProfile, AlumniProfile, UserSession
 from app.models.auth import User, Role, Profile, LearnerProfile, VolunteerProfile, AlumniProfile, UserSession
 from app.core.security import create_access_token, create_refresh_token, decode_refresh_token, hash_token, hash_password, verify_password
+from app.core.config import settings
+from google.oauth2 import id_token
+from google.auth.transport import requests
 from app.schemas.auth import GoogleAuthRequest, TokenResponse, UserMeResponse, UserRegisterRequest, UserLoginRequest, UserUpdateRequest
 
 class AuthService:
 
     @staticmethod
     def authenticate_google_user(db: Session, req: GoogleAuthRequest) -> TokenResponse:
-        # Google OAuth is pending real integration in Phase 2
-        # Throw 501 Not Implemented
-        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Google OAuth integration is pending. Please create a new account using Email and Password.")
+        try:
+            # Verify the token against Google's public keys
+            idinfo = id_token.verify_oauth2_token(
+                req.id_token, requests.Request(), settings.GOOGLE_CLIENT_ID, clock_skew_in_seconds=10
+            )
+
+            email = idinfo['email']
+            name = idinfo.get('name', 'Google User')
+            picture = idinfo.get('picture', None)
+
+            user = db.query(User).filter(User.email == email).first()
+            if not user:
+                role = db.query(Role).filter(Role.name == req.role_name).first()
+                if not role:
+                    role = db.query(Role).filter(Role.name == "student").first()
+                
+                user = User(
+                    email=email,
+                    role_id=role.id,
+                    is_active=True,
+                    is_verified=True
+                )
+                db.add(user)
+                db.flush()
+
+                # Create profile with real name and avatar from Google
+                profile = Profile(
+                    user_id=user.id,
+                    full_name=name,
+                    avatar_url=picture
+                )
+                db.add(profile)
+
+                if req.role_name == "student":
+                    db.add(LearnerProfile(user_id=user.id))
+                elif req.role_name == "volunteer":
+                    db.add(VolunteerProfile(user_id=user.id, is_approved=False))
+                elif req.role_name == "alumni":
+                    db.add(AlumniProfile(user_id=user.id))
+                
+                db.commit()
+                db.refresh(user)
+
+            # Extra volunteer check if logging in
+            if user.role.name == "volunteer" and user.volunteer_profile and not user.volunteer_profile.is_approved:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Your volunteer account is pending admin approval.")
+
+            access_token = create_access_token(subject=str(user.id), role=user.role.name)
+            refresh_token = create_refresh_token(subject=str(user.id))
+
+            return TokenResponse(
+                access_token=access_token,
+                refresh_token=refresh_token,
+                token_type="bearer",
+                expires_in=1800
+            )
+
+        except ValueError as e:
+            # Invalid token
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Google authentication token.")
 
     @staticmethod
     def register_user(db: Session, req: UserRegisterRequest) -> TokenResponse:

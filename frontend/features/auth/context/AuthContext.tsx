@@ -8,7 +8,7 @@ interface AuthContextType {
   user: UserProfile | null;
   token: string | null;
   isLoading: boolean;
-  loginWithGoogle: (role: UserRole) => Promise<void>;
+  loginWithGoogle: (role: UserRole, idToken: string) => Promise<void>;
   login: (data: any) => Promise<void>;
   register: (data: any) => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
@@ -49,11 +49,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loginWithGoogle = async (role: UserRole) => {
+  const loginWithGoogle = async (role: UserRole, idToken: string) => {
     setIsLoading(true);
     try {
       const res = await apiClient.post("/auth/google", {
-        id_token: "mock_google_id_token_xyz",
+        id_token: idToken,
         role_name: role
       });
       const newToken = res.data?.data?.access_token;
