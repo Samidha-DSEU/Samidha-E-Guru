@@ -3,8 +3,9 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from app.models.auth import User, Role, Profile, LearnerProfile, VolunteerProfile, AlumniProfile, UserSession
+from app.models.auth import User, Role, Profile, LearnerProfile, VolunteerProfile, AlumniProfile, UserSession
 from app.core.security import create_access_token, create_refresh_token, decode_refresh_token, hash_token, hash_password, verify_password
-from app.schemas.auth import GoogleAuthRequest, TokenResponse, UserMeResponse, UserRegisterRequest, UserLoginRequest
+from app.schemas.auth import GoogleAuthRequest, TokenResponse, UserMeResponse, UserRegisterRequest, UserLoginRequest, UserUpdateRequest
 
 class AuthService:
 
@@ -138,4 +139,26 @@ class AuthService:
 
     @staticmethod
     def get_me(current_user: User) -> UserMeResponse:
+        return UserMeResponse.model_validate(current_user)
+
+    @staticmethod
+    def update_me(db: Session, current_user: User, req: UserUpdateRequest) -> UserMeResponse:
+        if req.profile and current_user.profile:
+            for key, value in req.profile.model_dump(exclude_unset=True).items():
+                setattr(current_user.profile, key, value)
+                
+        if req.learner_profile and current_user.learner_profile:
+            for key, value in req.learner_profile.model_dump(exclude_unset=True).items():
+                setattr(current_user.learner_profile, key, value)
+                
+        if req.volunteer_profile and current_user.volunteer_profile:
+            for key, value in req.volunteer_profile.model_dump(exclude_unset=True).items():
+                setattr(current_user.volunteer_profile, key, value)
+                
+        if req.alumni_profile and current_user.alumni_profile:
+            for key, value in req.alumni_profile.model_dump(exclude_unset=True).items():
+                setattr(current_user.alumni_profile, key, value)
+                
+        db.commit()
+        db.refresh(current_user)
         return UserMeResponse.model_validate(current_user)

@@ -5,9 +5,11 @@ import Link from "next/link";
 import { BookOpen, Sparkles, User, ChevronDown, ShieldAlert, ShieldCheck, GraduationCap, Award, LayoutDashboard, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { ProfileSidebar } from "./ProfileSidebar";
 
 export function Navbar() {
   const [isPortalOpen, setIsPortalOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const { user, logout } = useAuth();
 
@@ -123,16 +125,15 @@ export function Navbar() {
                 </span>
                 <span className="text-xs text-zinc-500 capitalize">{user.role.name.replace("_", " ")}</span>
               </div>
-              <div className="h-9 w-9 rounded-full bg-sky-100 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-200 dark:border-sky-800">
-                <User className="h-4 w-4" />
-              </div>
-              
-              <button
-                onClick={logout}
-                className="inline-flex items-center justify-center h-9 w-9 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors ml-1"
-                title="Logout"
+              <button 
+                onClick={() => setIsProfileOpen(true)}
+                className="h-9 w-9 rounded-full bg-sky-100 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-200 dark:border-sky-800 hover:scale-105 transition-transform"
               >
-                <LogOut className="h-4 w-4" />
+                {user.profile?.avatar_url ? (
+                  <img src={user.profile.avatar_url} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                ) : (
+                  <User className="h-4 w-4" />
+                )}
               </button>
             </div>
           ) : (
@@ -156,6 +157,8 @@ export function Navbar() {
           )}
         </div>
       </div>
+
+      <ProfileSidebar isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </header>
   );
 }

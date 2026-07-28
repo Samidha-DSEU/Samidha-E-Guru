@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas.common import StandardResponse
-from app.schemas.auth import GoogleAuthRequest, TokenResponse, UserMeResponse, UserRegisterRequest, UserLoginRequest
+from app.schemas.auth import GoogleAuthRequest, TokenResponse, UserMeResponse, UserRegisterRequest, UserLoginRequest, UserUpdateRequest
 from app.services.auth_service import AuthService
 from app.middlewares.auth_middleware import get_current_user
 from app.models.auth import User
@@ -44,4 +44,17 @@ def get_current_user_profile(current_user: User = Depends(get_current_user)):
     return StandardResponse.success_response(
         data=user_data,
         message="User profile retrieved successfully."
+    )
+
+
+@router.put("/me", response_model=StandardResponse[UserMeResponse])
+def update_current_user_profile(
+    req: UserUpdateRequest, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    user_data = AuthService.update_me(db, current_user, req)
+    return StandardResponse.success_response(
+        data=user_data,
+        message="User profile updated successfully."
     )

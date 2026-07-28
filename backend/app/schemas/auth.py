@@ -90,3 +90,36 @@ class UserMeResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ProfileUpdateRequest(BaseModel):
+    full_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    bio: Optional[str] = None
+    phone: Optional[str] = None
+
+
+class LearnerProfileUpdateRequest(BaseModel):
+    institution_type: Optional[str] = None
+    institution_name: Optional[str] = None
+    class_or_degree: Optional[str] = None
+    interests: Optional[List[str]] = None
+
+
+class VolunteerProfileUpdateRequest(BaseModel):
+    organization: Optional[str] = None
+    expertise_areas: Optional[List[str]] = None
+
+
+class AlumniProfileUpdateRequest(BaseModel):
+    graduation_year: Optional[int] = None
+    current_company: Optional[str] = None
+    designation: Optional[str] = None
+    mentorship_offered: Optional[bool] = None
+
+
+class UserUpdateRequest(BaseModel):
+    profile: Optional[ProfileUpdateRequest] = None
+    learner_profile: Optional[LearnerProfileUpdateRequest] = None
+    volunteer_profile: Optional[VolunteerProfileUpdateRequest] = None
+    alumni_profile: Optional[AlumniProfileUpdateRequest] = None

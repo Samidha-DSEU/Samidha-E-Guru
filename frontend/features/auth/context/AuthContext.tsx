@@ -11,6 +11,7 @@ interface AuthContextType {
   loginWithGoogle: (role: UserRole) => Promise<void>;
   login: (data: any) => Promise<void>;
   register: (data: any) => Promise<void>;
+  updateProfile: (data: any) => Promise<void>;
   logout: () => void;
 }
 
@@ -96,6 +97,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateProfile = async (data: any) => {
+    setIsLoading(true);
+    try {
+      const res = await apiClient.put("/auth/me", data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.data) {
+        setUser(res.data.data);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("samidha_access_token");
     setToken(null);
@@ -103,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, loginWithGoogle, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, loginWithGoogle, login, register, updateProfile, logout }}>
       {children}
     </AuthContext.Provider>
   );
