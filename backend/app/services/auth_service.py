@@ -101,6 +101,9 @@ class AuthService:
         db.commit()
         db.refresh(user)
 
+        if user.role.name == "volunteer":
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Registration successful. Your account is pending admin approval.")
+
         access_token = create_access_token(subject=str(user.id), role=user.role.name)
         refresh_token = create_refresh_token(subject=str(user.id))
 
@@ -119,6 +122,9 @@ class AuthService:
         
         if not verify_password(req.password, user.hashed_password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+            
+        if user.role.name == "volunteer" and user.volunteer_profile and not user.volunteer_profile.is_approved:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Your volunteer account is pending admin approval.")
 
         access_token = create_access_token(subject=str(user.id), role=user.role.name)
         refresh_token = create_refresh_token(subject=str(user.id))

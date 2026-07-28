@@ -18,7 +18,7 @@ export default function AlumniDashboardPage() {
           </p>
         </div>
 
-        <Button>
+        <Button onClick={() => alert("Mentorship Article creation will be available in the next release!")}>
           <Plus className="h-4 w-4 mr-2" />
           Create Mentorship Article
         </Button>
