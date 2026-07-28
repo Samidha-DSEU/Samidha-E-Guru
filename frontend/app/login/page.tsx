@@ -50,21 +50,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    setError(null);
-    try {
-      await loginWithGoogle(selectedRole);
-      if (selectedRole === "admin" || selectedRole === "super_admin") {
-        router.push("/admin");
-      } else if (selectedRole === "volunteer") {
-        router.push("/volunteer");
-      } else if (selectedRole === "alumni") {
-        router.push("/alumni");
-      } else {
-        router.push("/dashboard");
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "An error occurred during Google sign in");
-    }
+    setError("Google OAuth integration is pending. Please use 'Create Account' with Email and Password for now.");
   };
 
   return (
