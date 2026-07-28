@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # Active Local PostgreSQL Database Service
+  postgres:
+    image: postgres:16-alpine
+    container_name: samidha_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-samidha_eguru}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Future Architectural Roadmap Services (Disabled by default during initial dev)
+  # backend:
+  #   build: ./backend
+  #   container_name: samidha_backend
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/samidha_eguru
+  #   depends_on:
+  #     - postgres
+
+  # frontend:
+  #   build: ./frontend
+  #   container_name: samidha_frontend
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: samidha_redis
+  #   ports:
+  #     - "6379:6379"
+
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   container_name: samidha_pgadmin
+  #   ports:
+  #     - "5050:80"
+
+volumes:
+  postgres_data:
