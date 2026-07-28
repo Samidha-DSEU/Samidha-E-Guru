@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from app.models.auth import User, Role, Profile, LearnerProfile, VolunteerProfile, AlumniProfile, UserSession
-from app.core.security import create_access_token, create_refresh_token, decode_refresh_token, hash_token
-from app.schemas.auth import GoogleAuthRequest, TokenResponse, UserMeResponse
+from app.core.security import create_access_token, create_refresh_token, decode_refresh_token, hash_token, hash_password, verify_password
+from app.schemas.auth import GoogleAuthRequest, TokenResponse, UserMeResponse, UserRegisterRequest, UserLoginRequest
 
 class AuthService:
 
@@ -56,6 +56,72 @@ class AuthService:
             expires_at=UserSession.created_at # Will be managed on production
         )
         # We can flush session cleanly
+
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=1800
+        )
+
+    @staticmethod
+    def register_user(db: Session, req: UserRegisterRequest) -> TokenResponse:
+        existing_user = db.query(User).filter(User.email == req.email).first()
+        if existing_user:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+        
+        role = db.query(Role).filter(Role.name == req.role_name).first()
+        if not role:
+            role = db.query(Role).filter(Role.name == "student").first()
+            
+        user = User(
+            email=req.email,
+            hashed_password=hash_password(req.password),
+            role_id=role.id,
+            is_active=True,
+            is_verified=False
+        )
+        db.add(user)
+        db.flush()
+
+        # Create default profile
+        profile = Profile(
+            user_id=user.id,
+            full_name=req.full_name
+        )
+        db.add(profile)
+
+        if req.role_name == "student":
+            db.add(LearnerProfile(user_id=user.id))
+        elif req.role_name == "volunteer":
+            db.add(VolunteerProfile(user_id=user.id, is_approved=False))
+        elif req.role_name == "alumni":
+            db.add(AlumniProfile(user_id=user.id))
+        
+        db.commit()
+        db.refresh(user)
+
+        access_token = create_access_token(subject=str(user.id), role=user.role.name)
+        refresh_token = create_refresh_token(subject=str(user.id))
+
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=1800
+        )
+
+    @staticmethod
+    def authenticate_email_user(db: Session, req: UserLoginRequest) -> TokenResponse:
+        user = db.query(User).filter(User.email == req.email).first()
+        if not user or not user.hashed_password:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+        
+        if not verify_password(req.password, user.hashed_password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+
+        access_token = create_access_token(subject=str(user.id), role=user.role.name)
+        refresh_token = create_refresh_token(subject=str(user.id))
 
         return TokenResponse(
             access_token=access_token,

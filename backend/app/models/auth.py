@@ -23,6 +23,7 @@ class User(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    hashed_password: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     google_id: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
     role_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("roles.id"), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

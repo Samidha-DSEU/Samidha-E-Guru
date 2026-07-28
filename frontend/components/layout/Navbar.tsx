@@ -2,12 +2,14 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { BookOpen, Sparkles, User, ChevronDown, ShieldAlert, ShieldCheck, GraduationCap, Award, LayoutDashboard } from "lucide-react";
+import { BookOpen, Sparkles, User, ChevronDown, ShieldAlert, ShieldCheck, GraduationCap, Award, LayoutDashboard, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 export function Navbar() {
   const [isPortalOpen, setIsPortalOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
@@ -113,21 +115,45 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           <ThemeToggle />
 
-          <Link
-            href="/login"
-            className="inline-flex items-center justify-center h-9 px-4 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-lg transition-colors"
-          >
-            <User className="h-4 w-4 mr-2 text-zinc-500" />
-            Sign In
-          </Link>
+          {user ? (
+            <div className="flex items-center gap-3 ml-2">
+              <div className="flex flex-col items-end hidden sm:flex">
+                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 leading-none">
+                  {user.profile?.full_name || "User"}
+                </span>
+                <span className="text-xs text-zinc-500 capitalize">{user.role.name.replace("_", " ")}</span>
+              </div>
+              <div className="h-9 w-9 rounded-full bg-sky-100 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-200 dark:border-sky-800">
+                <User className="h-4 w-4" />
+              </div>
+              
+              <button
+                onClick={logout}
+                className="inline-flex items-center justify-center h-9 w-9 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors ml-1"
+                title="Logout"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center h-9 px-4 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+              >
+                <User className="h-4 w-4 mr-2 text-zinc-500" />
+                Sign In
+              </Link>
 
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center justify-center h-9 px-4 text-sm font-medium text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-sm transition-all"
-          >
-            <Sparkles className="h-4 w-4 mr-1.5" />
-            Dashboard
-          </Link>
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center justify-center h-9 px-4 text-sm font-medium text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-sm transition-all"
+              >
+                <Sparkles className="h-4 w-4 mr-1.5" />
+                Dashboard
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

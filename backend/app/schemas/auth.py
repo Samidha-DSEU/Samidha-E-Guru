@@ -9,6 +9,18 @@ class GoogleAuthRequest(BaseModel):
     role_name: Optional[str] = "student"  # student, volunteer, alumni
 
 
+class UserRegisterRequest(BaseModel):
+    full_name: str
+    email: EmailStr
+    password: str
+    role_name: Optional[str] = "student"
+
+
+class UserLoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str

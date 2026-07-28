@@ -9,6 +9,8 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   loginWithGoogle: (role: UserRole) => Promise<void>;
+  login: (data: any) => Promise<void>;
+  register: (data: any) => Promise<void>;
   logout: () => void;
 }
 
@@ -64,6 +66,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const login = async (data: any) => {
+    setIsLoading(true);
+    try {
+      const res = await apiClient.post("/auth/login", data);
+      const newToken = res.data?.data?.access_token;
+      if (newToken) {
+        localStorage.setItem("samidha_access_token", newToken);
+        setToken(newToken);
+        await fetchCurrentUser(newToken);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const register = async (data: any) => {
+    setIsLoading(true);
+    try {
+      const res = await apiClient.post("/auth/register", data);
+      const newToken = res.data?.data?.access_token;
+      if (newToken) {
+        localStorage.setItem("samidha_access_token", newToken);
+        setToken(newToken);
+        await fetchCurrentUser(newToken);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("samidha_access_token");
     setToken(null);
@@ -71,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, loginWithGoogle, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
