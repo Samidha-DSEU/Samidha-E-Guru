@@ -36,6 +36,24 @@ export interface UserProfile {
     bio?: string;
     phone?: string;
   };
+  learner_profile?: {
+    institution_type?: string;
+    institution_name?: string;
+    class_or_degree?: string;
+    interests?: string[];
+  };
+  volunteer_profile?: {
+    organization?: string;
+    expertise_areas?: string[];
+    volunteer_hours?: number;
+    is_approved?: boolean;
+  };
+  alumni_profile?: {
+    graduation_year?: number;
+    current_company?: string;
+    designation?: string;
+    mentorship_offered?: boolean;
+  };
 }
 
 export interface ResourceItem {
