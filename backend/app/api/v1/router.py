@@ -10,3 +10,6 @@ api_v1_router.include_router(community.router, prefix="/community", tags=["Commu
 api_v1_router.include_router(events.router, prefix="/events", tags=["Events"])
 api_v1_router.include_router(communications.router, prefix="/communications", tags=["Communications"])
 api_v1_router.include_router(admin.router, prefix="/admin", tags=["Administration"])
+
+# Export alias for compatibility
+api_router = api_v1_router
