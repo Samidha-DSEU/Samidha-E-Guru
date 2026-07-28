@@ -3,8 +3,10 @@
 import React from "react";
 import { BookOpen, Bookmark, CheckCircle, Bell, Award, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   return (
     <div className="space-y-8">
       {/* Overview Banner */}
@@ -12,7 +14,7 @@ export default function DashboardPage() {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold uppercase tracking-wider">
           <Sparkles className="h-3.5 w-3.5" /> Student Dashboard
         </div>
-        <h1 className="text-3xl font-bold">Welcome back, SAMIDHA Learner!</h1>
+        <h1 className="text-3xl font-bold">Welcome back, {user?.profile?.full_name?.split(' ')[0] || "Student"}!</h1>
         <p className="text-sky-100 text-sm max-w-xl">
           Track your learning progress, review bookmarked study resources, and manage upcoming registered events.
         </p>
