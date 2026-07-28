@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { BookOpen, Heart, Users, ShieldCheck, Award } from "lucide-react";
 import { Card } from "@/components/ui/Card";
@@ -22,14 +24,13 @@ export default function AboutPage() {
           alt="SAMIDHA Social Initiative"
           className="w-full h-full object-cover absolute inset-0 opacity-80"
           onError={(e) => {
-            // Hide image fallback if not uploaded yet
             (e.target as HTMLElement).style.display = 'none';
           }}
         />
         <div className="relative z-10 space-y-2 max-w-md bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md p-6 rounded-xl border border-zinc-200 dark:border-zinc-800">
           <BookOpen className="h-8 w-8 text-sky-600 mx-auto" />
           <h2 className="font-bold text-lg text-zinc-900 dark:text-zinc-100">Free Education for All</h2>
-          <p className="text-xs text-zinc-500">Drop your about section photos in <code className="bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-sky-600">frontend/public/images/about-hero.jpg</code></p>
+          <p className="text-xs text-zinc-500">SAMIDHA E-GURU Educational Initiative</p>
         </div>
       </div>
 
