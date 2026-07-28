@@ -14,7 +14,8 @@ export function Navbar() {
   const { user, logout } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
+    <>
+      <header className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand Logo & Title */}
         <Link href="/" className="flex items-center gap-2.5 group">
@@ -158,7 +159,9 @@ export function Navbar() {
         </div>
       </div>
 
+      </header>
+
       <ProfileSidebar isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
-    </header>
+    </>
   );
 }
