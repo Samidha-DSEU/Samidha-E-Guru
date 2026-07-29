@@ -15,12 +15,20 @@ export function Navbar() {
   const [logoError, setLogoError] = useState(false);
   const { user } = useAuth();
 
+  const getHomeLink = () => {
+    if (!user) return "/";
+    if (user.role?.name === "volunteer") return "/volunteer";
+    if (user.role?.name === "alumni") return "/alumni";
+    if (user.role?.name === "admin" || user.role?.name === "super_admin") return "/admin";
+    return "/dashboard";
+  };
+
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Brand Logo & Title */}
-          <Link href="/" className="flex items-center gap-2.5 group">
+          <Link href={getHomeLink()} className="flex items-center gap-2.5 group">
             {!logoError ? (
               <img
                 src="/images/logo.png"
