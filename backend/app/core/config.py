@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
     SUPABASE_BUCKET: str = "samidha-storage"
 
+    # Resend Email Configuration
+    RESEND_API_KEY: Optional[str] = None
+    FROM_EMAIL: str = "SAMIDHA E-GURU <onboarding@resend.dev>"
+
     # CORS
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",

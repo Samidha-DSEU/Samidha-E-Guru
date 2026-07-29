@@ -4,12 +4,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 import requests
 from sqlalchemy.orm import Session
+from app.core.config import settings
 from app.models.auth import User, Role, VolunteerProfile
 
 logger = logging.getLogger("samidha.notifications")
-
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-FROM_EMAIL = os.getenv("FROM_EMAIL", "SAMIDHA E-GURU <notifications@samidha.org>")
 
 # In-memory cooldown tracker for chat emails: { conversation_key: datetime }
 _chat_cooldowns = {}
@@ -22,16 +20,16 @@ class NotificationService:
         Dispatches email via Resend API if API Key is set,
         otherwise logs cleanly to console in dev mode.
         """
-        if RESEND_API_KEY:
+        if settings.RESEND_API_KEY:
             try:
                 res = requests.post(
                     "https://api.resend.com/emails",
                     headers={
-                        "Authorization": f"Bearer {RESEND_API_KEY}",
+                        "Authorization": f"Bearer {settings.RESEND_API_KEY}",
                         "Content-Type": "application/json",
                     },
                     json={
-                        "from": FROM_EMAIL,
+                        "from": settings.FROM_EMAIL,
                         "to": [to_email],
                         "subject": subject,
                         "html": html_content,
