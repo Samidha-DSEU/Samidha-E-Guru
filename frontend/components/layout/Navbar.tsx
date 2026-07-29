@@ -146,14 +146,6 @@ export function Navbar() {
                 <User className="h-4 w-4 mr-2 text-zinc-500" />
                 Sign In
               </Link>
-
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center justify-center h-9 px-4 text-sm font-medium text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-sm transition-all"
-              >
-                <Sparkles className="h-4 w-4 mr-1.5" />
-                Dashboard
-              </Link>
             </>
           )}
         </div>

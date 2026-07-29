@@ -4,11 +4,13 @@ import React from "react";
 import { BookOpen, Bookmark, CheckCircle, Bell, Award, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 
 export default function DashboardPage() {
   const { user } = useAuth();
   return (
-    <div className="space-y-8">
+    <ProtectedRoute>
+      <div className="space-y-8">
       {/* Overview Banner */}
       <div className="bg-gradient-to-r from-sky-600 via-sky-500 to-indigo-600 rounded-3xl p-8 text-white space-y-3 shadow-lg shadow-sky-500/10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold uppercase tracking-wider">
@@ -49,6 +51,7 @@ export default function DashboardPage() {
           <p className="text-xs text-zinc-400">Upcoming workshops</p>
         </Card>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
