@@ -47,6 +47,10 @@ export interface UserProfile {
     expertise_areas?: string[];
     volunteer_hours?: number;
     is_approved?: boolean;
+    approval_status?: string;
+    applied_at?: string;
+    expires_at?: string;
+    rejection_reason?: string;
   };
   alumni_profile?: {
     graduation_year?: number;

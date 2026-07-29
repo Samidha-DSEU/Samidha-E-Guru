@@ -66,3 +66,15 @@ def require_roles(allowed_roles: List[str]) -> Callable:
             )
         return current_user
     return role_checker
+
+
+def require_approved_volunteer(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role.name == "volunteer":
+        vp = current_user.volunteer_profile
+        if not vp or vp.approval_status != "APPROVED":
+            status_name = vp.approval_status if vp else "PENDING"
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Volunteer action restricted. Your account verification status is: {status_name}"
+            )
+    return current_user

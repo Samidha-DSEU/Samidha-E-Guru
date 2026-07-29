@@ -1,10 +1,18 @@
 import uuid
+import enum
 from datetime import datetime
 from typing import Optional, List, Any
 from sqlalchemy import String, Text, Boolean, Integer, ForeignKey, DateTime, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.db.session import Base
+
+
+class ApprovalStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    EXPIRED = "EXPIRED"
 
 
 class Role(Base):
@@ -29,13 +37,14 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     role: Mapped["Role"] = relationship(back_populates="users")
     profile: Mapped[Optional["Profile"]] = relationship(back_populates="user", uselist=False, cascade="all, delete-orphan")
     learner_profile: Mapped[Optional["LearnerProfile"]] = relationship(back_populates="user", uselist=False, cascade="all, delete-orphan")
-    volunteer_profile: Mapped[Optional["VolunteerProfile"]] = relationship(back_populates="user", uselist=False, cascade="all, delete-orphan")
+    volunteer_profile: Mapped[Optional["VolunteerProfile"]] = relationship(back_populates="user", uselist=False, foreign_keys="VolunteerProfile.user_id", cascade="all, delete-orphan")
     alumni_profile: Mapped[Optional["AlumniProfile"]] = relationship(back_populates="user", uselist=False, cascade="all, delete-orphan")
     sessions: Mapped[List["UserSession"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
@@ -77,10 +86,20 @@ class VolunteerProfile(Base):
     organization: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     expertise_areas: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
     volunteer_hours: Mapped[int] = mapped_column(Integer, default=0)
+    
+    # Approval Lifecycle & Purge Fields
+    approval_status: Mapped[str] = mapped_column(String(20), default=ApprovalStatus.PENDING.value, nullable=False)
     is_approved: Mapped[bool] = mapped_column(Boolean, default=False)
+    applied_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    approved_by: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    rejected_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    reminder_sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    user: Mapped["User"] = relationship(back_populates="volunteer_profile")
+    user: Mapped["User"] = relationship(back_populates="volunteer_profile", foreign_keys=[user_id])
 
 
 class AlumniProfile(Base):

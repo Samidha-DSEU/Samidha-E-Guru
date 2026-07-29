@@ -1,14 +1,16 @@
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
-from app.models.auth import User, Role, Profile, LearnerProfile, VolunteerProfile, AlumniProfile, UserSession
-from app.models.auth import User, Role, Profile, LearnerProfile, VolunteerProfile, AlumniProfile, UserSession
+from app.models.auth import User, Role, Profile, LearnerProfile, VolunteerProfile, AlumniProfile, UserSession, ApprovalStatus
 from app.core.security import create_access_token, create_refresh_token, decode_refresh_token, hash_token, hash_password, verify_password
 from app.core.config import settings
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from app.schemas.auth import GoogleAuthRequest, TokenResponse, UserMeResponse, UserRegisterRequest, UserLoginRequest, UserUpdateRequest
+from app.services.notification_service import NotificationService
+
 
 class AuthService:
 
@@ -25,6 +27,8 @@ class AuthService:
             picture = idinfo.get('picture', None)
 
             user = db.query(User).filter(User.email == email).first()
+            now = datetime.now(timezone.utc)
+
             if not user:
                 role = db.query(Role).filter(Role.name == req.role_name).first()
                 if not role:
@@ -34,7 +38,8 @@ class AuthService:
                     email=email,
                     role_id=role.id,
                     is_active=True,
-                    is_verified=True
+                    is_verified=True,
+                    created_at=now
                 )
                 db.add(user)
                 db.flush()
@@ -50,17 +55,27 @@ class AuthService:
                 if req.role_name == "student":
                     db.add(LearnerProfile(user_id=user.id))
                 elif req.role_name == "volunteer":
-                    db.add(VolunteerProfile(user_id=user.id, is_approved=True))
+                    expires = now + timedelta(days=3)
+                    db.add(VolunteerProfile(
+                        user_id=user.id,
+                        approval_status=ApprovalStatus.PENDING.value,
+                        is_approved=False,
+                        applied_at=now,
+                        expires_at=expires
+                    ))
                 elif req.role_name == "alumni":
                     db.add(AlumniProfile(user_id=user.id))
                 
                 db.commit()
                 db.refresh(user)
 
-            # Auto-approve volunteer profile if Google authenticated
-            if user.role.name == "volunteer" and user.volunteer_profile:
-                user.volunteer_profile.is_approved = True
-                db.commit()
+                if req.role_name == "volunteer":
+                    NotificationService.notify_admins_new_volunteer(db, user)
+
+            # Update login & activity timestamps
+            user.last_login_at = now
+            user.last_seen_at = now
+            db.commit()
 
             access_token = create_access_token(subject=str(user.id), role=user.role.name)
             refresh_token = create_refresh_token(subject=str(user.id))
@@ -73,7 +88,6 @@ class AuthService:
             )
 
         except ValueError as e:
-            # Invalid token
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Google authentication token.")
 
     @staticmethod
@@ -86,12 +100,14 @@ class AuthService:
         if not role:
             role = db.query(Role).filter(Role.name == "student").first()
             
+        now = datetime.now(timezone.utc)
         user = User(
             email=req.email,
             hashed_password=hash_password(req.password),
             role_id=role.id,
             is_active=True,
-            is_verified=False
+            is_verified=False,
+            created_at=now
         )
         db.add(user)
         db.flush()
@@ -106,15 +122,26 @@ class AuthService:
         if req.role_name == "student":
             db.add(LearnerProfile(user_id=user.id))
         elif req.role_name == "volunteer":
-            db.add(VolunteerProfile(user_id=user.id, is_approved=False))
+            expires = now + timedelta(days=3)
+            db.add(VolunteerProfile(
+                user_id=user.id,
+                approval_status=ApprovalStatus.PENDING.value,
+                is_approved=False,
+                applied_at=now,
+                expires_at=expires
+            ))
         elif req.role_name == "alumni":
             db.add(AlumniProfile(user_id=user.id))
         
         db.commit()
         db.refresh(user)
 
-        if user.role.name == "volunteer":
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Registration successful. Your account is pending admin approval.")
+        if req.role_name == "volunteer":
+            NotificationService.notify_admins_new_volunteer(db, user)
+
+        user.last_login_at = now
+        user.last_seen_at = now
+        db.commit()
 
         access_token = create_access_token(subject=str(user.id), role=user.role.name)
         refresh_token = create_refresh_token(subject=str(user.id))
@@ -134,9 +161,11 @@ class AuthService:
         
         if not verify_password(req.password, user.hashed_password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
-            
-        if user.role.name == "volunteer" and user.volunteer_profile and not user.volunteer_profile.is_approved:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Your volunteer account is pending admin approval.")
+
+        now = datetime.now(timezone.utc)
+        user.last_login_at = now
+        user.last_seen_at = now
+        db.commit()
 
         access_token = create_access_token(subject=str(user.id), role=user.role.name)
         refresh_token = create_refresh_token(subject=str(user.id))

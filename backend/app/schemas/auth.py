@@ -62,6 +62,11 @@ class VolunteerProfileSchema(BaseModel):
     expertise_areas: Optional[List[str]] = None
     volunteer_hours: int = 0
     is_approved: bool = False
+    approval_status: str = "PENDING"
+    applied_at: Optional[datetime] = None
+    approved_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
 
     class Config:
         from_attributes = True
