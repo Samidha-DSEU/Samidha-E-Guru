@@ -154,17 +154,6 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Avatar Image URL (Optional)</label>
-              <input
-                name="avatar_url"
-                placeholder="https://example.com/photo.jpg"
-                value={formData.profile.avatar_url}
-                onChange={handleProfileChange}
-                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs"
-              />
-            </div>
-
-            <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Phone</label>
               <input
                 name="phone"
