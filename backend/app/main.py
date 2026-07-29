@@ -10,6 +10,9 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+from app.db.session import engine, ensure_schema_migrations
+from app.models.auth import Base
+
 logger = logging.getLogger("samidha")
 
 app = FastAPI(
@@ -19,6 +22,12 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+@app.on_event("startup")
+def startup_db_migrations():
+    logger.info("Running database schema creation & auto-migrations...")
+    Base.metadata.create_all(bind=engine)
+    ensure_schema_migrations(engine)
 
 # Configure CORS
 app.add_middleware(
