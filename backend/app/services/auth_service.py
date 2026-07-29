@@ -29,8 +29,11 @@ class AuthService:
             user = db.query(User).filter(User.email == email).first()
             now = datetime.now(timezone.utc)
 
+            admin_emails = ["azlantalks4u@gmail.com", "feyazkhan8800@gmail.com"]
+            target_role = "admin" if email in admin_emails else req.role_name
+
             if not user:
-                role = db.query(Role).filter(Role.name == req.role_name).first()
+                role = db.query(Role).filter(Role.name == target_role).first()
                 if not role:
                     role = db.query(Role).filter(Role.name == "student").first()
                 
@@ -71,6 +74,15 @@ class AuthService:
 
                 if req.role_name == "volunteer":
                     NotificationService.notify_admins_new_volunteer(db, user)
+
+            else:
+                # Auto-upgrade to admin if email is in admin list
+                if email in admin_emails and user.role.name not in ["admin", "super_admin"]:
+                    admin_role = db.query(Role).filter(Role.name == "admin").first()
+                    if admin_role:
+                        user.role_id = admin_role.id
+                        db.commit()
+                        db.refresh(user)
 
             # Update login & activity timestamps
             user.last_login_at = now
@@ -161,6 +173,14 @@ class AuthService:
         
         if not verify_password(req.password, user.hashed_password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+
+        admin_emails = ["azlantalks4u@gmail.com", "feyazkhan8800@gmail.com"]
+        if user.email in admin_emails and user.role.name not in ["admin", "super_admin"]:
+            admin_role = db.query(Role).filter(Role.name == "admin").first()
+            if admin_role:
+                user.role_id = admin_role.id
+                db.commit()
+                db.refresh(user)
 
         now = datetime.now(timezone.utc)
         user.last_login_at = now
