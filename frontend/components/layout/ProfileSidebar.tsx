@@ -10,10 +10,12 @@ interface ProfileSidebarProps {
 
 export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
   const { user, updateProfile, logout } = useAuth();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     profile: {
       full_name: "",
+      avatar_url: "",
       bio: "",
       phone: ""
     },
@@ -35,6 +37,7 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
       setFormData({
         profile: {
           full_name: user.profile?.full_name || "",
+          avatar_url: user.profile?.avatar_url || "",
           bio: user.profile?.bio || "",
           phone: user.profile?.phone || ""
         },
@@ -54,6 +57,24 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
   }, [user]);
 
   if (!isOpen) return null;
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Image size should be less than 2MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({
+          ...prev,
+          profile: { ...prev.profile, avatar_url: reader.result as string }
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -92,14 +113,26 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           <div className="flex flex-col items-center gap-4">
             <div className="relative group">
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                onChange={handleImageFileChange}
+                className="hidden"
+              />
               <div className="h-24 w-24 rounded-full bg-sky-100 dark:bg-sky-950/50 flex items-center justify-center border-4 border-white dark:border-zinc-900 shadow-lg overflow-hidden">
-                {user?.profile?.avatar_url ? (
-                  <img src={user.profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                {formData.profile.avatar_url ? (
+                  <img src={formData.profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <User className="h-10 w-10 text-sky-500" />
                 )}
               </div>
-              <button className="absolute bottom-0 right-0 p-2 bg-sky-600 text-white rounded-full shadow-md hover:bg-sky-500 transition-colors">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-0 right-0 p-2 bg-sky-600 text-white rounded-full shadow-md hover:bg-sky-500 transition-colors"
+                title="Upload Profile Picture"
+              >
                 <Camera className="h-4 w-4" />
               </button>
             </div>
@@ -117,6 +150,17 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
                 value={formData.profile.full_name}
                 onChange={handleProfileChange}
                 className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Avatar Image URL (Optional)</label>
+              <input
+                name="avatar_url"
+                placeholder="https://example.com/photo.jpg"
+                value={formData.profile.avatar_url}
+                onChange={handleProfileChange}
+                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs"
               />
             </div>
 

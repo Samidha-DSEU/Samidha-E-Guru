@@ -241,13 +241,14 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="flex justify-center w-full">
+        <div className="flex justify-center w-full min-h-[44px]">
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={handleGoogleError}
-            theme="outline"
+            theme="filled_blue"
             size="large"
-            width="100%"
+            width="380"
+            shape="rectangular"
             text="continue_with"
           />
         </div>

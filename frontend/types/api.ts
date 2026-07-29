@@ -85,5 +85,8 @@ export interface CommunityPostItem {
   likes_count: number;
   comments_count: number;
   author_id: string;
+  author_name?: string;
+  author_avatar?: string | null;
+  author_role?: string;
   created_at: string;
 }

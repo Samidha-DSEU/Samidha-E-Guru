@@ -87,24 +87,6 @@ export function Navbar() {
                   <Award className="h-4 w-4 text-indigo-500" />
                   Alumni Portal
                 </Link>
-
-                <Link
-                  href="/admin"
-                  onClick={() => setIsPortalOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-600 rounded-lg transition-colors"
-                >
-                  <LayoutDashboard className="h-4 w-4 text-amber-500" />
-                  Admin Control Panel
-                </Link>
-
-                <Link
-                  href="/super-admin"
-                  onClick={() => setIsPortalOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 rounded-lg transition-colors"
-                >
-                  <ShieldAlert className="h-4 w-4 text-rose-500" />
-                  Super Admin Portal
-                </Link>
               </div>
             )}
           </div>
