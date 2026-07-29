@@ -46,7 +46,7 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "An error occurred");
+      setError(err.response?.data?.detail || err.response?.data?.message || "An error occurred");
     }
   };
 
@@ -67,7 +67,7 @@ export default function LoginPage() {
         }
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "An error occurred during Google sign in");
+      setError(err.response?.data?.detail || err.response?.data?.message || "An error occurred during Google sign in");
     }
   };
 

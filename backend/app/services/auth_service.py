@@ -50,16 +50,17 @@ class AuthService:
                 if req.role_name == "student":
                     db.add(LearnerProfile(user_id=user.id))
                 elif req.role_name == "volunteer":
-                    db.add(VolunteerProfile(user_id=user.id, is_approved=False))
+                    db.add(VolunteerProfile(user_id=user.id, is_approved=True))
                 elif req.role_name == "alumni":
                     db.add(AlumniProfile(user_id=user.id))
                 
                 db.commit()
                 db.refresh(user)
 
-            # Extra volunteer check if logging in
-            if user.role.name == "volunteer" and user.volunteer_profile and not user.volunteer_profile.is_approved:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Your volunteer account is pending admin approval.")
+            # Auto-approve volunteer profile if Google authenticated
+            if user.role.name == "volunteer" and user.volunteer_profile:
+                user.volunteer_profile.is_approved = True
+                db.commit()
 
             access_token = create_access_token(subject=str(user.id), role=user.role.name)
             refresh_token = create_refresh_token(subject=str(user.id))
