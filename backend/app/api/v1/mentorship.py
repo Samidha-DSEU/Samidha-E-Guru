@@ -78,7 +78,8 @@ def request_mentorship(
     notif = Notification(
         user_id=req.alumni_id,
         title="New Mentorship Request Received! 🤝",
-        content=f"{requester_name} has requested guidance on topic: '{req.topic}'. Check your Alumni Portal to accept or decline."
+        message=f"{requester_name} has requested guidance on topic: '{req.topic}'. Check your Alumni Portal to accept or decline.",
+        notification_type="mentorship"
     )
     db.add(notif)
     db.commit()
@@ -152,7 +153,8 @@ def respond_to_mentorship_request(
     notif = Notification(
         user_id=m_request.requester_id,
         title=f"Mentorship Request Update ({m_request.status.upper()})",
-        content=f"{alumni_name} has {m_request.status} your mentorship request for '{m_request.topic}'."
+        message=f"{alumni_name} has {m_request.status} your mentorship request for '{m_request.topic}'.",
+        notification_type="mentorship"
     )
     db.add(notif)
     db.commit()
