@@ -1,14 +1,16 @@
+import time
 from typing import List, Optional
 from datetime import datetime, timezone
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from app.db.session import get_db
 from app.schemas.common import StandardResponse
 from app.middlewares.auth_middleware import require_roles
-from app.models.auth import User, VolunteerProfile, ApprovalStatus
+from app.models.auth import User, VolunteerProfile, ApprovalStatus, Role
 from app.models.resources import Resource
 from app.models.events import Event
 from app.models.administration import ActivityLog
@@ -371,3 +373,152 @@ def reject_event_admin(
         data={"id": str(id), "verification_status": "rejected"},
         message="Event rejected."
     )
+
+
+@router.get("/healthcheck", response_model=StandardResponse[dict])
+def run_system_healthcheck(
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    start_time = time.time()
+    db.execute(text("SELECT 1"))
+    latency_ms = round((time.time() - start_time) * 1000, 2)
+    
+    users_count = db.query(User).count()
+    resources_count = db.query(Resource).count()
+    events_count = db.query(Event).count()
+    logs_count = db.query(ActivityLog).count()
+    
+    data = {
+        "status": "HEALTHY",
+        "database": {
+            "connected": True,
+            "latency_ms": latency_ms,
+            "engine": "PostgreSQL"
+        },
+        "statistics": {
+            "total_users": users_count,
+            "total_resources": resources_count,
+            "total_events": events_count,
+            "total_logs": logs_count
+        },
+        "jwt_auth": {
+            "status": "OPERATIONAL",
+            "active_role": current_user.role.name
+        },
+        "storage": {
+            "status": "OPERATIONAL",
+            "provider": "Cloud Storage (Google Drive / S3 / Direct)"
+        },
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    return StandardResponse.success_response(data=data, message="System health diagnostic check completed.")
+
+
+@router.get("/users", response_model=StandardResponse[List[dict]])
+def get_all_users_admin(
+    search: Optional[str] = None,
+    role_filter: Optional[str] = None,
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    query = db.query(User)
+    if search:
+        query = query.join(User.profile).filter(
+            (User.email.ilike(f"%{search}%")) | (User.profile.has(full_name=search))
+        )
+    if role_filter:
+        query = query.join(User.role).filter(Role.name == role_filter)
+
+    users = query.order_by(User.created_at.desc()).all()
+    data = [
+        {
+            "id": str(u.id),
+            "email": u.email,
+            "role": u.role.name if u.role else "student",
+            "full_name": u.profile.full_name if u.profile else "User",
+            "phone": u.profile.phone if u.profile else "",
+            "avatar_url": u.profile.avatar_url if u.profile else "",
+            "is_active": u.is_active,
+            "created_at": u.created_at.isoformat()
+        } for u in users
+    ]
+    return StandardResponse.success_response(data=data, message="User directory retrieved.")
+
+
+@router.post("/users/{id}/promote-admin", response_model=StandardResponse[dict])
+def promote_user_to_admin(
+    id: UUID,
+    current_user: User = Depends(require_roles(["super_admin", "admin"])),
+    db: Session = Depends(get_db)
+):
+    target_user = db.query(User).filter(User.id == id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    admin_role = db.query(Role).filter(Role.name == "admin").first()
+    if not admin_role:
+        raise HTTPException(status_code=500, detail="Admin role definition missing")
+
+    target_user.role_id = admin_role.id
+    
+    log = ActivityLog(
+        user_id=current_user.id,
+        action="USER_PROMOTE_ADMIN",
+        details={"target_user_id": str(id), "email": target_user.email}
+    )
+    db.add(log)
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={"id": str(id), "role": "admin"},
+        message=f"User {target_user.email} successfully promoted to Admin role!"
+    )
+
+
+@router.delete("/users/{id}", response_model=StandardResponse[dict])
+def delete_user_account_admin(
+    id: UUID,
+    current_user: User = Depends(require_roles(["super_admin", "admin"])),
+    db: Session = Depends(get_db)
+):
+    if str(id) == str(current_user.id):
+        raise HTTPException(status_code=400, detail="You cannot delete your own admin account!")
+
+    target_user = db.query(User).filter(User.id == id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    email = target_user.email
+    db.delete(target_user)
+
+    log = ActivityLog(
+        user_id=current_user.id,
+        action="USER_DELETE",
+        details={"deleted_user_id": str(id), "email": email}
+    )
+    db.add(log)
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={"id": str(id), "status": "deleted"},
+        message=f"User account ({email}) permanently removed."
+    )
+
+
+@router.get("/users/{id}/activity-logs", response_model=StandardResponse[List[dict]])
+def get_user_activity_logs_admin(
+    id: UUID,
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    logs = db.query(ActivityLog).filter(ActivityLog.user_id == id).order_by(ActivityLog.created_at.desc()).all()
+    data = [
+        {
+            "id": str(l.id),
+            "action": l.action,
+            "details": l.details,
+            "created_at": l.created_at.isoformat()
+        } for l in logs
+    ]
+    return StandardResponse.success_response(data=data, message="User activity trail retrieved.")

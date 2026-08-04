@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getUserSlug } from "@/lib/userUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ShieldCheck, Users, FileCheck, Activity, Database, Check, X, Clock, AlertCircle, ExternalLink, BookOpen, Calendar, MessageSquare, Trash2 } from "lucide-react";
+import { ShieldCheck, Users, FileCheck, Activity, Database, Check, X, Clock, AlertCircle, ExternalLink, BookOpen, Calendar, MessageSquare, Trash2, Search, UserPlus, Eye, ShieldAlert, Cpu, CheckCircle2 } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
 import { StandardResponse } from "@/types/api";
 import { Card, Skeleton } from "@/components/ui/Card";
@@ -63,6 +63,48 @@ interface PendingEventItem {
   created_at: string;
 }
 
+interface UserItem {
+  id: string;
+  email: string;
+  role: string;
+  full_name: string;
+  phone?: string;
+  avatar_url?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+interface UserActivityLog {
+  id: string;
+  action: string;
+  details?: any;
+  created_at: string;
+}
+
+interface HealthcheckData {
+  status: string;
+  database: {
+    connected: boolean;
+    latency_ms: number;
+    engine: string;
+  };
+  statistics: {
+    total_users: number;
+    total_resources: number;
+    total_events: number;
+    total_logs: number;
+  };
+  jwt_auth: {
+    status: string;
+    active_role: string;
+  };
+  storage: {
+    status: string;
+    provider: string;
+  };
+  timestamp: string;
+}
+
 export default function AdminDashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -75,19 +117,31 @@ export default function AdminDashboardPage() {
       router.replace(`/admin/${slug}`);
     }
   }, [user, params, router]);
-  
-  // Volunteer Rejection Modal State
+
+  // ACTIVE TAB FILTER FROM METRIC CARDS
+  const [activeTab, setActiveTab] = useState<"users" | "volunteers" | "resources" | "events" | "deletions">("users");
+
+  // USER MANAGEMENT STATE
+  const [userSearch, setUserSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("");
+
+  // MODALS STATE
+  const [isHealthModalOpen, setIsHealthModalOpen] = useState(false);
+  const [viewingActivityUser, setViewingActivityUser] = useState<UserItem | null>(null);
+  const [deletingUser, setDeletingUser] = useState<UserItem | null>(null);
+  const [promotingUser, setPromotingUser] = useState<UserItem | null>(null);
+
+  // REJECTION REASON MODALS
   const [rejectingUserId, setRejectingUserId] = useState<string | null>(null);
   const [volunteerRejectReason, setVolunteerRejectReason] = useState("");
 
-  // Resource Rejection Modal State
   const [rejectingResourceId, setRejectingResourceId] = useState<string | null>(null);
   const [resourceRejectReason, setResourceRejectReason] = useState("");
 
-  // Event Rejection Modal State
   const [rejectingEventId, setRejectingEventId] = useState<string | null>(null);
   const [eventRejectReason, setEventRejectReason] = useState("");
 
+  // QUERIES
   const { data, isLoading } = useQuery({
     queryKey: ["adminMetrics"],
     queryFn: async () => {
@@ -99,6 +153,16 @@ export default function AdminDashboardPage() {
         approved_volunteers: number;
         system_status: string;
       }>>("/admin/dashboard");
+      return res.data;
+    }
+  });
+
+  const { data: usersData, isLoading: usersLoading, refetch: refetchUsers } = useQuery({
+    queryKey: ["allUsers", userSearch, roleFilter],
+    queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<UserItem[]>>("/admin/users", {
+        params: { search: userSearch || undefined, role_filter: roleFilter || undefined }
+      });
       return res.data;
     }
   });
@@ -135,7 +199,52 @@ export default function AdminDashboardPage() {
     }
   });
 
-  // VOLUNTEER ACTIONS
+  // SYSTEM HEALTHCHECK QUERY (Runs on demand when modal opens)
+  const { data: healthData, isLoading: healthLoading, refetch: refetchHealth } = useQuery({
+    queryKey: ["systemHealthcheck"],
+    queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<HealthcheckData>>("/admin/healthcheck");
+      return res.data;
+    },
+    enabled: isHealthModalOpen
+  });
+
+  // USER ACTIVITY LOGS QUERY
+  const { data: userLogsData, isLoading: userLogsLoading } = useQuery({
+    queryKey: ["userActivityLogs", viewingActivityUser?.id],
+    queryFn: async () => {
+      if (!viewingActivityUser) return null;
+      const res = await apiClient.get<StandardResponse<UserActivityLog[]>>(`/admin/users/${viewingActivityUser.id}/activity-logs`);
+      return res.data;
+    },
+    enabled: !!viewingActivityUser
+  });
+
+  // MUTATIONS
+  const promoteAdminMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await apiClient.post(`/admin/users/${userId}/promote-admin`);
+      return res.data;
+    },
+    onSuccess: () => {
+      setPromotingUser(null);
+      refetchUsers();
+      queryClient.invalidateQueries({ queryKey: ["adminMetrics"] });
+    }
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await apiClient.delete(`/admin/users/${userId}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      setDeletingUser(null);
+      refetchUsers();
+      queryClient.invalidateQueries({ queryKey: ["adminMetrics"] });
+    }
+  });
+
   const approveVolunteerMutation = useMutation({
     mutationFn: async (userId: string) => {
       const res = await apiClient.post(`/admin/volunteers/${userId}/approve`);
@@ -144,6 +253,7 @@ export default function AdminDashboardPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminMetrics"] });
       queryClient.invalidateQueries({ queryKey: ["pendingVolunteers"] });
+      refetchUsers();
     }
   });
 
@@ -160,7 +270,6 @@ export default function AdminDashboardPage() {
     }
   });
 
-  // RESOURCE ACTIONS
   const approveResourceMutation = useMutation({
     mutationFn: async (resourceId: string) => {
       const res = await apiClient.post(`/admin/resources/${resourceId}/approve`);
@@ -185,7 +294,6 @@ export default function AdminDashboardPage() {
     }
   });
 
-  // DELETION REQUEST ACTIONS
   const approveDeletionMutation = useMutation({
     mutationFn: async (resourceId: string) => {
       const res = await apiClient.post(`/admin/resources/${resourceId}/approve-deletion`);
@@ -208,7 +316,6 @@ export default function AdminDashboardPage() {
     }
   });
 
-  // EVENT ACTIONS
   const approveEventMutation = useMutation({
     mutationFn: async (eventId: string) => {
       const res = await apiClient.post(`/admin/events/${eventId}/approve`);
@@ -234,10 +341,13 @@ export default function AdminDashboardPage() {
   });
 
   const metrics = data?.data;
+  const allUsers = usersData?.data || [];
   const pendingVolunteers = volunteersData?.data || [];
   const pendingResources = resourcesData?.data || [];
   const pendingDeletions = deletionsData?.data || [];
   const pendingEvents = eventsData?.data || [];
+  const health = healthData?.data;
+  const userLogs = userLogsData?.data || [];
 
   return (
     <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
@@ -247,47 +357,499 @@ export default function AdminDashboardPage() {
             Welcome back, {user?.profile?.full_name || "Administrator"}! 👋
           </h1>
           <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1">
-            Platform metrics, volunteer verification queues, resource moderation, and event approvals.
+            Platform metrics, user directory controls, resource moderation, and real-time health diagnostics.
           </p>
         </div>
 
-        {/* Metrics Row */}
+        {/* 🌟 INTERACTIVE CLICKABLE METRIC CARDS (FILTER TABS) */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
-          <Card className="space-y-2">
+          <Card
+            onClick={() => setActiveTab("users")}
+            className={`space-y-2 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
+              activeTab === "users"
+                ? "ring-2 ring-sky-500 bg-sky-50/40 dark:bg-sky-950/30 border-sky-300 dark:border-sky-700"
+                : "hover:border-zinc-300 dark:hover:border-zinc-700"
+            }`}
+          >
             <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-xs font-semibold uppercase tracking-wider">Total Users</span>
+              <span className="text-xs font-bold uppercase tracking-wider">Total Users</span>
               <Users className="h-4 w-4 text-sky-600" />
             </div>
             <div className="text-3xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : metrics?.total_users ?? 0}</div>
+            <div className="text-[11px] text-sky-600 dark:text-sky-400">Click to manage user roles & accounts</div>
           </Card>
 
-          <Card className="space-y-2">
+          <Card
+            onClick={() => setActiveTab("volunteers")}
+            className={`space-y-2 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
+              activeTab === "volunteers"
+                ? "ring-2 ring-amber-500 bg-amber-50/40 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700"
+                : "hover:border-zinc-300 dark:hover:border-zinc-700"
+            }`}
+          >
             <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-xs font-semibold uppercase tracking-wider">Pending Volunteers</span>
+              <span className="text-xs font-bold uppercase tracking-wider">Pending Volunteers</span>
               <Clock className="h-4 w-4 text-amber-600 animate-pulse" />
             </div>
             <div className="text-3xl font-bold text-amber-600">{isLoading ? <Skeleton className="h-8 w-16" /> : metrics?.pending_volunteers ?? 0}</div>
+            <div className="text-[11px] text-amber-600 dark:text-amber-400">Click to view 3-day verification queue</div>
           </Card>
 
-          <Card className="space-y-2">
+          <Card
+            onClick={() => setActiveTab("resources")}
+            className={`space-y-2 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
+              activeTab === "resources"
+                ? "ring-2 ring-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700"
+                : "hover:border-zinc-300 dark:hover:border-zinc-700"
+            }`}
+          >
             <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-xs font-semibold uppercase tracking-wider">Pending Resources</span>
+              <span className="text-xs font-bold uppercase tracking-wider">Pending Resources</span>
               <FileCheck className="h-4 w-4 text-indigo-600 animate-pulse" />
             </div>
             <div className="text-3xl font-bold text-indigo-600">{isLoading ? <Skeleton className="h-8 w-16" /> : metrics?.pending_resources ?? 0}</div>
+            <div className="text-[11px] text-indigo-600 dark:text-indigo-400">Click to moderate study notes</div>
           </Card>
 
-          <Card className="space-y-2">
+          <Card
+            onClick={() => setIsHealthModalOpen(true)}
+            className="space-y-2 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/20 hover:border-emerald-400"
+          >
             <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-xs font-semibold uppercase tracking-wider">System Health</span>
-              <Database className="h-4 w-4 text-emerald-600" />
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">System Health</span>
+              <Cpu className="h-4 w-4 text-emerald-600 animate-spin" />
             </div>
-            <div className="text-xl font-bold text-emerald-600">Healthy</div>
+            <div className="text-xl font-bold text-emerald-600 flex items-center gap-1.5">
+              <CheckCircle2 className="h-5 w-5" /> Operational
+            </div>
+            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">Click to run Live Diagnostics</div>
           </Card>
         </div>
 
-        {/* 1. PENDING RESOURCE DELETION REQUESTS QUEUE */}
-        {pendingDeletions.length > 0 && (
+        {/* NAVIGATION TABS HEADER */}
+        <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3 flex-wrap">
+          <button
+            onClick={() => setActiveTab("users")}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeTab === "users" ? "bg-sky-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600"
+            }`}
+          >
+            👥 Platform Users Directory
+          </button>
+
+          <button
+            onClick={() => setActiveTab("volunteers")}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeTab === "volunteers" ? "bg-amber-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600"
+            }`}
+          >
+            ⏳ Pending Volunteers ({pendingVolunteers.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab("resources")}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeTab === "resources" ? "bg-indigo-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600"
+            }`}
+          >
+            📚 Resource Moderation ({pendingResources.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab("events")}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeTab === "events" ? "bg-purple-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600"
+            }`}
+          >
+            📅 Event Approvals ({pendingEvents.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab("deletions")}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeTab === "deletions" ? "bg-rose-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600"
+            }`}
+          >
+            🗑️ Deletion Requests ({pendingDeletions.length})
+          </button>
+        </div>
+
+        {/* TAB 1: PLATFORM USER DIRECTORY & MANAGEMENT */}
+        {activeTab === "users" && (
+          <Card className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <Users className="h-5 w-5 text-sky-500" /> Platform User Directory & Role Promotion
+              </h2>
+
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Search className="h-4 w-4 absolute left-3 top-2.5 text-zinc-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    className="pl-9 pr-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 w-48 sm:w-64"
+                  />
+                </div>
+
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
+                >
+                  <option value="">All Roles</option>
+                  <option value="student">Student</option>
+                  <option value="volunteer">Volunteer</option>
+                  <option value="alumni">Alumni</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
+                  <tr>
+                    <th className="px-4 py-3">User Name</th>
+                    <th className="px-4 py-3">Email Address</th>
+                    <th className="px-4 py-3">Assigned Role</th>
+                    <th className="px-4 py-3">Joined Date</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {usersLoading ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                        Loading users directory...
+                      </td>
+                    </tr>
+                  ) : allUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                        No users found matching search query.
+                      </td>
+                    </tr>
+                  ) : (
+                    allUsers.map((u) => (
+                      <tr key={u.id}>
+                        <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center font-bold text-xs">
+                            {u.full_name.charAt(0).toUpperCase()}
+                          </div>
+                          <span>{u.full_name}</span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">{u.email}</td>
+                        <td className="px-4 py-3 text-xs">
+                          <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                            u.role === "admin" || u.role === "super_admin"
+                              ? "bg-purple-100 text-purple-700"
+                              : u.role === "volunteer"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : u.role === "alumni"
+                              ? "bg-indigo-100 text-indigo-700"
+                              : "bg-sky-100 text-sky-700"
+                          }`}>
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-zinc-400">{new Date(u.created_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-right space-x-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setViewingActivityUser(u)}
+                            className="text-xs h-7 px-2 text-sky-600 border-sky-200"
+                          >
+                            <Eye className="h-3 w-3 mr-1" /> Activity Trail
+                          </Button>
+
+                          {u.role !== "admin" && u.role !== "super_admin" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setPromotingUser(u)}
+                              className="text-xs h-7 px-2 text-purple-600 border-purple-200"
+                            >
+                              <UserPlus className="h-3 w-3 mr-1" /> Promote Admin
+                            </Button>
+                          )}
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setDeletingUser(u)}
+                            className="text-xs h-7 px-2 text-rose-600 border-rose-200"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+
+        {/* TAB 2: PENDING VOLUNTEERS QUEUE */}
+        {activeTab === "volunteers" && (
+          <Card className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <Clock className="h-5 w-5 text-amber-500" /> Pending Volunteer Verification Queue (3-Day Expiry)
+              </h2>
+              <span className="text-xs text-zinc-500 font-medium">{pendingVolunteers.length} pending review</span>
+            </div>
+
+            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
+                  <tr>
+                    <th className="px-4 py-3">Applicant Name</th>
+                    <th className="px-4 py-3">Email</th>
+                    <th className="px-4 py-3">Organization</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {volunteersLoading ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                        Loading pending applications...
+                      </td>
+                    </tr>
+                  ) : pendingVolunteers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                        No pending volunteer verification requests.
+                      </td>
+                    </tr>
+                  ) : (
+                    pendingVolunteers.map((v) => (
+                      <tr key={v.id}>
+                        <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{v.full_name}</td>
+                        <td className="px-4 py-3 text-zinc-500 text-xs">{v.email}</td>
+                        <td className="px-4 py-3 text-zinc-500 text-xs">{v.organization}</td>
+                        <td className="px-4 py-3">
+                          <span className="px-2.5 py-0.5 bg-amber-50 dark:bg-amber-950 text-amber-600 text-xs rounded-full border border-amber-200 dark:border-amber-800 font-semibold">
+                            {v.approval_status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right space-x-2">
+                          <Button
+                            size="sm"
+                            isLoading={approveVolunteerMutation.isPending}
+                            onClick={() => approveVolunteerMutation.mutate(v.user_id)}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs h-8"
+                          >
+                            <Check className="h-3.5 w-3.5 mr-1" /> Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setRejectingUserId(v.user_id)}
+                            className="text-rose-600 border-rose-200 text-xs h-8"
+                          >
+                            <X className="h-3.5 w-3.5 mr-1" /> Reject
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+
+        {/* TAB 3: PENDING RESOURCE MODERATION QUEUE */}
+        {activeTab === "resources" && (
+          <Card className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-indigo-500" /> Pending Educational Resource Approval Queue
+              </h2>
+              <span className="text-xs text-zinc-500 font-medium">{pendingResources.length} pending review</span>
+            </div>
+
+            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
+                  <tr>
+                    <th className="px-4 py-3">Resource Title</th>
+                    <th className="px-4 py-3">Taxonomy</th>
+                    <th className="px-4 py-3">Uploader (Volunteer)</th>
+                    <th className="px-4 py-3">Document Link</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {resourcesLoading ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                        Loading pending educational resources...
+                      </td>
+                    </tr>
+                  ) : pendingResources.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                        No pending educational resources for moderation.
+                      </td>
+                    </tr>
+                  ) : (
+                    pendingResources.map((res) => (
+                      <tr key={res.id}>
+                        <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                          <div>{res.title}</div>
+                          {res.description && <div className="text-[11px] text-zinc-500 line-clamp-1">{res.description}</div>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1">
+                            <span className="px-1.5 py-0.5 bg-sky-50 dark:bg-sky-950 text-sky-600 text-[10px] font-bold rounded">
+                              {res.target_class}
+                            </span>
+                            <span className="px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 text-[10px] font-bold rounded">
+                              {res.subject_name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 text-xs">
+                          <div className="font-semibold text-zinc-900 dark:text-zinc-200">{res.uploader_name}</div>
+                          <div className="text-[10px] text-zinc-500">{res.uploader_email}</div>
+                        </td>
+                        <td className="px-4 py-3 text-xs">
+                          <a
+                            href={res.external_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-sky-600 hover:text-sky-500 font-semibold"
+                          >
+                            Open Link <ExternalLink className="h-3 w-3 ml-1" />
+                          </a>
+                        </td>
+                        <td className="px-4 py-3 text-right space-x-2">
+                          <Button
+                            size="sm"
+                            isLoading={approveResourceMutation.isPending}
+                            onClick={() => approveResourceMutation.mutate(res.id)}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs h-8"
+                          >
+                            <Check className="h-3.5 w-3.5 mr-1" /> Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setRejectingResourceId(res.id)}
+                            className="text-rose-600 border-rose-200 text-xs h-8"
+                          >
+                            <X className="h-3.5 w-3.5 mr-1" /> Reject
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+
+        {/* TAB 4: EVENT APPROVALS QUEUE */}
+        {activeTab === "events" && (
+          <Card className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-indigo-500" /> Pending Student Bootcamp / Event Approval Queue
+              </h2>
+              <span className="text-xs text-zinc-500 font-medium">{pendingEvents.length} pending review</span>
+            </div>
+
+            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
+                  <tr>
+                    <th className="px-4 py-3">Event Title & Timing</th>
+                    <th className="px-4 py-3">Mode & Venue</th>
+                    <th className="px-4 py-3">Organizer (Volunteer)</th>
+                    <th className="px-4 py-3">WhatsApp Link</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {eventsLoading ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                        Loading pending events...
+                      </td>
+                    </tr>
+                  ) : pendingEvents.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                        No pending event verification requests.
+                      </td>
+                    </tr>
+                  ) : (
+                    pendingEvents.map((e) => (
+                      <tr key={e.id}>
+                        <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                          <div>{e.title}</div>
+                          <div className="text-[11px] text-zinc-500">
+                            {new Date(e.event_date).toLocaleDateString()} {e.start_time ? `• ${e.start_time}` : ""}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-xs">
+                          <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 text-[10px] font-bold rounded uppercase mr-1">
+                            {e.mode}
+                          </span>
+                          <span className="text-zinc-600 dark:text-zinc-400">{e.venue}</span>
+                        </td>
+                        <td className="px-4 py-3 text-xs">
+                          <div className="font-semibold text-zinc-900 dark:text-zinc-200">{e.organizer_name}</div>
+                          <div className="text-[10px] text-zinc-500">{e.organizer_email}</div>
+                        </td>
+                        <td className="px-4 py-3 text-xs">
+                          {e.whatsapp_group_url ? (
+                            <a href={e.whatsapp_group_url} target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-semibold flex items-center gap-1">
+                              <MessageSquare className="h-3 w-3" /> Group Link
+                            </a>
+                          ) : (
+                            <span className="text-zinc-400 text-[11px]">N/A</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right space-x-2">
+                          <Button
+                            size="sm"
+                            isLoading={approveEventMutation.isPending}
+                            onClick={() => approveEventMutation.mutate(e.id)}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs h-8"
+                          >
+                            <Check className="h-3.5 w-3.5 mr-1" /> Approve Event
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setRejectingEventId(e.id)}
+                            className="text-rose-600 border-rose-200 text-xs h-8"
+                          >
+                            <X className="h-3.5 w-3.5 mr-1" /> Reject
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+
+        {/* TAB 5: DELETION REQUESTS QUEUE */}
+        {activeTab === "deletions" && (
           <Card className="space-y-4 border-rose-200 dark:border-rose-900 bg-rose-50/30 dark:bg-rose-950/20">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-rose-900 dark:text-rose-200 flex items-center gap-2">
@@ -347,279 +909,223 @@ export default function AdminDashboardPage() {
           </Card>
         )}
 
-        {/* 2. PENDING EVENT VERIFICATION QUEUE */}
-        <Card className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-indigo-500" /> Pending Student Bootcamp / Event Approval Queue
-            </h2>
-            <span className="text-xs text-zinc-500 font-medium">{pendingEvents.length} pending review</span>
-          </div>
+        {/* 🩺 REAL LIVE SYSTEM DIAGNOSTICS & HEALTHCHECK MODAL */}
+        {isHealthModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-2xl relative">
+              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+                <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Cpu className="h-5 w-5 text-emerald-500 animate-spin" /> Live System Health & Diagnostics Test
+                </h3>
+                <button onClick={() => setIsHealthModalOpen(false)} className="text-zinc-500 hover:text-zinc-700">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
 
-          <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
-                <tr>
-                  <th className="px-4 py-3">Event Title & Timing</th>
-                  <th className="px-4 py-3">Mode & Venue</th>
-                  <th className="px-4 py-3">Organizer (Volunteer)</th>
-                  <th className="px-4 py-3">WhatsApp Link</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                {eventsLoading ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
-                      Loading pending events...
-                    </td>
-                  </tr>
-                ) : pendingEvents.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
-                      No pending event verification requests.
-                    </td>
-                  </tr>
+              {healthLoading ? (
+                <div className="py-8 text-center text-xs text-zinc-500 space-y-2">
+                  <div className="animate-spin h-6 w-6 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto" />
+                  <div>Running real-time database query latency test & storage checks...</div>
+                </div>
+              ) : health ? (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                      <div>
+                        <div className="font-bold text-sm text-emerald-900 dark:text-emerald-100">Overall System Health: {health.status}</div>
+                        <div className="text-xs text-emerald-700 dark:text-emerald-300">All database & middleware services responding normally.</div>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 bg-emerald-200/80 text-emerald-900 text-xs font-bold rounded-lg">
+                      ⚡ {health.database.latency_ms} ms ping
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 space-y-1">
+                      <div className="text-zinc-500 font-semibold uppercase">Database Connection</div>
+                      <div className="font-bold text-zinc-900 dark:text-zinc-100">{health.database.engine} (Connected)</div>
+                      <div className="text-[11px] text-emerald-600">Query Latency: {health.database.latency_ms} ms</div>
+                    </div>
+
+                    <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 space-y-1">
+                      <div className="text-zinc-500 font-semibold uppercase">JWT Auth Guard</div>
+                      <div className="font-bold text-zinc-900 dark:text-zinc-100">{health.jwt_auth.status}</div>
+                      <div className="text-[11px] text-zinc-500">Active Role: {health.jwt_auth.active_role}</div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 space-y-2">
+                    <div className="text-xs font-semibold uppercase text-zinc-500">Database Record Totals</div>
+                    <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                      <div className="p-2 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <div className="font-bold text-base">{health.statistics.total_users}</div>
+                        <div className="text-[10px] text-zinc-500">Users</div>
+                      </div>
+                      <div className="p-2 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <div className="font-bold text-base">{health.statistics.total_resources}</div>
+                        <div className="text-[10px] text-zinc-500">Resources</div>
+                      </div>
+                      <div className="p-2 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <div className="font-bold text-base">{health.statistics.total_events}</div>
+                        <div className="text-[10px] text-zinc-500">Events</div>
+                      </div>
+                      <div className="p-2 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <div className="font-bold text-base">{health.statistics.total_logs}</div>
+                        <div className="text-[10px] text-zinc-500">Audit Logs</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-2">
+                    <div className="text-[11px] text-zinc-400">Last tested: {new Date(health.timestamp).toLocaleTimeString()}</div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => refetchHealth()}>
+                        Re-run Tests
+                      </Button>
+                      <Button size="sm" onClick={() => setIsHealthModalOpen(false)}>
+                        Close
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
+
+        {/* 👁️ USER ACTIVITY AUDIT TRAIL MODAL */}
+        {viewingActivityUser && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+                <div>
+                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-sky-500" /> User Activity Audit Trail
+                  </h3>
+                  <div className="text-xs text-zinc-500">{viewingActivityUser.full_name} ({viewingActivityUser.email})</div>
+                </div>
+                <button onClick={() => setViewingActivityUser(null)} className="text-zinc-500 hover:text-zinc-700">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {userLogsLoading ? (
+                  <div className="py-8 text-center text-xs text-zinc-500">Fetching user activity logs...</div>
+                ) : userLogs.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-zinc-500">No activity logs recorded yet for this user.</div>
                 ) : (
-                  pendingEvents.map((e) => (
-                    <tr key={e.id}>
-                      <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
-                        <div>{e.title}</div>
-                        <div className="text-[11px] text-zinc-500">
-                          {new Date(e.event_date).toLocaleDateString()} {e.start_time ? `• ${e.start_time}` : ""}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-xs">
-                        <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 text-[10px] font-bold rounded uppercase mr-1">
-                          {e.mode}
+                  userLogs.map((log) => (
+                    <div key={log.id} className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 text-xs space-y-1">
+                      <div className="flex items-center justify-between font-bold text-zinc-900 dark:text-zinc-100">
+                        <span className="px-2 py-0.5 bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 text-[10px] rounded uppercase font-bold">
+                          {log.action}
                         </span>
-                        <span className="text-zinc-600 dark:text-zinc-400">{e.venue}</span>
-                      </td>
-                      <td className="px-4 py-3 text-xs">
-                        <div className="font-semibold text-zinc-900 dark:text-zinc-200">{e.organizer_name}</div>
-                        <div className="text-[10px] text-zinc-500">{e.organizer_email}</div>
-                      </td>
-                      <td className="px-4 py-3 text-xs">
-                        {e.whatsapp_group_url ? (
-                          <a href={e.whatsapp_group_url} target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-semibold flex items-center gap-1">
-                            <MessageSquare className="h-3 w-3" /> Group Link
-                          </a>
-                        ) : (
-                          <span className="text-zinc-400 text-[11px]">N/A</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right space-x-2">
-                        <Button
-                          size="sm"
-                          isLoading={approveEventMutation.isPending}
-                          onClick={() => approveEventMutation.mutate(e.id)}
-                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs h-8"
-                        >
-                          <Check className="h-3.5 w-3.5 mr-1" /> Approve Event
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setRejectingEventId(e.id)}
-                          className="text-rose-600 border-rose-200 text-xs h-8"
-                        >
-                          <X className="h-3.5 w-3.5 mr-1" /> Reject
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        {/* 3. PENDING RESOURCE MODERATION QUEUE */}
-        <Card className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-indigo-500" /> Pending Educational Resource Approval Queue
-            </h2>
-            <span className="text-xs text-zinc-500 font-medium">{pendingResources.length} pending review</span>
-          </div>
-
-          <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
-                <tr>
-                  <th className="px-4 py-3">Resource Title</th>
-                  <th className="px-4 py-3">Taxonomy</th>
-                  <th className="px-4 py-3">Uploader (Volunteer)</th>
-                  <th className="px-4 py-3">Document Link</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                {resourcesLoading ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
-                      Loading pending educational resources...
-                    </td>
-                  </tr>
-                ) : pendingResources.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
-                      No pending educational resources for moderation.
-                    </td>
-                  </tr>
-                ) : (
-                  pendingResources.map((res) => (
-                    <tr key={res.id}>
-                      <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
-                        <div>{res.title}</div>
-                        {res.description && <div className="text-[11px] text-zinc-500 line-clamp-1">{res.description}</div>}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1">
-                          <span className="px-1.5 py-0.5 bg-sky-50 dark:bg-sky-950 text-sky-600 text-[10px] font-bold rounded">
-                            {res.target_class}
-                          </span>
-                          <span className="px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 text-[10px] font-bold rounded">
-                            {res.subject_name}
-                          </span>
+                        <span className="text-zinc-400 font-normal">{new Date(log.created_at).toLocaleString()}</span>
+                      </div>
+                      {log.details && (
+                        <div className="text-zinc-600 dark:text-zinc-400 font-mono text-[11px] overflow-x-auto p-1.5 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-800 mt-1">
+                          {JSON.stringify(log.details)}
                         </div>
-                      </td>
-                      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 text-xs">
-                        <div className="font-semibold text-zinc-900 dark:text-zinc-200">{res.uploader_name}</div>
-                        <div className="text-[10px] text-zinc-500">{res.uploader_email}</div>
-                      </td>
-                      <td className="px-4 py-3 text-xs">
-                        <a
-                          href={res.external_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-sky-600 hover:text-sky-500 font-semibold"
-                        >
-                          Open Link <ExternalLink className="h-3 w-3 ml-1" />
-                        </a>
-                      </td>
-                      <td className="px-4 py-3 text-right space-x-2">
-                        <Button
-                          size="sm"
-                          isLoading={approveResourceMutation.isPending}
-                          onClick={() => approveResourceMutation.mutate(res.id)}
-                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs h-8"
-                        >
-                          <Check className="h-3.5 w-3.5 mr-1" /> Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setRejectingResourceId(res.id)}
-                          className="text-rose-600 border-rose-200 text-xs h-8"
-                        >
-                          <X className="h-3.5 w-3.5 mr-1" /> Reject
-                        </Button>
-                      </td>
-                    </tr>
+                      )}
+                    </div>
                   ))
                 )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+              </div>
 
-        {/* 4. PENDING VOLUNTEER VERIFICATION QUEUE */}
-        <Card className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <Clock className="h-5 w-5 text-amber-500" /> Pending Volunteer Verification Queue (3-Day Expiry)
-            </h2>
-            <span className="text-xs text-zinc-500 font-medium">{pendingVolunteers.length} pending review</span>
+              <div className="flex justify-end pt-2">
+                <Button variant="outline" size="sm" onClick={() => setViewingActivityUser(null)}>
+                  Close Audit Trail
+                </Button>
+              </div>
+            </div>
           </div>
+        )}
 
-          <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
-                <tr>
-                  <th className="px-4 py-3">Applicant Name</th>
-                  <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Organization</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                {volunteersLoading ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
-                      Loading pending applications...
-                    </td>
-                  </tr>
-                ) : pendingVolunteers.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
-                      No pending volunteer verification requests.
-                    </td>
-                  </tr>
-                ) : (
-                  pendingVolunteers.map((v) => (
-                    <tr key={v.id}>
-                      <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{v.full_name}</td>
-                      <td className="px-4 py-3 text-zinc-500 text-xs">{v.email}</td>
-                      <td className="px-4 py-3 text-zinc-500 text-xs">{v.organization}</td>
-                      <td className="px-4 py-3">
-                        <span className="px-2.5 py-0.5 bg-amber-50 dark:bg-amber-950 text-amber-600 text-xs rounded-full border border-amber-200 dark:border-amber-800 font-semibold">
-                          {v.approval_status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right space-x-2">
-                        <Button
-                          size="sm"
-                          isLoading={approveVolunteerMutation.isPending}
-                          onClick={() => approveVolunteerMutation.mutate(v.user_id)}
-                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs h-8"
-                        >
-                          <Check className="h-3.5 w-3.5 mr-1" /> Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setRejectingUserId(v.user_id)}
-                          className="text-rose-600 border-rose-200 text-xs h-8"
-                        >
-                          <X className="h-3.5 w-3.5 mr-1" /> Reject
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        {/* EVENT REJECTION MODAL */}
-        {rejectingEventId && (
+        {/* 👑 PROMOTE TO ADMIN CONFIRMATION MODAL */}
+        {promotingUser && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
               <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-rose-500" /> Reject Event Creation
+                <UserPlus className="h-5 w-5 text-purple-500" /> Promote User to Admin Role
               </h3>
-              <p className="text-xs text-zinc-500">
-                Specify rejection reason for this event submission:
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Are you sure you want to promote <strong>{promotingUser.full_name}</strong> ({promotingUser.email}) to <strong>Admin</strong> role? This will grant them full administrative moderation access.
               </p>
-              <textarea
-                rows={3}
-                required
-                placeholder="E.g., WhatsApp link is broken or venue info incomplete."
-                value={eventRejectReason}
-                onChange={(e) => setEventRejectReason(e.target.value)}
-                className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
-              />
+
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => setRejectingEventId(null)}>
+                <Button variant="outline" size="sm" onClick={() => setPromotingUser(null)}>
                   Cancel
                 </Button>
                 <Button
                   size="sm"
-                  isLoading={rejectEventMutation.isPending}
-                  onClick={() => rejectEventMutation.mutate({ eventId: rejectingEventId, reason: eventRejectReason || "Event criteria not met." })}
+                  isLoading={promoteAdminMutation.isPending}
+                  onClick={() => promoteAdminMutation.mutate(promotingUser.id)}
+                  className="bg-purple-600 hover:bg-purple-500 text-white"
+                >
+                  Confirm Admin Promotion
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 🗑️ DELETE USER CONFIRMATION MODAL */}
+        {deletingUser && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+              <h3 className="font-bold text-base text-rose-600 flex items-center gap-2">
+                <Trash2 className="h-5 w-5 text-rose-500" /> Permanently Delete User Account
+              </h3>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Are you sure you want to permanently delete user account <strong>{deletingUser.full_name}</strong> ({deletingUser.email})? This action cannot be undone.
+              </p>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setDeletingUser(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  isLoading={deleteUserMutation.isPending}
+                  onClick={() => deleteUserMutation.mutate(deletingUser.id)}
+                  className="bg-rose-600 hover:bg-rose-500 text-white"
+                >
+                  Confirm Permanent Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* REJECTION REASON MODALS */}
+        {rejectingUserId && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+              <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-rose-500" /> Reject Volunteer Application
+              </h3>
+              <p className="text-xs text-zinc-500">
+                Specify rejection reason for this volunteer applicant:
+              </p>
+              <textarea
+                rows={3}
+                required
+                placeholder="E.g., Invalid organization proof provided."
+                value={volunteerRejectReason}
+                onChange={(e) => setVolunteerRejectReason(e.target.value)}
+                className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+              />
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setRejectingUserId(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  isLoading={rejectVolunteerMutation.isPending}
+                  onClick={() => rejectVolunteerMutation.mutate({ userId: rejectingUserId, reason: volunteerRejectReason || "Criteria not met." })}
                   className="bg-rose-600 hover:bg-rose-500 text-white"
                 >
                   Confirm Rejection
@@ -629,7 +1135,6 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* RESOURCE REJECTION MODAL */}
         {rejectingResourceId && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
@@ -655,6 +1160,40 @@ export default function AdminDashboardPage() {
                   size="sm"
                   isLoading={rejectResourceMutation.isPending}
                   onClick={() => rejectResourceMutation.mutate({ resourceId: rejectingResourceId, reason: resourceRejectReason || "Resource criteria not met." })}
+                  className="bg-rose-600 hover:bg-rose-500 text-white"
+                >
+                  Confirm Rejection
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {rejectingEventId && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+              <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-rose-500" /> Reject Event Creation
+              </h3>
+              <p className="text-xs text-zinc-500">
+                Specify rejection reason for this event submission:
+              </p>
+              <textarea
+                rows={3}
+                required
+                placeholder="E.g., WhatsApp link is broken or venue info incomplete."
+                value={eventRejectReason}
+                onChange={(e) => setEventRejectReason(e.target.value)}
+                className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+              />
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setRejectingEventId(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  isLoading={rejectEventMutation.isPending}
+                  onClick={() => rejectEventMutation.mutate({ eventId: rejectingEventId, reason: eventRejectReason || "Event criteria not met." })}
                   className="bg-rose-600 hover:bg-rose-500 text-white"
                 >
                   Confirm Rejection
