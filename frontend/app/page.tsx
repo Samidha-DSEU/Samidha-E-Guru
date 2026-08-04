@@ -27,51 +27,51 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="relative overflow-hidden space-y-28 py-10 selection:bg-sky-500 selection:text-white">
+    <div className="relative overflow-hidden space-y-16 sm:space-y-28 py-6 sm:py-10 selection:bg-sky-500 selection:text-white">
       
       {/* 3D BACKGROUND GLOWING ORBS & ANIMATED MESH GRADIENTS */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[650px] pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute top-10 left-1/4 w-96 h-96 bg-sky-500/20 dark:bg-sky-500/15 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute top-32 right-1/4 w-96 h-96 bg-purple-500/20 dark:bg-purple-500/15 rounded-full blur-[120px] animate-pulse delay-1000" />
-        <div className="absolute top-80 left-1/3 w-80 h-80 bg-emerald-500/15 dark:bg-emerald-500/10 rounded-full blur-[100px]" />
+        <div className="absolute top-10 left-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-sky-500/20 dark:bg-sky-500/15 rounded-full blur-[100px] sm:blur-[120px] animate-pulse" />
+        <div className="absolute top-32 right-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-purple-500/20 dark:bg-purple-500/15 rounded-full blur-[100px] sm:blur-[120px] animate-pulse delay-1000" />
+        <div className="absolute top-80 left-1/3 w-64 sm:w-80 h-64 sm:h-80 bg-emerald-500/15 dark:bg-emerald-500/10 rounded-full blur-[80px] sm:blur-[100px]" />
       </div>
 
       {/* HERO SECTION: SAMIDHA MISSION & VISION */}
-      <section className="relative text-center space-y-8 max-w-5xl mx-auto px-4">
+      <section className="relative text-center space-y-6 sm:space-y-8 max-w-5xl mx-auto px-4">
         
         {/* Floating Mission Badge */}
-        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 backdrop-blur-xl shadow-xl shadow-sky-500/5 hover:scale-105 transition-transform">
-          <Heart className="h-4 w-4 text-rose-500 fill-rose-500/20" />
-          <span className="text-xs font-bold tracking-wider uppercase bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-            SAMIDHA Non-Profit Educational Initiative
+        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 backdrop-blur-xl shadow-xl shadow-sky-500/5 transition-transform max-w-full">
+          <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-rose-500 fill-rose-500/20 shrink-0" />
+          <span className="text-[11px] sm:text-xs font-bold tracking-wide uppercase bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent truncate sm:whitespace-normal">
+            SAMIDHA Society • G.B. Pant Engineering College (DSEU Okhla-1 Campus)
           </span>
         </div>
 
         {/* Main Mission Title */}
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 leading-[1.1]">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 leading-[1.15] sm:leading-[1.1]">
           Empowering Every Student with <br className="hidden sm:inline" />
           <span className="bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
             Free, Quality Education & Mentorship
           </span>
         </h1>
 
-        <p className="text-lg sm:text-xl text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed max-w-3xl mx-auto">
+        <p className="text-sm sm:text-lg text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed max-w-3xl mx-auto">
           SAMIDHA is dedicated to bridging the educational divide by providing structured study resources, NCERT notes, question banks, and direct 1-on-1 mentorship from experienced alumni — 100% free for all students across India.
         </p>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-          <Link href="/resources">
-            <Button size="lg" className="h-13 px-8 text-base bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white shadow-xl shadow-sky-500/25 rounded-2xl hover:scale-[1.02] active:scale-95 transition-all">
-              <BookMarked className="h-5 w-5 mr-2" />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3.5 pt-2 w-full sm:w-auto">
+          <Link href="/resources" className="w-full sm:w-auto">
+            <Button size="lg" className="w-full sm:w-auto h-12 sm:h-13 px-6 sm:px-8 text-sm sm:text-base bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white shadow-xl shadow-sky-500/25 rounded-2xl transition-all">
+              <BookMarked className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Explore Free Study Resources
-              <ArrowRight className="h-5 w-5 ml-2.5" />
+              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
             </Button>
           </Link>
 
-          <Link href="/community">
-            <Button variant="outline" size="lg" className="h-13 px-8 text-base backdrop-blur-xl bg-white/60 dark:bg-zinc-900/60 border-zinc-300 dark:border-zinc-800 rounded-2xl hover:scale-[1.02] active:scale-95 transition-all">
-              <Users className="h-5 w-5 mr-2 text-indigo-500" />
+          <Link href="/community" className="w-full sm:w-auto">
+            <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 sm:h-13 px-6 sm:px-8 text-sm sm:text-base backdrop-blur-xl bg-white/60 dark:bg-zinc-900/60 border-zinc-300 dark:border-zinc-800 rounded-2xl transition-all">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-indigo-500" />
               Connect with Alumni Mentors
             </Button>
           </Link>
