@@ -1,20 +1,24 @@
 -- ==============================================================================
--- SAMIDHA E-GURU: PROMOTE AZLAN ZIDAN TO SUPER ADMIN ROLE
+-- SAMIDHA E-GURU: STRICT SUPER ADMIN PROMOTION FOR AZLAN ZIDAN ONLY
 -- Run this in Supabase SQL Editor (https://supabase.com/dashboard/project/vigxqigzprmohgzetyzs/sql)
 -- ==============================================================================
 
--- 1. Ensure 'super_admin' role exists in roles table
+-- 1. Ensure 'super_admin' role exists
 INSERT INTO roles (id, name, description) 
 SELECT gen_random_uuid(), 'super_admin', 'Super Administrator' 
 WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'super_admin');
 
--- 2. Promote Azlan Zidan account to Super Admin
+-- 2. Promote ONLY AZLAN ZIDAN to Super Admin
 UPDATE users 
 SET role_id = (SELECT id FROM roles WHERE name = 'super_admin' LIMIT 1) 
-WHERE LOWER(email) LIKE '%azlan%' OR LOWER(email) LIKE '%zidan%' OR LOWER(email) LIKE '%feyaz%';
+WHERE LOWER(email) = 'azlantalks4u@gmail.com';
 
--- 3. Verify user role
+-- 3. Reset Feyaz account to standard Admin role
+UPDATE users 
+SET role_id = (SELECT id FROM roles WHERE name = 'admin' LIMIT 1) 
+WHERE LOWER(email) = 'feyazkhan3800@gmail.com';
+
+-- 4. Verify user roles
 SELECT u.id, u.email, r.name as role_name 
 FROM users u 
-JOIN roles r ON u.role_id = r.id 
-WHERE LOWER(u.email) LIKE '%azlan%' OR LOWER(u.email) LIKE '%zidan%' OR LOWER(u.email) LIKE '%feyaz%';
+JOIN roles r ON u.role_id = r.id;

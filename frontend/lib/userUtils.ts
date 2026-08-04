@@ -9,6 +9,7 @@ export function getUserHomeLink(user: any): string {
   const slug = getUserSlug(user);
   if (user.role?.name === "volunteer") return `/volunteer/${slug}`;
   if (user.role?.name === "alumni") return `/alumni/${slug}`;
-  if (user.role?.name === "admin" || user.role?.name === "super_admin") return `/admin/${slug}`;
+  if (user.role?.name === "super_admin") return `/super-admin/${slug}`;
+  if (user.role?.name === "admin") return `/admin/${slug}`;
   return `/dashboard/${slug}`;
 }

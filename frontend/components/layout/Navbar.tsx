@@ -25,7 +25,8 @@ export function Navbar() {
     if (!user) return "";
     if (user.role?.name === "volunteer") return "Volunteer Portal";
     if (user.role?.name === "alumni") return "Alumni Portal";
-    if (user.role?.name === "admin" || user.role?.name === "super_admin") return "Admin Control";
+    if (user.role?.name === "super_admin") return "Super Admin Portal";
+    if (user.role?.name === "admin") return "Admin Control";
     return "My Dashboard";
   };
 
