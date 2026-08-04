@@ -8,6 +8,7 @@ import { StandardResponse } from "@/types/api";
 import { Card, Skeleton } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 interface VolunteerApplication {
   id: string;
@@ -61,6 +62,7 @@ interface PendingEventItem {
 }
 
 export default function AdminDashboardPage() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   
   // Volunteer Rejection Modal State
@@ -231,9 +233,9 @@ export default function AdminDashboardPage() {
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Admin Control Panel
+            Welcome back, {user?.profile?.full_name || "Administrator"}! 👋
           </h1>
-          <p className="text-zinc-600 dark:text-zinc-400 text-sm">
+          <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1">
             Platform metrics, volunteer verification queues, resource moderation, and event approvals.
           </p>
         </div>

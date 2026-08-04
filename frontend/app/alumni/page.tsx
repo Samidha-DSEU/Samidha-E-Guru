@@ -5,17 +5,20 @@ import { Plus } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 export default function AlumniDashboardPage() {
+  const { user } = useAuth();
+
   return (
     <ProtectedRoute allowedRoles={["alumni", "admin", "super_admin"]}>
       <div className="space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-              Alumni Mentorship Portal
+              Welcome back, {user?.profile?.full_name || "Alumni Mentor"}! 👋
             </h1>
-            <p className="text-zinc-600 dark:text-zinc-400 text-sm">
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1">
               Share career guidance, mentor aspiring students, and publish educational articles.
             </p>
           </div>
