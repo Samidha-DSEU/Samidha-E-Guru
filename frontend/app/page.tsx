@@ -26,7 +26,7 @@ export default function LandingPage() {
     }
   }, [user, isLoading, router]);
 
-  if (isLoading || user) {
+  if (user) {
     return null;
   }
   return (
