@@ -72,7 +72,7 @@ export default function LandingPage() {
           <Link href="/community" className="w-full sm:w-auto">
             <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 sm:h-13 px-6 sm:px-8 text-sm sm:text-base backdrop-blur-xl bg-white/60 dark:bg-zinc-900/60 border-zinc-300 dark:border-zinc-800 rounded-2xl transition-all">
               <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-indigo-500" />
-              Connect with Alumni Mentors
+              Volunteer Mentorship Network
             </Button>
           </Link>
         </div>
@@ -133,9 +133,9 @@ export default function LandingPage() {
             <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
               <Award className="h-7 w-7" />
             </div>
-            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">1-on-1 Alumni Mentorship</h3>
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Volunteer-Alumni Pipeline</h3>
             <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              Direct guidance from experienced university alumni and industry professionals. Students can request career advice, college selection support, and exam preparation strategies.
+              Direct mentorship pipeline for volunteers to connect with experienced alumni for 1-on-1 career guidance, industry trends, and professional mentoring.
             </p>
           </div>
 
@@ -214,17 +214,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION 3: ALUMNI MENTORSHIP & GUIDANCE PIPELINE */}
+      {/* SECTION 3: VOLUNTEER & ALUMNI MENTORSHIP PIPELINE */}
       <section className="max-w-7xl mx-auto px-4 space-y-12">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-bold uppercase tracking-widest border border-purple-500/20">
-            <Users className="h-3.5 w-3.5" /> Direct Mentorship
+            <Users className="h-3.5 w-3.5" /> Volunteer-Alumni Guidance
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
-            Learn Directly from Seniors & Alumni
+            Volunteer & Alumni Mentorship Network
           </h2>
           <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-            SAMIDHA connects students from tier-2, tier-3 cities & rural areas with experienced alumni for personalized career advice.
+            SAMIDHA empowers volunteer educators with direct 1-on-1 guidance, career insights, and market advice from experienced alumni mentors.
           </p>
         </div>
 
@@ -234,14 +234,14 @@ export default function LandingPage() {
             <div className="h-12 w-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold">
               <MessageSquare className="h-6 w-6" />
             </div>
-            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">1-on-1 Guidance Requests</h3>
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Volunteer Mentorship Requests</h3>
             <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              Students can send targeted mentorship requests to verified alumni mentors specifying their exact topic (e.g. JEE Prep, Class 12 Boards, College Applications).
+              Volunteers can send targeted mentorship requests to verified alumni mentors specifying topics like Career Guidance, Industry Trends, or Exam Preparation.
             </p>
             <div className="pt-2">
               <Link href="/community">
                 <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl">
-                  Explore Mentor Directory ➔
+                  Volunteer Mentorship Directory ➔
                 </Button>
               </Link>
             </div>
