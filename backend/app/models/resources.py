@@ -35,9 +35,9 @@ class Resource(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     thumbnail_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     external_url: Mapped[str] = mapped_column(Text, nullable=False)
-    chapter_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("chapters.id", ondelete="CASCADE"), nullable=False)
-    resource_type_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("resource_types.id"), nullable=False)
-    resource_source_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("resource_sources.id"), nullable=False)
+    chapter_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("chapters.id", ondelete="CASCADE"), nullable=True)
+    resource_type_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("resource_types.id"), nullable=True)
+    resource_source_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("resource_sources.id"), nullable=True)
     uploader_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     verification_status: Mapped[str] = mapped_column(String(50), default="pending")  # pending, approved, rejected
     rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
