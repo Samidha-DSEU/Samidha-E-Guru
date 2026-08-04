@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Upload, Calendar, Clock, ShieldCheck, CheckCircle2, Lock, Plus, FileText, X, MessageSquare } from "lucide-react";
+import { Upload, Calendar, Clock, ShieldCheck, CheckCircle2, Lock, Plus, FileText, X, MessageSquare, Users, Eye, Ban, Edit, Sparkles } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
 import { StandardResponse } from "@/types/api";
 import { Card, Skeleton } from "@/components/ui/Card";
@@ -13,6 +13,32 @@ import { useAuth } from "@/features/auth/context/AuthContext";
 const CLASSES = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "Undergraduate"];
 const SUBJECTS = ["Mathematics", "Science", "Physics", "Chemistry", "Biology", "English", "Social Science", "Computer Science"];
 const CATEGORIES = ["Notes", "Question Paper / PYQ", "Sample Paper", "Worksheet"];
+
+interface MyEventItem {
+  id: string;
+  title: string;
+  description: string;
+  mode: string;
+  venue: string;
+  event_date: string;
+  start_time?: string;
+  whatsapp_group_url?: string;
+  verification_status: string;
+  event_status: string;
+  registrations_count: number;
+  rejection_reason?: string;
+  created_at: string;
+}
+
+interface StudentRosterItem {
+  id: string;
+  full_name: string;
+  email: string;
+  class_or_college: string;
+  mobile_number: string;
+  address: string;
+  registered_at: string;
+}
 
 export default function VolunteerDashboardPage() {
   const { user } = useAuth();
@@ -35,8 +61,10 @@ export default function VolunteerDashboardPage() {
   });
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // EVENT MODAL STATE
+  // EVENT MANAGEMENT MODAL STATE
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [eventTab, setEventTab] = useState<"create" | "manage">("manage");
+
   const [eventData, setEventData] = useState({
     title: "",
     description: "",
@@ -49,7 +77,11 @@ export default function VolunteerDashboardPage() {
   });
   const [eventError, setEventError] = useState<string | null>(null);
 
-  // DYNAMICALLY FETCH REAL VOLUNTEER RESOURCE STATS FROM BACKEND
+  // ROSTER MODAL STATE
+  const [viewingRosterEventId, setViewingRosterEventId] = useState<string | null>(null);
+  const [viewingRosterEventTitle, setViewingRosterEventTitle] = useState<string>("");
+
+  // DYNAMIC VOLUNTEER RESOURCE STATS
   const { data: statsData, isLoading: isStatsLoading } = useQuery({
     queryKey: ["volunteerStats"],
     queryFn: async () => {
@@ -60,6 +92,27 @@ export default function VolunteerDashboardPage() {
       }>>("/resources/my-stats");
       return res.data;
     }
+  });
+
+  // MY CREATED EVENTS QUERY
+  const { data: myEventsData, isLoading: myEventsLoading, refetch: refetchMyEvents } = useQuery({
+    queryKey: ["myCreatedEvents"],
+    queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<MyEventItem[]>>("/events/my-events");
+      return res.data;
+    },
+    enabled: isApproved
+  });
+
+  // STUDENT ROSTER QUERY
+  const { data: rosterData, isLoading: rosterLoading } = useQuery({
+    queryKey: ["eventRoster", viewingRosterEventId],
+    queryFn: async () => {
+      if (!viewingRosterEventId) return null;
+      const res = await apiClient.get<StandardResponse<StudentRosterItem[]>>(`/events/${viewingRosterEventId}/registrations`);
+      return res.data;
+    },
+    enabled: !!viewingRosterEventId
   });
 
   const uploadResourceMutation = useMutation({
@@ -91,7 +144,7 @@ export default function VolunteerDashboardPage() {
       return res.data;
     },
     onSuccess: () => {
-      setIsEventModalOpen(false);
+      setEventTab("manage");
       setEventData({
         title: "",
         description: "",
@@ -103,9 +156,20 @@ export default function VolunteerDashboardPage() {
         max_participants: 50
       });
       setEventError(null);
+      refetchMyEvents();
     },
     onError: (err: any) => {
       setEventError(err.response?.data?.detail || err.response?.data?.message || "Failed to create event.");
+    }
+  });
+
+  const closeEventMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      const res = await apiClient.post(`/events/${eventId}/close`);
+      return res.data;
+    },
+    onSuccess: () => {
+      refetchMyEvents();
     }
   });
 
@@ -139,6 +203,8 @@ export default function VolunteerDashboardPage() {
   }, [volunteerProfile, isApproved]);
 
   const stats = statsData?.data;
+  const myEvents = myEventsData?.data || [];
+  const rosterStudents = rosterData?.data || [];
 
   const handleResourceSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,7 +273,7 @@ export default function VolunteerDashboardPage() {
               className={!isApproved ? "opacity-60 cursor-not-allowed bg-zinc-400 text-zinc-200" : "bg-indigo-600 hover:bg-indigo-500 text-white"}
             >
               {!isApproved ? <Lock className="h-4 w-4 mr-2" /> : <Calendar className="h-4 w-4 mr-2" />}
-              Organize Event / Bootcamp
+              Organize / Manage Events
             </Button>
 
             <Button
@@ -354,122 +420,292 @@ export default function VolunteerDashboardPage() {
           </div>
         )}
 
-        {/* ORGANIZE EVENT MODAL */}
+        {/* EVENT MANAGEMENT & ROSTER MODAL */}
         {isEventModalOpen && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-3xl w-full p-6 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
-                <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-indigo-500" /> Organize Student Bootcamp / Event
-                </h3>
+                <div className="flex items-center gap-3">
+                  <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-indigo-500" /> Volunteer Event Control Center
+                  </h3>
+                  <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold rounded-full border border-emerald-300">
+                    🎁 100% FREE EVENTS BY DEFAULT
+                  </span>
+                </div>
                 <button onClick={() => setIsEventModalOpen(false)} className="text-zinc-500 hover:text-zinc-700">
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              {eventError && (
-                <div className="p-3 text-xs bg-rose-50 dark:bg-rose-950 text-rose-600 rounded-xl border border-rose-200">
-                  {eventError}
+              {/* TABS HEADER */}
+              <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-2">
+                <button
+                  onClick={() => setEventTab("manage")}
+                  className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+                    eventTab === "manage"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                  }`}
+                >
+                  📋 My Organized Events & Rosters ({myEvents.length})
+                </button>
+                <button
+                  onClick={() => setEventTab("create")}
+                  className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+                    eventTab === "create"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                  }`}
+                >
+                  ➕ Organize New Event
+                </button>
+              </div>
+
+              {/* TAB 1: MANAGE EVENTS */}
+              {eventTab === "manage" && (
+                <div className="space-y-4">
+                  {myEventsLoading ? (
+                    <div className="p-8 text-center text-xs text-zinc-500">Loading your events...</div>
+                  ) : myEvents.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-zinc-500 space-y-3">
+                      <div>No events created yet. Click "Organize New Event" to create your first free bootcamp!</div>
+                      <Button size="sm" onClick={() => setEventTab("create")} className="bg-indigo-600 text-white">
+                        + Organize New Event
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {myEvents.map((e) => (
+                        <div key={e.id} className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{e.title}</h4>
+                              <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                                e.verification_status === "approved"
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : e.verification_status === "pending"
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-rose-100 text-rose-700"
+                              }`}>
+                                {e.verification_status}
+                              </span>
+                              {e.event_status === "closed" && (
+                                <span className="px-2 py-0.5 bg-zinc-200 text-zinc-700 text-[10px] font-bold rounded">
+                                  CLOSED
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-zinc-500">
+                              {new Date(e.event_date).toLocaleDateString()} {e.start_time ? `• ${e.start_time}` : ""} • {e.mode.toUpperCase()} ({e.venue})
+                            </div>
+                            <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                              👥 {e.registrations_count} Registered Students
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setViewingRosterEventId(e.id);
+                                setViewingRosterEventTitle(e.title);
+                              }}
+                              className="text-xs"
+                            >
+                              <Users className="h-3.5 w-3.5 mr-1 text-sky-500" /> View Roster ({e.registrations_count})
+                            </Button>
+
+                            {e.event_status !== "closed" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                isLoading={closeEventMutation.isPending}
+                                onClick={() => closeEventMutation.mutate(e.id)}
+                                className="text-xs text-rose-600 border-rose-200"
+                              >
+                                <Ban className="h-3.5 w-3.5 mr-1" /> End Registration
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
-              <form onSubmit={handleEventSubmit} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Bootcamp / Event Title *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="E.g., Free 3-Day Class 10 Science Revision & Doubt Solver"
-                    value={eventData.title}
-                    onChange={(e) => setEventData({ ...eventData, title: e.target.value })}
-                    className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Mode of Class *</label>
-                    <select
-                      value={eventData.mode}
-                      onChange={(e) => setEventData({ ...eventData, mode: e.target.value })}
-                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value="online">🌐 Online (Google Meet / Zoom)</option>
-                      <option value="offline">🏫 Offline (Physical Location)</option>
-                    </select>
-                  </div>
+              {/* TAB 2: CREATE NEW EVENT */}
+              {eventTab === "create" && (
+                <form onSubmit={handleEventSubmit} className="space-y-4">
+                  {eventError && (
+                    <div className="p-3 text-xs bg-rose-50 dark:bg-rose-950 text-rose-600 rounded-xl border border-rose-200">
+                      {eventError}
+                    </div>
+                  )}
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Venue / Meeting Link *</label>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Bootcamp / Event Title *</label>
                     <input
                       type="text"
                       required
-                      placeholder={eventData.mode === "online" ? "https://meet.google.com/..." : "Campus Auditorium, Block A"}
-                      value={eventData.venue}
-                      onChange={(e) => setEventData({ ...eventData, venue: e.target.value })}
-                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      placeholder="E.g., Free 3-Day Class 10 Science Revision & Doubt Solver"
+                      value={eventData.title}
+                      onChange={(e) => setEventData({ ...eventData, title: e.target.value })}
+                      className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Mode of Class *</label>
+                      <select
+                        value={eventData.mode}
+                        onChange={(e) => setEventData({ ...eventData, mode: e.target.value })}
+                        className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="online">🌐 Online (Google Meet / Zoom)</option>
+                        <option value="offline">🏫 Offline (Physical Location)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Venue / Meeting Link *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder={eventData.mode === "online" ? "https://meet.google.com/..." : "Campus Auditorium, Block A"}
+                        value={eventData.venue}
+                        onChange={(e) => setEventData({ ...eventData, venue: e.target.value })}
+                        className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Start Date *</label>
+                      <input
+                        type="date"
+                        required
+                        value={eventData.event_date}
+                        onChange={(e) => setEventData({ ...eventData, event_date: e.target.value })}
+                        className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Class Timing *</label>
+                      <input
+                        type="text"
+                        placeholder="E.g., 5:00 PM - 6:30 PM IST"
+                        value={eventData.start_time}
+                        onChange={(e) => setEventData({ ...eventData, start_time: e.target.value })}
+                        className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Start Date *</label>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">WhatsApp Group Link (For Student Updates) *</label>
                     <input
-                      type="date"
+                      type="url"
                       required
-                      value={eventData.event_date}
-                      onChange={(e) => setEventData({ ...eventData, event_date: e.target.value })}
-                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      placeholder="https://chat.whatsapp.com/..."
+                      value={eventData.whatsapp_group_url}
+                      onChange={(e) => setEventData({ ...eventData, whatsapp_group_url: e.target.value })}
+                      className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
+                    <p className="text-[11px] text-zinc-500">Students will receive this WhatsApp link immediately after registering!</p>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Class Timing *</label>
-                    <input
-                      type="text"
-                      placeholder="E.g., 5:00 PM - 6:30 PM IST"
-                      value={eventData.start_time}
-                      onChange={(e) => setEventData({ ...eventData, start_time: e.target.value })}
-                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Bootcamp Description & Schedule *</label>
+                    <textarea
+                      rows={3}
+                      required
+                      placeholder="Detailed topics covered, prerequisites, and instructions for students..."
+                      value={eventData.description}
+                      onChange={(e) => setEventData({ ...eventData, description: e.target.value })}
+                      className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
-                </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">WhatsApp Group Link (For Student Updates) *</label>
-                  <input
-                    type="url"
-                    required
-                    placeholder="https://chat.whatsapp.com/..."
-                    value={eventData.whatsapp_group_url}
-                    onChange={(e) => setEventData({ ...eventData, whatsapp_group_url: e.target.value })}
-                    className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  <p className="text-[11px] text-zinc-500">Students will receive this WhatsApp link immediately after registering!</p>
-                </div>
+                  <div className="flex justify-end gap-3 pt-2">
+                    <Button variant="outline" type="button" onClick={() => setEventTab("manage")}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" isLoading={createEventMutation.isPending} className="bg-indigo-600 hover:bg-indigo-500 text-white">
+                      Submit Event for Admin Review
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
 
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Bootcamp Description & Schedule *</label>
-                  <textarea
-                    rows={3}
-                    required
-                    placeholder="Detailed topics covered, prerequisites, and instructions for students..."
-                    value={eventData.description}
-                    onChange={(e) => setEventData({ ...eventData, description: e.target.value })}
-                    className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+        {/* STUDENT ROSTER INSPECTION MODAL */}
+        {viewingRosterEventId && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+                <div>
+                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-sky-500" /> Registered Student Roster
+                  </h3>
+                  <div className="text-xs text-zinc-500">{viewingRosterEventTitle}</div>
                 </div>
+                <button onClick={() => setViewingRosterEventId(null)} className="text-zinc-500 hover:text-zinc-700">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
 
-                <div className="flex justify-end gap-3 pt-2">
-                  <Button variant="outline" type="button" onClick={() => setIsEventModalOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" isLoading={createEventMutation.isPending} className="bg-indigo-600 hover:bg-indigo-500 text-white">
-                    Submit Event for Admin Review
-                  </Button>
-                </div>
-              </form>
+              <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
+                    <tr>
+                      <th className="px-3 py-2.5">Student Name</th>
+                      <th className="px-3 py-2.5">Class / College</th>
+                      <th className="px-3 py-2.5">Mobile / WhatsApp</th>
+                      <th className="px-3 py-2.5">Address / City</th>
+                      <th className="px-3 py-2.5">Registered At</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                    {rosterLoading ? (
+                      <tr>
+                        <td colSpan={5} className="px-3 py-6 text-center text-zinc-500">
+                          Loading student roster...
+                        </td>
+                      </tr>
+                    ) : rosterStudents.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-3 py-6 text-center text-zinc-500">
+                          No students registered yet for this event.
+                        </td>
+                      </tr>
+                    ) : (
+                      rosterStudents.map((st) => (
+                        <tr key={st.id}>
+                          <td className="px-3 py-2.5 font-bold text-zinc-900 dark:text-zinc-100">{st.full_name}</td>
+                          <td className="px-3 py-2.5 text-zinc-600 dark:text-zinc-400">{st.class_or_college}</td>
+                          <td className="px-3 py-2.5 text-indigo-600 font-semibold">{st.mobile_number}</td>
+                          <td className="px-3 py-2.5 text-zinc-500">{st.address}</td>
+                          <td className="px-3 py-2.5 text-zinc-400">{new Date(st.registered_at).toLocaleDateString()}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button variant="outline" size="sm" onClick={() => setViewingRosterEventId(null)}>
+                  Close Roster
+                </Button>
+              </div>
             </div>
           </div>
         )}

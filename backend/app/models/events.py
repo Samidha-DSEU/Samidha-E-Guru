@@ -24,8 +24,10 @@ class Event(Base):
     max_participants: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     registrations_count: Mapped[int] = mapped_column(Integer, default=0)
     verification_status: Mapped[str] = mapped_column(String(50), default="pending") # pending, approved, rejected
+    event_status: Mapped[str] = mapped_column(String(50), default="active") # active, closed
     rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_cancelled: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_free: Mapped[bool] = mapped_column(Boolean, default=True) # 100% Free by default
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     organizer: Mapped["User"] = relationship()

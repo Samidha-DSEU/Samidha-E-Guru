@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, MapPin, Users, Video, Clock, CheckCircle2, MessageSquare, ExternalLink, X, AlertCircle } from "lucide-react";
+import { Calendar, MapPin, Users, Video, Clock, CheckCircle2, MessageSquare, ExternalLink, X, AlertCircle, Sparkles, Tag } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
 import { StandardResponse } from "@/types/api";
 import { Card, Skeleton } from "@/components/ui/Card";
@@ -24,6 +24,8 @@ interface EventItem {
   whatsapp_group_url?: string;
   max_participants?: number;
   registrations_count: number;
+  event_status: string;
+  is_free: boolean;
   organizer_name: string;
 }
 
@@ -95,10 +97,15 @@ export default function EventsPage() {
   return (
     <ProtectedRoute>
       <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-3">
-            <Calendar className="h-8 w-8 text-indigo-500" /> Workshops & Educational Events
-          </h1>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-3">
+              <Calendar className="h-8 w-8 text-indigo-500" /> Workshops & Educational Events
+            </h1>
+            <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300 text-xs font-bold rounded-full border border-emerald-200 dark:border-emerald-800">
+              🎁 100% FREE INITIATIVE
+            </span>
+          </div>
           <p className="text-zinc-600 dark:text-zinc-400 text-sm">
             Register for free live workshops, mentoring sessions, and career orientation bootcamps organized by SAMIDHA volunteers.
           </p>
@@ -125,15 +132,20 @@ export default function EventsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {events.map((evt) => (
-              <Card key={evt.id} className="flex flex-col justify-between space-y-4">
+              <Card key={evt.id} className="flex flex-col justify-between space-y-4 relative">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                     <span className="flex items-center gap-1.5">
                       <Users className="h-3.5 w-3.5 text-zinc-400" /> Organized by {evt.organizer_name}
                     </span>
-                    <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 rounded border border-indigo-200 dark:border-indigo-800">
-                      {evt.mode}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 text-[10px] font-bold rounded border border-emerald-200">
+                        FREE ENTRY
+                      </span>
+                      <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 rounded border border-indigo-200 dark:border-indigo-800">
+                        {evt.mode}
+                      </span>
+                    </div>
                   </div>
 
                   <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{evt.title}</h3>
@@ -159,12 +171,18 @@ export default function EventsPage() {
                   </div>
                 </div>
 
-                <Button
-                  onClick={() => setSelectedEvent(evt)}
-                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white"
-                >
-                  Register Now
-                </Button>
+                {evt.event_status === "closed" ? (
+                  <Button disabled className="w-full bg-zinc-300 text-zinc-600 cursor-not-allowed">
+                    Registration Closed
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => setSelectedEvent(evt)}
+                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white"
+                  >
+                    Register Now (Free)
+                  </Button>
+                )}
               </Card>
             ))}
           </div>
@@ -175,9 +193,14 @@ export default function EventsPage() {
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative">
               <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
-                <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-indigo-500" /> Event Registration
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+                    Event Registration
+                  </h3>
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded">
+                    100% FREE
+                  </span>
+                </div>
                 <button onClick={handleCloseModal} className="text-zinc-500 hover:text-zinc-700">
                   <X className="h-5 w-5" />
                 </button>
@@ -279,7 +302,7 @@ export default function EventsPage() {
                       Cancel
                     </Button>
                     <Button type="submit" isLoading={registerMutation.isPending} className="bg-indigo-600 hover:bg-indigo-500 text-white">
-                      Confirm Registration
+                      Confirm Free Registration
                     </Button>
                   </div>
                 </form>

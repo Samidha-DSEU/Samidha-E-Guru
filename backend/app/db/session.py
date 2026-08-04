@@ -44,6 +44,8 @@ def ensure_schema_migrations(engine):
         "ALTER TABLE events ADD COLUMN IF NOT EXISTS start_time VARCHAR(50);",
         "ALTER TABLE events ADD COLUMN IF NOT EXISTS verification_status VARCHAR(50) DEFAULT 'pending';",
         "ALTER TABLE events ADD COLUMN IF NOT EXISTS rejection_reason TEXT;",
+        "ALTER TABLE events ADD COLUMN IF NOT EXISTS event_status VARCHAR(50) DEFAULT 'active';",
+        "ALTER TABLE events ADD COLUMN IF NOT EXISTS is_free BOOLEAN DEFAULT TRUE;",
         "ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);",
         "ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS class_or_college VARCHAR(255);",
         "ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS mobile_number VARCHAR(50);",
