@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Optional, List
 from sqlalchemy import String, Text, Boolean, DateTime, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.db.base_class import Base
+from app.db.session import Base
 
 class MentorshipRequest(Base):
     __tablename__ = "mentorship_requests"
