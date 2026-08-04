@@ -1,6 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getUserSlug } from "@/lib/userUtils";
 import { Plus } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -9,6 +11,15 @@ import { useAuth } from "@/features/auth/context/AuthContext";
 
 export default function AlumniDashboardPage() {
   const { user } = useAuth();
+  const router = useRouter();
+  const params = useParams();
+
+  useEffect(() => {
+    if (user && (!params || !params.username)) {
+      const slug = getUserSlug(user);
+      router.replace(`/alumni/${slug}`);
+    }
+  }, [user, params, router]);
 
   return (
     <ProtectedRoute allowedRoles={["alumni", "admin", "super_admin"]}>

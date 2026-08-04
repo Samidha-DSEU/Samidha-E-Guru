@@ -7,6 +7,8 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { ProfileSidebar } from "./ProfileSidebar";
 
+import { getUserHomeLink } from "@/lib/userUtils";
+
 export function Navbar() {
   const [isPortalOpen, setIsPortalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -15,11 +17,7 @@ export function Navbar() {
   const { user } = useAuth();
 
   const getHomeLink = () => {
-    if (!user) return "/";
-    if (user.role?.name === "volunteer") return "/volunteer";
-    if (user.role?.name === "alumni") return "/alumni";
-    if (user.role?.name === "admin" || user.role?.name === "super_admin") return "/admin";
-    return "/dashboard";
+    return getUserHomeLink(user);
   };
 
   const getPortalLabel = () => {

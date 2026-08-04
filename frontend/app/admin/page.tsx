@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getUserSlug } from "@/lib/userUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck, Users, FileCheck, Activity, Database, Check, X, Clock, AlertCircle, ExternalLink, BookOpen, Calendar, MessageSquare, Trash2 } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
@@ -63,7 +65,16 @@ interface PendingEventItem {
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
+  const router = useRouter();
+  const params = useParams();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (user && (!params || !params.username)) {
+      const slug = getUserSlug(user);
+      router.replace(`/admin/${slug}`);
+    }
+  }, [user, params, router]);
   
   // Volunteer Rejection Modal State
   const [rejectingUserId, setRejectingUserId] = useState<string | null>(null);

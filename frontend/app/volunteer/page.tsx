@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getUserSlug } from "@/lib/userUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Upload, Calendar, Clock, ShieldCheck, CheckCircle2, Lock, Plus, FileText, X, MessageSquare, Users, Eye, Ban, Edit, Sparkles, Trash2, ExternalLink, AlertTriangle } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
@@ -58,10 +60,19 @@ interface StudentRosterItem {
 
 export default function VolunteerDashboardPage() {
   const { user } = useAuth();
+  const router = useRouter();
+  const params = useParams();
   const queryClient = useQueryClient();
   const volunteerProfile = user?.volunteer_profile;
   const status = volunteerProfile?.approval_status || "PENDING";
   const isApproved = status === "APPROVED";
+
+  useEffect(() => {
+    if (user && (!params || !params.username)) {
+      const slug = getUserSlug(user);
+      router.replace(`/volunteer/${slug}`);
+    }
+  }, [user, params, router]);
 
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [resourceFilter, setResourceFilter] = useState<"all" | "approved" | "pending">("all");

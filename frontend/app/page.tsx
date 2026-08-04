@@ -8,21 +8,15 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/features/auth/context/AuthContext";
 
+import { getUserHomeLink } from "@/lib/userUtils";
+
 export default function LandingPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && user) {
-      if (user.role?.name === "volunteer") {
-        router.replace("/volunteer");
-      } else if (user.role?.name === "alumni") {
-        router.replace("/alumni");
-      } else if (user.role?.name === "admin" || user.role?.name === "super_admin") {
-        router.replace("/admin");
-      } else {
-        router.replace("/dashboard");
-      }
+      router.replace(getUserHomeLink(user));
     }
   }, [user, isLoading, router]);
 

@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getUserSlug } from "@/lib/userUtils";
 import { BookOpen, Bookmark, CheckCircle, Bell, Award, Sparkles, Mail, UserCheck } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -9,7 +11,16 @@ import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const router = useRouter();
+  const params = useParams();
   const [requested, setRequested] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user && (!params || !params.username)) {
+      const slug = getUserSlug(user);
+      router.replace(`/dashboard/${slug}`);
+    }
+  }, [user, params, router]);
 
   const handleRequestMentorship = (name: string) => {
     setRequested(name);

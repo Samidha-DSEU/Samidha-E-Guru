@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { X, Save, User, Camera, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { getUserHomeLink } from "@/lib/userUtils";
 
 interface ProfileSidebarProps {
   isOpen: boolean;
@@ -141,12 +142,7 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
               <p className="text-sm text-zinc-500 capitalize">{user?.role?.name?.replace("_", " ")}</p>
               {user && (
                 <a
-                  href={
-                    user.role?.name === "volunteer" ? "/volunteer" :
-                    user.role?.name === "alumni" ? "/alumni" :
-                    (user.role?.name === "admin" || user.role?.name === "super_admin") ? "/admin" :
-                    "/dashboard"
-                  }
+                  href={getUserHomeLink(user)}
                   onClick={onClose}
                   className="mt-2.5 inline-flex items-center justify-center gap-1.5 px-4 py-1.5 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
                 >
