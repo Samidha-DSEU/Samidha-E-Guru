@@ -376,7 +376,7 @@ export default function AlumniDashboardPage() {
               <span className="text-xs text-zinc-500 font-medium">{pendingRequestsCount} awaiting your approval</span>
             </div>
 
-            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
                   <tr>

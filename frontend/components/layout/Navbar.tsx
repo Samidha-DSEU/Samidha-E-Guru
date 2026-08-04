@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { BookOpen, Sparkles, User, ChevronDown, ShieldCheck, GraduationCap, Award, X, Mail } from "lucide-react";
+import { BookOpen, Sparkles, User, ChevronDown, ShieldCheck, GraduationCap, Award, X, Mail, Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { ProfileSidebar } from "./ProfileSidebar";
@@ -13,6 +13,7 @@ export function Navbar() {
   const [isPortalOpen, setIsPortalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const { user } = useAuth();
 
@@ -176,8 +177,64 @@ export function Navbar() {
                 </Link>
               </>
             )}
+
+            {/* Mobile Menu Toggle Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 rounded-lg"
+              title="Toggle Mobile Menu"
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Drawer */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-4 space-y-3 shadow-xl">
+            {user && (
+              <Link
+                href={getHomeLink()}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/60 rounded-xl border border-sky-200 dark:border-sky-800"
+              >
+                <span>{getPortalLabel()} ➔</span>
+              </Link>
+            )}
+
+            <Link
+              href="/resources"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg"
+            >
+              Educational Resources
+            </Link>
+
+            <Link
+              href="/community"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg"
+            >
+              Community & Mentorship
+            </Link>
+
+            <Link
+              href="/events"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg"
+            >
+              Upcoming Bootcamps & Events
+            </Link>
+
+            <Link
+              href="/about"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg"
+            >
+              About SAMIDHA E-GURU
+            </Link>
+          </div>
+        )}
       </header>
 
       <ProfileSidebar isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />

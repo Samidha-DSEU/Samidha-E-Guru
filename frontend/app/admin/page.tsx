@@ -508,7 +508,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
                   <tr>
@@ -605,7 +605,7 @@ export default function AdminDashboardPage() {
               <span className="text-xs text-zinc-500 font-medium">{pendingVolunteers.length} pending review</span>
             </div>
 
-            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
                   <tr>
@@ -677,7 +677,7 @@ export default function AdminDashboardPage() {
               <span className="text-xs text-zinc-500 font-medium">{pendingResources.length} pending review</span>
             </div>
 
-            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
                   <tr>
@@ -769,7 +769,7 @@ export default function AdminDashboardPage() {
               <span className="text-xs text-zinc-500 font-medium">{pendingEvents.length} pending review</span>
             </div>
 
-            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
                   <tr>
