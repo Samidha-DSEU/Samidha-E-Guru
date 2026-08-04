@@ -310,10 +310,10 @@ export default function VolunteerDashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-              SAMIDHA Volunteer Portal
+              Welcome back, {user?.profile?.full_name || "Volunteer"}! 👋
             </h1>
-            <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-              Upload educational resources, track verification status, and organize student bootcamps.
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1">
+              Track your uploaded study materials, verification status, and organize student bootcamps.
             </p>
           </div>
 
