@@ -64,6 +64,7 @@ export default function VolunteerDashboardPage() {
   const isApproved = status === "APPROVED";
 
   const [timeLeft, setTimeLeft] = useState<string>("");
+  const [resourceFilter, setResourceFilter] = useState<"all" | "approved" | "pending">("all");
 
   // RESOURCE UPLOAD MODAL STATE
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -248,6 +249,11 @@ export default function VolunteerDashboardPage() {
 
   const stats = statsData?.data;
   const myUploads = myUploadsData?.data || [];
+  const filteredUploads = myUploads.filter((item) => {
+    if (resourceFilter === "approved") return item.verification_status === "approved";
+    if (resourceFilter === "pending") return item.verification_status === "pending";
+    return true;
+  });
   const myEvents = myEventsData?.data || [];
   const rosterStudents = rosterData?.data || [];
 
@@ -332,37 +338,82 @@ export default function VolunteerDashboardPage() {
           </div>
         </div>
 
-        {/* DYNAMIC GENERIC STAT CARDS */}
+        {/* INTERACTIVE CLICKABLE METRIC CARDS (FILTER TABS) */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <Card className="space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Uploaded Resources</div>
-            <div className="text-3xl font-bold">
+          <Card
+            onClick={() => setResourceFilter("all")}
+            className={`space-y-2 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
+              resourceFilter === "all"
+                ? "ring-2 ring-sky-500 bg-sky-50/40 dark:bg-sky-950/30 border-sky-300 dark:border-sky-700"
+                : "hover:border-zinc-300 dark:hover:border-zinc-700"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Uploaded Resources</span>
+              {resourceFilter === "all" && <span className="px-2 py-0.5 bg-sky-500 text-white text-[10px] font-bold rounded-full">ACTIVE TAB</span>}
+            </div>
+            <div className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
               {isStatsLoading ? <Skeleton className="h-8 w-16" /> : stats?.total_uploaded ?? 0}
             </div>
+            <div className="text-[11px] text-zinc-500">Click to view all uploaded materials</div>
           </Card>
 
-          <Card className="space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Approved & Live</div>
+          <Card
+            onClick={() => setResourceFilter("approved")}
+            className={`space-y-2 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
+              resourceFilter === "approved"
+                ? "ring-2 ring-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700"
+                : "hover:border-zinc-300 dark:hover:border-zinc-700"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Approved & Live</span>
+              {resourceFilter === "approved" && <span className="px-2 py-0.5 bg-emerald-500 text-white text-[10px] font-bold rounded-full">ACTIVE TAB</span>}
+            </div>
             <div className="text-3xl font-bold text-emerald-600">
               {isStatsLoading ? <Skeleton className="h-8 w-16" /> : stats?.approved_and_live ?? 0}
             </div>
+            <div className="text-[11px] text-emerald-600 dark:text-emerald-400">Click to filter live published materials</div>
           </Card>
 
-          <Card className="space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Pending Review</div>
+          <Card
+            onClick={() => setResourceFilter("pending")}
+            className={`space-y-2 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
+              resourceFilter === "pending"
+                ? "ring-2 ring-amber-500 bg-amber-50/40 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700"
+                : "hover:border-zinc-300 dark:hover:border-zinc-700"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Pending Review</span>
+              {resourceFilter === "pending" && <span className="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full">ACTIVE TAB</span>}
+            </div>
             <div className="text-3xl font-bold text-amber-600">
               {isStatsLoading ? <Skeleton className="h-8 w-16" /> : stats?.pending_review ?? 0}
             </div>
+            <div className="text-[11px] text-amber-600 dark:text-amber-400">Click to filter items under admin review</div>
           </Card>
         </div>
 
         {/* MY UPLOADED RESOURCES TRACKING TABLE */}
         <Card className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <FileText className="h-5 w-5 text-emerald-500" /> My Uploaded Educational Resources
+              {resourceFilter !== "all" && (
+                <span className="px-2.5 py-0.5 bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 text-xs font-semibold rounded-full border border-sky-200">
+                  Filtered by: {resourceFilter.toUpperCase()}
+                </span>
+              )}
             </h2>
-            <span className="text-xs text-zinc-500 font-medium">{myUploads.length} uploaded materials</span>
+            <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium">
+              <span>Showing {filteredUploads.length} of {myUploads.length} materials</span>
+              {resourceFilter !== "all" && (
+                <button onClick={() => setResourceFilter("all")} className="text-sky-600 hover:underline font-bold ml-1">
+                  Show All
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
@@ -383,14 +434,16 @@ export default function VolunteerDashboardPage() {
                       Loading your uploaded resources...
                     </td>
                   </tr>
-                ) : myUploads.length === 0 ? (
+                ) : filteredUploads.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
-                      No study resources uploaded yet. Click "Upload New Resource" to add one!
+                      {resourceFilter === "all"
+                        ? 'No study resources uploaded yet. Click "Upload New Resource" to add one!'
+                        : `No resources found matching "${resourceFilter.toUpperCase()}" filter.`}
                     </td>
                   </tr>
                 ) : (
-                  myUploads.map((res) => (
+                  filteredUploads.map((res) => (
                     <tr key={res.id}>
                       <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
                         <div>{res.title}</div>
