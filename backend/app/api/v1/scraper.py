@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 import uuid
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTask
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
