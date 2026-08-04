@@ -1,5 +1,5 @@
 from typing import List, Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -173,6 +173,14 @@ def get_chat_messages(
     if str(current_user.id) not in [str(m_request.requester_id), str(m_request.alumni_id)]:
         raise HTTPException(status_code=403, detail="Unauthorized to view this mentorship chat")
 
+    # 🧹 AUTOMATIC 3-DAY (72 HOURS) AUTO-PURGE EXPIRY CLEANUP
+    cutoff_time = datetime.now(timezone.utc) - timedelta(days=3)
+    db.query(MentorshipMessage).filter(
+        MentorshipMessage.request_id == id,
+        MentorshipMessage.created_at < cutoff_time
+    ).delete()
+    db.commit()
+
     messages = db.query(MentorshipMessage).filter(MentorshipMessage.request_id == id).order_by(MentorshipMessage.created_at.asc()).all()
     data = [
         {
@@ -183,7 +191,7 @@ def get_chat_messages(
             "created_at": m.created_at.isoformat()
         } for m in messages
     ]
-    return StandardResponse.success_response(data=data, message="Chat messages retrieved.")
+    return StandardResponse.success_response(data=data, message="Chat messages retrieved. (Older than 3 days auto-purged)")
 
 
 @router.post("/requests/{id}/messages", response_model=StandardResponse[dict])

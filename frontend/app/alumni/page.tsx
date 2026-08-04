@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getUserSlug } from "@/lib/userUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Upload, Calendar, Users, BookOpen, Award, FileText, CheckCircle2, Clock, X, ExternalLink, Trash2, Ban, MessageSquare, Sparkles, Send, Check, AlertCircle } from "lucide-react";
+import { Plus, Upload, Calendar, Users, BookOpen, Award, FileText, CheckCircle2, Clock, X, ExternalLink, Trash2, Ban, MessageSquare, Sparkles, Send, Check, AlertCircle, ShieldCheck } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
 import { StandardResponse } from "@/types/api";
 import { Card, Skeleton } from "@/components/ui/Card";
@@ -490,7 +490,9 @@ export default function AlumniDashboardPage() {
                   <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                     💬 Mentorship Room with {activeChatRequest.requester_name}: {activeChatRequest.topic}
                   </h3>
-                  <div className="text-xs text-zinc-500">Live 1-on-1 Mentorship Active</div>
+                  <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 mt-0.5">
+                    <ShieldCheck className="h-3.5 w-3.5" /> Asynchronous Text-Only Inbox • Auto-purges after 3 days
+                  </div>
                 </div>
                 <button onClick={() => setActiveChatRequest(null)} className="text-zinc-500 hover:text-zinc-700">
                   <X className="h-5 w-5" />

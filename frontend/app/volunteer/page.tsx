@@ -690,9 +690,11 @@ export default function VolunteerDashboardPage() {
               <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/60 flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                    💬 1-on-1 Mentorship Room: {activeChatRequest.topic}
+                    💬 Mentorship Room: {activeChatRequest.topic}
                   </h3>
-                  <div className="text-xs text-zinc-500">Mentorship Room Active</div>
+                  <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 mt-0.5">
+                    <ShieldCheck className="h-3.5 w-3.5" /> Asynchronous Text-Only Inbox • Auto-purges after 3 days
+                  </div>
                 </div>
                 <button onClick={() => setActiveChatRequest(null)} className="text-zinc-500 hover:text-zinc-700">
                   <X className="h-5 w-5" />
