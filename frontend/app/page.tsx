@@ -40,22 +40,22 @@ export default function LandingPage() {
       <section className="relative text-center space-y-6 sm:space-y-8 max-w-5xl mx-auto px-4">
         
         {/* Floating Mission Badge */}
-        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 backdrop-blur-xl shadow-xl shadow-sky-500/5 transition-transform max-w-full">
-          <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-rose-500 fill-rose-500/20 shrink-0" />
-          <span className="text-[11px] sm:text-xs font-bold tracking-wide uppercase bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent truncate sm:whitespace-normal">
+        <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl sm:rounded-full bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 backdrop-blur-xl shadow-xl shadow-sky-500/5 max-w-full text-left sm:text-center">
+          <Heart className="h-4 w-4 text-rose-500 fill-rose-500/20 shrink-0 mt-0.5 sm:mt-0" />
+          <span className="text-[10px] sm:text-xs font-bold tracking-wide uppercase bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent leading-tight">
             SAMIDHA Society • G.B. Pant Engineering College (DSEU Okhla-1 Campus)
           </span>
         </div>
 
         {/* Main Mission Title */}
-        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 leading-[1.15] sm:leading-[1.1]">
+        <h1 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 leading-[1.2] sm:leading-[1.1] px-1">
           Empowering Every Student with <br className="hidden sm:inline" />
           <span className="bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
             Free, Quality Education & Mentorship
           </span>
         </h1>
 
-        <p className="text-sm sm:text-lg text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed max-w-3xl mx-auto">
+        <p className="text-xs sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed max-w-3xl mx-auto px-1">
           SAMIDHA is dedicated to bridging the educational divide by providing structured study resources, NCERT notes, question banks, and direct 1-on-1 mentorship from experienced alumni — 100% free for all students across India.
         </p>
 
