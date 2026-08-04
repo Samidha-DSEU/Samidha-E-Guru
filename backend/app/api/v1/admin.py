@@ -10,6 +10,7 @@ from app.schemas.common import StandardResponse
 from app.middlewares.auth_middleware import require_roles
 from app.models.auth import User, VolunteerProfile, ApprovalStatus
 from app.models.resources import Resource
+from app.models.events import Event
 from app.models.administration import ActivityLog
 from app.services.notification_service import NotificationService
 
@@ -213,4 +214,84 @@ def reject_resource_admin(
     return StandardResponse.success_response(
         data={"id": str(id), "verification_status": "rejected"},
         message="Resource rejected."
+    )
+
+
+# EVENT MODERATION ENDPOINTS FOR ADMIN
+@router.get("/pending-events", response_model=StandardResponse[List[dict]])
+def get_pending_events_admin(
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    pending = db.query(Event).filter(Event.verification_status == "pending").order_by(Event.created_at.desc()).all()
+    data = [
+        {
+            "id": str(e.id),
+            "title": e.title,
+            "description": e.description,
+            "mode": e.mode,
+            "venue": e.venue,
+            "event_date": e.event_date.isoformat(),
+            "start_time": e.start_time,
+            "whatsapp_group_url": e.whatsapp_group_url,
+            "max_participants": e.max_participants,
+            "organizer_name": e.organizer.profile.full_name if (e.organizer and e.organizer.profile) else (e.organizer.email if e.organizer else "Organizer"),
+            "organizer_email": e.organizer.email if e.organizer else "",
+            "created_at": e.created_at.isoformat()
+        } for e in pending
+    ]
+    return StandardResponse.success_response(data=data, message="Pending events queue retrieved.")
+
+
+@router.post("/events/{id}/approve", response_model=StandardResponse[dict])
+def approve_event_admin(
+    id: UUID,
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    event = db.query(Event).filter(Event.id == id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    event.verification_status = "approved"
+    
+    log = ActivityLog(
+        user_id=current_user.id,
+        action="EVENT_APPROVE",
+        details={"event_id": str(id), "title": event.title}
+    )
+    db.add(log)
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={"id": str(id), "verification_status": "approved"},
+        message="Event approved and published live!"
+    )
+
+
+@router.post("/events/{id}/reject", response_model=StandardResponse[dict])
+def reject_event_admin(
+    id: UUID,
+    req: RejectRequest,
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    event = db.query(Event).filter(Event.id == id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    event.verification_status = "rejected"
+    event.rejection_reason = req.reason.strip()
+    
+    log = ActivityLog(
+        user_id=current_user.id,
+        action="EVENT_REJECT",
+        details={"event_id": str(id), "reason": req.reason}
+    )
+    db.add(log)
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={"id": str(id), "verification_status": "rejected"},
+        message="Event rejected."
     )

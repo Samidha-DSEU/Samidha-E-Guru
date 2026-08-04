@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ShieldCheck, Users, FileCheck, Activity, Database, Check, X, Clock, AlertCircle, ExternalLink, BookOpen } from "lucide-react";
+import { ShieldCheck, Users, FileCheck, Activity, Database, Check, X, Clock, AlertCircle, ExternalLink, BookOpen, Calendar, MessageSquare } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
 import { StandardResponse } from "@/types/api";
 import { Card, Skeleton } from "@/components/ui/Card";
@@ -34,6 +34,20 @@ interface PendingResourceItem {
   created_at: string;
 }
 
+interface PendingEventItem {
+  id: string;
+  title: string;
+  description: string;
+  mode: string;
+  venue: string;
+  event_date: string;
+  start_time?: string;
+  whatsapp_group_url?: string;
+  organizer_name: string;
+  organizer_email: string;
+  created_at: string;
+}
+
 export default function AdminDashboardPage() {
   const queryClient = useQueryClient();
   
@@ -44,6 +58,10 @@ export default function AdminDashboardPage() {
   // Resource Rejection Modal State
   const [rejectingResourceId, setRejectingResourceId] = useState<string | null>(null);
   const [resourceRejectReason, setResourceRejectReason] = useState("");
+
+  // Event Rejection Modal State
+  const [rejectingEventId, setRejectingEventId] = useState<string | null>(null);
+  const [eventRejectReason, setEventRejectReason] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["adminMetrics"],
@@ -72,6 +90,14 @@ export default function AdminDashboardPage() {
     queryKey: ["pendingResources"],
     queryFn: async () => {
       const res = await apiClient.get<StandardResponse<PendingResourceItem[]>>("/admin/pending-resources");
+      return res.data;
+    }
+  });
+
+  const { data: eventsData, isLoading: eventsLoading } = useQuery({
+    queryKey: ["pendingEvents"],
+    queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<PendingEventItem[]>>("/admin/pending-events");
       return res.data;
     }
   });
@@ -126,9 +152,35 @@ export default function AdminDashboardPage() {
     }
   });
 
+  // EVENT ACTIONS
+  const approveEventMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      const res = await apiClient.post(`/admin/events/${eventId}/approve`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminMetrics"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingEvents"] });
+    }
+  });
+
+  const rejectEventMutation = useMutation({
+    mutationFn: async ({ eventId, reason }: { eventId: string; reason: string }) => {
+      const res = await apiClient.post(`/admin/events/${eventId}/reject`, { reason });
+      return res.data;
+    },
+    onSuccess: () => {
+      setRejectingEventId(null);
+      setEventRejectReason("");
+      queryClient.invalidateQueries({ queryKey: ["adminMetrics"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingEvents"] });
+    }
+  });
+
   const metrics = data?.data;
   const pendingVolunteers = volunteersData?.data || [];
   const pendingResources = resourcesData?.data || [];
+  const pendingEvents = eventsData?.data || [];
 
   return (
     <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
@@ -138,7 +190,7 @@ export default function AdminDashboardPage() {
             Admin Control Panel
           </h1>
           <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-            Platform metrics, volunteer verification queues, resource moderation, and audit logs.
+            Platform metrics, volunteer verification queues, resource moderation, and event approvals.
           </p>
         </div>
 
@@ -177,7 +229,94 @@ export default function AdminDashboardPage() {
           </Card>
         </div>
 
-        {/* 1. PENDING RESOURCE MODERATION QUEUE */}
+        {/* 1. PENDING EVENT VERIFICATION QUEUE */}
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-indigo-500" /> Pending Student Bootcamp / Event Approval Queue
+            </h2>
+            <span className="text-xs text-zinc-500 font-medium">{pendingEvents.length} pending review</span>
+          </div>
+
+          <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
+                <tr>
+                  <th className="px-4 py-3">Event Title & Timing</th>
+                  <th className="px-4 py-3">Mode & Venue</th>
+                  <th className="px-4 py-3">Organizer (Volunteer)</th>
+                  <th className="px-4 py-3">WhatsApp Link</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                {eventsLoading ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                      Loading pending events...
+                    </td>
+                  </tr>
+                ) : pendingEvents.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                      No pending event verification requests.
+                    </td>
+                  </tr>
+                ) : (
+                  pendingEvents.map((e) => (
+                    <tr key={e.id}>
+                      <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                        <div>{e.title}</div>
+                        <div className="text-[11px] text-zinc-500">
+                          {new Date(e.event_date).toLocaleDateString()} {e.start_time ? `• ${e.start_time}` : ""}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 text-[10px] font-bold rounded uppercase mr-1">
+                          {e.mode}
+                        </span>
+                        <span className="text-zinc-600 dark:text-zinc-400">{e.venue}</span>
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        <div className="font-semibold text-zinc-900 dark:text-zinc-200">{e.organizer_name}</div>
+                        <div className="text-[10px] text-zinc-500">{e.organizer_email}</div>
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        {e.whatsapp_group_url ? (
+                          <a href={e.whatsapp_group_url} target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-semibold flex items-center gap-1">
+                            <MessageSquare className="h-3 w-3" /> Group Link
+                          </a>
+                        ) : (
+                          <span className="text-zinc-400 text-[11px]">N/A</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right space-x-2">
+                        <Button
+                          size="sm"
+                          isLoading={approveEventMutation.isPending}
+                          onClick={() => approveEventMutation.mutate(e.id)}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs h-8"
+                        >
+                          <Check className="h-3.5 w-3.5 mr-1" /> Approve Event
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setRejectingEventId(e.id)}
+                          className="text-rose-600 border-rose-200 text-xs h-8"
+                        >
+                          <X className="h-3.5 w-3.5 mr-1" /> Reject
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        {/* 2. PENDING RESOURCE MODERATION QUEUE */}
         <Card className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -254,7 +393,7 @@ export default function AdminDashboardPage() {
                           size="sm"
                           variant="outline"
                           onClick={() => setRejectingResourceId(res.id)}
-                          className="text-rose-600 border-rose-200 dark:border-rose-900 hover:bg-rose-50 text-xs h-8"
+                          className="text-rose-600 border-rose-200 text-xs h-8"
                         >
                           <X className="h-3.5 w-3.5 mr-1" /> Reject
                         </Button>
@@ -267,7 +406,7 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        {/* 2. PENDING VOLUNTEER VERIFICATION QUEUE */}
+        {/* 3. PENDING VOLUNTEER VERIFICATION QUEUE */}
         <Card className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -324,7 +463,7 @@ export default function AdminDashboardPage() {
                           size="sm"
                           variant="outline"
                           onClick={() => setRejectingUserId(v.user_id)}
-                          className="text-rose-600 border-rose-200 dark:border-rose-900 hover:bg-rose-50 text-xs h-8"
+                          className="text-rose-600 border-rose-200 text-xs h-8"
                         >
                           <X className="h-3.5 w-3.5 mr-1" /> Reject
                         </Button>
@@ -337,32 +476,32 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        {/* VOLUNTEER REJECTION MODAL */}
-        {rejectingUserId && (
+        {/* EVENT REJECTION MODAL */}
+        {rejectingEventId && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
               <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-rose-500" /> Reject Volunteer Application
+                <AlertCircle className="h-5 w-5 text-rose-500" /> Reject Event Creation
               </h3>
               <p className="text-xs text-zinc-500">
-                Specify rejection reason (will be emailed to applicant):
+                Specify rejection reason for this event submission:
               </p>
               <textarea
                 rows={3}
                 required
-                placeholder="E.g., Organization details could not be verified."
-                value={volunteerRejectReason}
-                onChange={(e) => setVolunteerRejectReason(e.target.value)}
+                placeholder="E.g., WhatsApp link is broken or venue info incomplete."
+                value={eventRejectReason}
+                onChange={(e) => setEventRejectReason(e.target.value)}
                 className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
               />
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => setRejectingUserId(null)}>
+                <Button variant="outline" size="sm" onClick={() => setRejectingEventId(null)}>
                   Cancel
                 </Button>
                 <Button
                   size="sm"
-                  isLoading={rejectVolunteerMutation.isPending}
-                  onClick={() => rejectVolunteerMutation.mutate({ userId: rejectingUserId, reason: volunteerRejectReason || "Application criteria not met." })}
+                  isLoading={rejectEventMutation.isPending}
+                  onClick={() => rejectEventMutation.mutate({ eventId: rejectingEventId, reason: eventRejectReason || "Event criteria not met." })}
                   className="bg-rose-600 hover:bg-rose-500 text-white"
                 >
                   Confirm Rejection
@@ -380,12 +519,12 @@ export default function AdminDashboardPage() {
                 <AlertCircle className="h-5 w-5 text-rose-500" /> Reject Resource Submission
               </h3>
               <p className="text-xs text-zinc-500">
-                Specify why this resource was rejected (e.g. Broken link, invalid content):
+                Specify why this resource was rejected:
               </p>
               <textarea
                 rows={3}
                 required
-                placeholder="E.g., Document link is broken or restricted."
+                placeholder="E.g., Document link is broken."
                 value={resourceRejectReason}
                 onChange={(e) => setResourceRejectReason(e.target.value)}
                 className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
@@ -397,7 +536,7 @@ export default function AdminDashboardPage() {
                 <Button
                   size="sm"
                   isLoading={rejectResourceMutation.isPending}
-                  onClick={() => rejectResourceMutation.mutate({ resourceId: rejectingResourceId, reason: resourceRejectReason || "Resource content criteria not met." })}
+                  onClick={() => rejectResourceMutation.mutate({ resourceId: rejectingResourceId, reason: resourceRejectReason || "Resource criteria not met." })}
                   className="bg-rose-600 hover:bg-rose-500 text-white"
                 >
                   Confirm Rejection

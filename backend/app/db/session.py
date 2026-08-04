@@ -38,7 +38,16 @@ def ensure_schema_migrations(engine):
         "ALTER TABLE resources ADD COLUMN IF NOT EXISTS rating_avg FLOAT DEFAULT 0.0;",
         "ALTER TABLE resources ALTER COLUMN chapter_id DROP NOT NULL;",
         "ALTER TABLE resources ALTER COLUMN resource_type_id DROP NOT NULL;",
-        "ALTER TABLE resources ALTER COLUMN resource_source_id DROP NOT NULL;"
+        "ALTER TABLE resources ALTER COLUMN resource_source_id DROP NOT NULL;",
+        "ALTER TABLE events ADD COLUMN IF NOT EXISTS mode VARCHAR(50) DEFAULT 'online';",
+        "ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_group_url TEXT;",
+        "ALTER TABLE events ADD COLUMN IF NOT EXISTS start_time VARCHAR(50);",
+        "ALTER TABLE events ADD COLUMN IF NOT EXISTS verification_status VARCHAR(50) DEFAULT 'pending';",
+        "ALTER TABLE events ADD COLUMN IF NOT EXISTS rejection_reason TEXT;",
+        "ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);",
+        "ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS class_or_college VARCHAR(255);",
+        "ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS mobile_number VARCHAR(50);",
+        "ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS address TEXT;"
     ]
     with engine.connect() as conn:
         for stmt in statements:

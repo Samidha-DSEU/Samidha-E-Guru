@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Upload, Clock, ShieldCheck, CheckCircle2, Lock, Plus, FileText, X } from "lucide-react";
+import { Upload, Calendar, Clock, ShieldCheck, CheckCircle2, Lock, Plus, FileText, X, MessageSquare } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
 import { StandardResponse } from "@/types/api";
 import { Card, Skeleton } from "@/components/ui/Card";
@@ -22,8 +22,10 @@ export default function VolunteerDashboardPage() {
   const isApproved = status === "APPROVED";
 
   const [timeLeft, setTimeLeft] = useState<string>("");
+
+  // RESOURCE MODAL STATE
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
+  const [resourceData, setResourceData] = useState({
     title: "",
     target_class: "Class 9",
     subject_name: "Science",
@@ -32,6 +34,20 @@ export default function VolunteerDashboardPage() {
     description: ""
   });
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // EVENT MODAL STATE
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [eventData, setEventData] = useState({
+    title: "",
+    description: "",
+    mode: "online",
+    venue: "",
+    event_date: "",
+    start_time: "5:00 PM",
+    whatsapp_group_url: "",
+    max_participants: 50
+  });
+  const [eventError, setEventError] = useState<string | null>(null);
 
   // DYNAMICALLY FETCH REAL VOLUNTEER RESOURCE STATS FROM BACKEND
   const { data: statsData, isLoading: isStatsLoading } = useQuery({
@@ -46,14 +62,14 @@ export default function VolunteerDashboardPage() {
     }
   });
 
-  const uploadMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+  const uploadResourceMutation = useMutation({
+    mutationFn: async (data: typeof resourceData) => {
       const res = await apiClient.post("/resources", data);
       return res.data;
     },
     onSuccess: () => {
       setIsUploadModalOpen(false);
-      setFormData({
+      setResourceData({
         title: "",
         target_class: "Class 9",
         subject_name: "Science",
@@ -66,6 +82,30 @@ export default function VolunteerDashboardPage() {
     },
     onError: (err: any) => {
       setUploadError(err.response?.data?.detail || err.response?.data?.message || "Failed to submit resource.");
+    }
+  });
+
+  const createEventMutation = useMutation({
+    mutationFn: async (data: typeof eventData) => {
+      const res = await apiClient.post("/events", data);
+      return res.data;
+    },
+    onSuccess: () => {
+      setIsEventModalOpen(false);
+      setEventData({
+        title: "",
+        description: "",
+        mode: "online",
+        venue: "",
+        event_date: "",
+        start_time: "5:00 PM",
+        whatsapp_group_url: "",
+        max_participants: 50
+      });
+      setEventError(null);
+    },
+    onError: (err: any) => {
+      setEventError(err.response?.data?.detail || err.response?.data?.message || "Failed to create event.");
     }
   });
 
@@ -100,13 +140,22 @@ export default function VolunteerDashboardPage() {
 
   const stats = statsData?.data;
 
-  const handleUploadSubmit = (e: React.FormEvent) => {
+  const handleResourceSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.external_url) {
-      setUploadError("Please provide a title and document/external link.");
+    if (!resourceData.title || !resourceData.external_url) {
+      setUploadError("Please provide a title and document link.");
       return;
     }
-    uploadMutation.mutate(formData);
+    uploadResourceMutation.mutate(resourceData);
+  };
+
+  const handleEventSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!eventData.title || !eventData.venue || !eventData.event_date) {
+      setEventError("Please fill in event title, venue/meeting link, and event date.");
+      return;
+    }
+    createEventMutation.mutate(eventData);
   };
 
   return (
@@ -151,15 +200,25 @@ export default function VolunteerDashboardPage() {
             </p>
           </div>
 
-          <Button
-            disabled={!isApproved}
-            onClick={() => setIsUploadModalOpen(true)}
-            title={!isApproved ? "Account verification pending approval" : ""}
-            className={!isApproved ? "opacity-60 cursor-not-allowed bg-zinc-400 text-zinc-200" : "bg-emerald-600 hover:bg-emerald-500 text-white"}
-          >
-            {!isApproved ? <Lock className="h-4 w-4 mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
-            Upload New Resource
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              disabled={!isApproved}
+              onClick={() => setIsEventModalOpen(true)}
+              className={!isApproved ? "opacity-60 cursor-not-allowed bg-zinc-400 text-zinc-200" : "bg-indigo-600 hover:bg-indigo-500 text-white"}
+            >
+              {!isApproved ? <Lock className="h-4 w-4 mr-2" /> : <Calendar className="h-4 w-4 mr-2" />}
+              Organize Event / Bootcamp
+            </Button>
+
+            <Button
+              disabled={!isApproved}
+              onClick={() => setIsUploadModalOpen(true)}
+              className={!isApproved ? "opacity-60 cursor-not-allowed bg-zinc-400 text-zinc-200" : "bg-emerald-600 hover:bg-emerald-500 text-white"}
+            >
+              {!isApproved ? <Lock className="h-4 w-4 mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+              Upload New Resource
+            </Button>
+          </div>
         </div>
 
         {/* DYNAMIC GENERIC STAT CARDS */}
@@ -194,24 +253,24 @@ export default function VolunteerDashboardPage() {
                 <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <Upload className="h-5 w-5 text-emerald-500" /> SAMIDHA Shiksha Library Upload
                 </h3>
-                <button onClick={() => setIsUploadModalOpen(false)} className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
+                <button onClick={() => setIsUploadModalOpen(false)} className="text-zinc-500 hover:text-zinc-700">
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
               {uploadError && (
-                <div className="p-3 text-xs bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 rounded-xl border border-rose-200 dark:border-rose-800">
+                <div className="p-3 text-xs bg-rose-50 dark:bg-rose-950 text-rose-600 rounded-xl border border-rose-200">
                   {uploadError}
                 </div>
               )}
 
-              <form onSubmit={handleUploadSubmit} className="space-y-4">
+              <form onSubmit={handleResourceSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Target Class *</label>
                     <select
-                      value={formData.target_class}
-                      onChange={(e) => setFormData({ ...formData, target_class: e.target.value })}
+                      value={resourceData.target_class}
+                      onChange={(e) => setResourceData({ ...resourceData, target_class: e.target.value })}
                       className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     >
                       {CLASSES.map((c) => (
@@ -223,8 +282,8 @@ export default function VolunteerDashboardPage() {
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Subject *</label>
                     <select
-                      value={formData.subject_name}
-                      onChange={(e) => setFormData({ ...formData, subject_name: e.target.value })}
+                      value={resourceData.subject_name}
+                      onChange={(e) => setResourceData({ ...resourceData, subject_name: e.target.value })}
                       className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     >
                       {SUBJECTS.map((s) => (
@@ -236,8 +295,8 @@ export default function VolunteerDashboardPage() {
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Type *</label>
                     <select
-                      value={formData.resource_category}
-                      onChange={(e) => setFormData({ ...formData, resource_category: e.target.value })}
+                      value={resourceData.resource_category}
+                      onChange={(e) => setResourceData({ ...resourceData, resource_category: e.target.value })}
                       className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     >
                       {CATEGORIES.map((cat) => (
@@ -253,8 +312,8 @@ export default function VolunteerDashboardPage() {
                     type="text"
                     required
                     placeholder="E.g., Ch-1 Real Numbers Complete Formula Sheet & PYQs"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    value={resourceData.title}
+                    onChange={(e) => setResourceData({ ...resourceData, title: e.target.value })}
                     className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
@@ -265,11 +324,10 @@ export default function VolunteerDashboardPage() {
                     type="url"
                     required
                     placeholder="https://drive.google.com/... or PDF link"
-                    value={formData.external_url}
-                    onChange={(e) => setFormData({ ...formData, external_url: e.target.value })}
+                    value={resourceData.external_url}
+                    onChange={(e) => setResourceData({ ...resourceData, external_url: e.target.value })}
                     className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
-                  <p className="text-[11px] text-zinc-500">Paste Google Drive, PDF, DIKSHA, NPTEL, or YouTube study link.</p>
                 </div>
 
                 <div className="space-y-1">
@@ -277,8 +335,8 @@ export default function VolunteerDashboardPage() {
                   <textarea
                     rows={2}
                     placeholder="Brief summary of topics covered..."
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    value={resourceData.description}
+                    onChange={(e) => setResourceData({ ...resourceData, description: e.target.value })}
                     className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
@@ -287,8 +345,128 @@ export default function VolunteerDashboardPage() {
                   <Button variant="outline" type="button" onClick={() => setIsUploadModalOpen(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit" isLoading={uploadMutation.isPending} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                  <Button type="submit" isLoading={uploadResourceMutation.isPending} className="bg-emerald-600 hover:bg-emerald-500 text-white">
                     Submit for Admin Review
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ORGANIZE EVENT MODAL */}
+        {isEventModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+                <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-indigo-500" /> Organize Student Bootcamp / Event
+                </h3>
+                <button onClick={() => setIsEventModalOpen(false)} className="text-zinc-500 hover:text-zinc-700">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {eventError && (
+                <div className="p-3 text-xs bg-rose-50 dark:bg-rose-950 text-rose-600 rounded-xl border border-rose-200">
+                  {eventError}
+                </div>
+              )}
+
+              <form onSubmit={handleEventSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Bootcamp / Event Title *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="E.g., Free 3-Day Class 10 Science Revision & Doubt Solver"
+                    value={eventData.title}
+                    onChange={(e) => setEventData({ ...eventData, title: e.target.value })}
+                    className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Mode of Class *</label>
+                    <select
+                      value={eventData.mode}
+                      onChange={(e) => setEventData({ ...eventData, mode: e.target.value })}
+                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="online">🌐 Online (Google Meet / Zoom)</option>
+                      <option value="offline">🏫 Offline (Physical Location)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Venue / Meeting Link *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder={eventData.mode === "online" ? "https://meet.google.com/..." : "Campus Auditorium, Block A"}
+                      value={eventData.venue}
+                      onChange={(e) => setEventData({ ...eventData, venue: e.target.value })}
+                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Start Date *</label>
+                    <input
+                      type="date"
+                      required
+                      value={eventData.event_date}
+                      onChange={(e) => setEventData({ ...eventData, event_date: e.target.value })}
+                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Class Timing *</label>
+                    <input
+                      type="text"
+                      placeholder="E.g., 5:00 PM - 6:30 PM IST"
+                      value={eventData.start_time}
+                      onChange={(e) => setEventData({ ...eventData, start_time: e.target.value })}
+                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">WhatsApp Group Link (For Student Updates) *</label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://chat.whatsapp.com/..."
+                    value={eventData.whatsapp_group_url}
+                    onChange={(e) => setEventData({ ...eventData, whatsapp_group_url: e.target.value })}
+                    className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <p className="text-[11px] text-zinc-500">Students will receive this WhatsApp link immediately after registering!</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Bootcamp Description & Schedule *</label>
+                  <textarea
+                    rows={3}
+                    required
+                    placeholder="Detailed topics covered, prerequisites, and instructions for students..."
+                    value={eventData.description}
+                    onChange={(e) => setEventData({ ...eventData, description: e.target.value })}
+                    className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button variant="outline" type="button" onClick={() => setIsEventModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" isLoading={createEventMutation.isPending} className="bg-indigo-600 hover:bg-indigo-500 text-white">
+                    Submit Event for Admin Review
                   </Button>
                 </div>
               </form>

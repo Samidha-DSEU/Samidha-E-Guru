@@ -14,12 +14,17 @@ class Event(Base):
     organizer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
+    mode: Mapped[str] = mapped_column(String(50), default="online") # online, offline
     poster_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    venue: Mapped[str] = mapped_column(String(255), nullable=False)
+    venue: Mapped[str] = mapped_column(String(255), nullable=False) # meeting link or physical location
     meeting_link: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    whatsapp_group_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    start_time: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     event_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     max_participants: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     registrations_count: Mapped[int] = mapped_column(Integer, default=0)
+    verification_status: Mapped[str] = mapped_column(String(50), default="pending") # pending, approved, rejected
+    rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_cancelled: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -34,6 +39,10 @@ class EventRegistration(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("events.id", ondelete="CASCADE"), nullable=False)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    full_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    class_or_college: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    mobile_number: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     registered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     event: Mapped["Event"] = relationship(back_populates="registrations")
