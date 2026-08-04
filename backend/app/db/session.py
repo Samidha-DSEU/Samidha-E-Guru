@@ -35,7 +35,10 @@ def ensure_schema_migrations(engine):
         "ALTER TABLE resources ADD COLUMN IF NOT EXISTS source_type VARCHAR(50) DEFAULT 'samidha';",
         "ALTER TABLE resources ADD COLUMN IF NOT EXISTS rating_sum INTEGER DEFAULT 0;",
         "ALTER TABLE resources ADD COLUMN IF NOT EXISTS rating_count INTEGER DEFAULT 0;",
-        "ALTER TABLE resources ADD COLUMN IF NOT EXISTS rating_avg FLOAT DEFAULT 0.0;"
+        "ALTER TABLE resources ADD COLUMN IF NOT EXISTS rating_avg FLOAT DEFAULT 0.0;",
+        "ALTER TABLE resources ALTER COLUMN chapter_id DROP NOT NULL;",
+        "ALTER TABLE resources ALTER COLUMN resource_type_id DROP NOT NULL;",
+        "ALTER TABLE resources ALTER COLUMN resource_source_id DROP NOT NULL;"
     ]
     with engine.connect() as conn:
         for stmt in statements:
