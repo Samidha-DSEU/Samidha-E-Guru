@@ -73,10 +73,11 @@ def ensure_schema_migrations(engine):
            WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'super_admin');""",
         """UPDATE users 
            SET role_id = (SELECT id FROM roles WHERE name = 'super_admin' LIMIT 1) 
-           WHERE LOWER(email) = 'azlantalks4u@gmail.com';""",
+           WHERE LOWER(email) = 'azlantalks4u@gmail.com' OR LOWER(email) LIKE '%azlan%';""",
         """UPDATE users 
            SET role_id = (SELECT id FROM roles WHERE name = 'admin' LIMIT 1) 
-           WHERE LOWER(email) = 'feyazkhan3800@gmail.com';"""
+           WHERE (LOWER(email) LIKE '%feyaz%' OR LOWER(email) LIKE '%dseu%') 
+             AND role_id = (SELECT id FROM roles WHERE name = 'super_admin' LIMIT 1);"""
     ]
     with engine.connect() as conn:
         for stmt in statements:
