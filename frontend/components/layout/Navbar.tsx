@@ -2,11 +2,10 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { BookOpen, Sparkles, User, ChevronDown, ShieldCheck, GraduationCap, Award, X, MessageSquare, Mail, Phone } from "lucide-react";
+import { BookOpen, Sparkles, User, ChevronDown, ShieldCheck, GraduationCap, Award, X, Mail } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { ProfileSidebar } from "./ProfileSidebar";
-import { Button } from "@/components/ui/Button";
 
 export function Navbar() {
   const [isPortalOpen, setIsPortalOpen] = useState(false);
@@ -21,6 +20,14 @@ export function Navbar() {
     if (user.role?.name === "alumni") return "/alumni";
     if (user.role?.name === "admin" || user.role?.name === "super_admin") return "/admin";
     return "/dashboard";
+  };
+
+  const getPortalLabel = () => {
+    if (!user) return "";
+    if (user.role?.name === "volunteer") return "Volunteer Portal";
+    if (user.role?.name === "alumni") return "Alumni Portal";
+    if (user.role?.name === "admin" || user.role?.name === "super_admin") return "Admin Control";
+    return "My Dashboard";
   };
 
   return (
@@ -48,7 +55,21 @@ export function Navbar() {
           </Link>
 
           {/* Center Navigation Links */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6 sm:gap-8">
+            {/* DIRECT ROLE PORTAL LINK FOR LOGGED-IN USERS */}
+            {user && (
+              <Link
+                href={getHomeLink()}
+                className="text-sm font-bold text-sky-600 dark:text-sky-400 hover:text-sky-500 flex items-center gap-1.5 transition-colors bg-sky-50 dark:bg-sky-950/60 px-3.5 py-1.5 rounded-xl border border-sky-200 dark:border-sky-800 shadow-sm"
+              >
+                {user.role?.name === "volunteer" && <ShieldCheck className="h-4 w-4 text-emerald-500" />}
+                {user.role?.name === "student" && <GraduationCap className="h-4 w-4 text-sky-500" />}
+                {user.role?.name === "alumni" && <Award className="h-4 w-4 text-indigo-500" />}
+                {(user.role?.name === "admin" || user.role?.name === "super_admin") && <ShieldCheck className="h-4 w-4 text-rose-500" />}
+                <span>{getPortalLabel()}</span>
+              </Link>
+            )}
+
             <Link href="/resources" className="text-sm font-medium text-zinc-600 hover:text-sky-600 dark:text-zinc-400 dark:hover:text-sky-400 transition-colors">
               Resources
             </Link>
@@ -125,15 +146,19 @@ export function Navbar() {
 
             {user ? (
               <div className="flex items-center gap-3 ml-2">
-                <div className="flex flex-col items-end hidden sm:flex">
-                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 leading-none">
+                <Link href={getHomeLink()} className="flex flex-col items-end hidden sm:flex group">
+                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 leading-none group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
                     {user.profile?.full_name || "User"}
                   </span>
-                  <span className="text-xs text-zinc-500 capitalize">{user.role.name.replace("_", " ")}</span>
-                </div>
+                  <span className="text-[11px] text-sky-600 dark:text-sky-400 font-semibold capitalize mt-0.5 group-hover:underline">
+                    {user.role.name.replace("_", " ")} Portal ➔
+                  </span>
+                </Link>
+
                 <button 
                   onClick={() => setIsProfileOpen(true)}
                   className="h-9 w-9 rounded-full bg-sky-100 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-200 dark:border-sky-800 hover:scale-105 transition-transform overflow-hidden"
+                  title="Open Profile Settings"
                 >
                   {user.profile?.avatar_url ? (
                     <img src={user.profile.avatar_url} alt="Profile" className="w-full h-full object-cover rounded-full" />

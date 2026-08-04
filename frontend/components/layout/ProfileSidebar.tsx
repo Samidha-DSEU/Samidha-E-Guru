@@ -139,6 +139,20 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
             <div className="text-center">
               <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-50">{user?.profile?.full_name}</h3>
               <p className="text-sm text-zinc-500 capitalize">{user?.role?.name?.replace("_", " ")}</p>
+              {user && (
+                <a
+                  href={
+                    user.role?.name === "volunteer" ? "/volunteer" :
+                    user.role?.name === "alumni" ? "/alumni" :
+                    (user.role?.name === "admin" || user.role?.name === "super_admin") ? "/admin" :
+                    "/dashboard"
+                  }
+                  onClick={onClose}
+                  className="mt-2.5 inline-flex items-center justify-center gap-1.5 px-4 py-1.5 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+                >
+                  Go to My Portal ➔
+                </a>
+              )}
             </div>
           </div>
 
