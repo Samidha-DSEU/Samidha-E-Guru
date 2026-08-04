@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { getUserSlug } from "@/lib/userUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -112,9 +113,15 @@ export default function AdminDashboardPage() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (user && (!params || !params.username)) {
+    if (user) {
       const slug = getUserSlug(user);
-      router.replace(`/admin/${slug}`);
+      if (user.role?.name === "super_admin") {
+        router.replace(`/super-admin/${slug}`);
+        return;
+      }
+      if (!params || !params.username) {
+        router.replace(`/admin/${slug}`);
+      }
     }
   }, [user, params, router]);
 
@@ -352,6 +359,23 @@ export default function AdminDashboardPage() {
   return (
     <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
       <div className="space-y-8">
+        {user?.role?.name === "super_admin" && (
+          <div className="bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 rounded-2xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+            <div className="flex items-center gap-3">
+              <ShieldAlert className="h-7 w-7 text-white shrink-0 animate-bounce" />
+              <div>
+                <h3 className="font-bold text-base">Super Admin Master Control Available! ⚡</h3>
+                <p className="text-xs text-white/90">Trigger external web scrapers, view API payload contracts, and manage master settings.</p>
+              </div>
+            </div>
+            <Link href={`/super-admin/${getUserSlug(user)}`}>
+              <Button size="sm" className="bg-white text-zinc-900 font-bold hover:bg-zinc-100 shrink-0">
+                Open Super Admin Master Portal ➔
+              </Button>
+            </Link>
+          </div>
+        )}
+
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             Welcome back, {user?.profile?.full_name || "Administrator"}! 👋
