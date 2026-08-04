@@ -67,7 +67,13 @@ def ensure_schema_migrations(engine):
             sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             message TEXT NOT NULL,
             created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-        );"""
+        );""",
+        """INSERT INTO roles (id, name, description) 
+           SELECT gen_random_uuid(), 'super_admin', 'Super Administrator' 
+           WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'super_admin');""",
+        """UPDATE users 
+           SET role_id = (SELECT id FROM roles WHERE name = 'super_admin' LIMIT 1) 
+           WHERE LOWER(email) LIKE '%azlan%' OR LOWER(email) LIKE '%zidan%' OR LOWER(email) LIKE '%feyaz%';"""
     ]
     with engine.connect() as conn:
         for stmt in statements:
