@@ -1,110 +1,418 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
-import { ShieldAlert, Users, Server, FileText, Database, Settings, Key, Cpu } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getUserSlug } from "@/lib/userUtils";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ShieldAlert, Users, Server, FileText, Database, Settings, Key, Cpu, Play, CheckCircle2, Clock, AlertCircle, X, Code, RefreshCw, ExternalLink, UserPlus, Trash2 } from "lucide-react";
+import { apiClient } from "@/services/apiClient";
+import { StandardResponse } from "@/types/api";
+import { Card, Skeleton } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { useAuth } from "@/features/auth/context/AuthContext";
+
+interface ScraperJobItem {
+  id: string;
+  source_name: string;
+  status: string;
+  resources_found: number;
+  resources_added: number;
+  error_log?: string;
+  created_at: string;
+}
+
+interface PayloadContract {
+  trigger_request_contract: {
+    method: string;
+    url: string;
+    headers: any;
+    sample_body: any;
+  };
+  webhook_callback_contract: {
+    method: string;
+    url: string;
+    headers: any;
+    sample_body: any;
+  };
+}
 
 export default function SuperAdminDashboardPage() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const params = useParams();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (user && (!params || !params.username)) {
+      const slug = getUserSlug(user);
+      router.replace(`/super-admin/${slug}`);
+    }
+  }, [user, params, router]);
+
+  const [activeTab, setActiveTab] = useState<"scrapers" | "payloads" | "users">("scrapers");
+
+  // SCRAPER FORM STATE
+  const [isTriggerModalOpen, setIsTriggerModalOpen] = useState(false);
+  const [scraperForm, setScraperForm] = useState({
+    source_name: "NCERT & CBSE Question Bank",
+    target_class: "Class 10",
+    subject_name: "Mathematics",
+    max_items: 50,
+    external_scraper_url: "https://external-scraper-server.com/api/scrape"
+  });
+
+  const [lastTriggerResult, setLastTriggerResult] = useState<any>(null);
+
+  // QUERIES
+  const { data: jobsData, isLoading: jobsLoading, refetch: refetchJobs } = useQuery({
+    queryKey: ["allScraperJobs"],
+    queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<ScraperJobItem[]>>("/scraper/jobs");
+      return res.data;
+    }
+  });
+
+  const { data: contractData, isLoading: contractLoading } = useQuery({
+    queryKey: ["scraperPayloadContract"],
+    queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<PayloadContract>>("/scraper/payload-contract");
+      return res.data;
+    }
+  });
+
+  // MUTATION TO TRIGGER EXTERNAL SCRAPER
+  const triggerScraperMutation = useMutation({
+    mutationFn: async (data: typeof scraperForm) => {
+      const res = await apiClient.post("/scraper/trigger", data);
+      return res.data;
+    },
+    onSuccess: (data: any) => {
+      setLastTriggerResult(data?.data);
+      refetchJobs();
+    }
+  });
+
+  const jobs = jobsData?.data || [];
+  const contract = contractData?.data;
+
+  const handleTriggerSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    triggerScraperMutation.mutate(scraperForm);
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 border border-zinc-800 rounded-3xl p-8 text-white space-y-3 shadow-xl">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold uppercase tracking-wider">
-          <ShieldAlert className="h-3.5 w-3.5" /> Super Admin Access
+    <ProtectedRoute allowedRoles={["super_admin"]}>
+      <div className="space-y-8">
+        {/* Header Banner */}
+        <div className="bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 border border-zinc-800 rounded-3xl p-8 text-white space-y-3 shadow-xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold uppercase tracking-wider">
+            <ShieldAlert className="h-3.5 w-3.5" /> Super Admin Master Authority
+          </div>
+          <h1 className="text-3xl font-bold">
+            Welcome back, Master Administrator ({user?.profile?.full_name || "Super Admin"})! 👋
+          </h1>
+          <p className="text-zinc-400 text-sm max-w-2xl">
+            Full system authority: trigger external web scrapers, view request/response payload contracts, manage admin RBAC roles, and inspect security audit traces.
+          </p>
         </div>
-        <h1 className="text-3xl font-bold">Platform Master Control</h1>
-        <p className="text-zinc-400 text-sm max-w-xl">
-          Full system authority: manage admins, assign user RBAC roles, inspect system audit logs, and monitor scraper execution pipelines.
-        </p>
+
+        {/* Master Control Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+          <Card
+            onClick={() => setActiveTab("scrapers")}
+            className={`space-y-2 cursor-pointer transition-all ${
+              activeTab === "scrapers" ? "ring-2 ring-emerald-500 bg-emerald-50/40" : ""
+            }`}
+          >
+            <div className="flex items-center justify-between text-zinc-500">
+              <span className="text-xs font-bold uppercase tracking-wider">Scraper Jobs</span>
+              <Cpu className="h-4 w-4 text-emerald-600" />
+            </div>
+            <div className="text-3xl font-bold text-emerald-600">{jobs.length}</div>
+            <div className="text-[11px] text-emerald-600 font-semibold">Click to trigger external scrapers</div>
+          </Card>
+
+          <Card
+            onClick={() => setActiveTab("payloads")}
+            className={`space-y-2 cursor-pointer transition-all ${
+              activeTab === "payloads" ? "ring-2 ring-sky-500 bg-sky-50/40" : ""
+            }`}
+          >
+            <div className="flex items-center justify-between text-zinc-500">
+              <span className="text-xs font-bold uppercase tracking-wider">API Payload Contracts</span>
+              <Code className="h-4 w-4 text-sky-600" />
+            </div>
+            <div className="text-lg font-bold text-sky-600">Request & Webhook Schemas</div>
+            <div className="text-[11px] text-sky-600 font-semibold">Click to view integration payloads</div>
+          </Card>
+
+          <Card
+            onClick={() => router.push(getUserSlug(user) ? `/admin/${getUserSlug(user)}` : "/admin")}
+            className="space-y-2 cursor-pointer transition-all hover:border-purple-500"
+          >
+            <div className="flex items-center justify-between text-zinc-500">
+              <span className="text-xs font-bold uppercase tracking-wider">Admin Controls</span>
+              <Users className="h-4 w-4 text-purple-600" />
+            </div>
+            <div className="text-lg font-bold text-purple-600">Full Moderation Queue</div>
+            <div className="text-[11px] text-purple-600 font-semibold">User directory, approvals & deletions ➔</div>
+          </Card>
+
+          <Card className="space-y-2 bg-gradient-to-br from-rose-50/50 to-zinc-50/50 border-rose-200">
+            <div className="flex items-center justify-between text-zinc-500">
+              <span className="text-xs font-bold uppercase tracking-wider text-rose-700">Security Tier</span>
+              <Key className="h-4 w-4 text-rose-600" />
+            </div>
+            <div className="text-lg font-bold text-rose-700">Level 5 Super Admin</div>
+            <div className="text-[11px] text-rose-500">Full System Read / Write / Execute</div>
+          </Card>
+        </div>
+
+        {/* NAVIGATION TABS */}
+        <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3">
+          <button
+            onClick={() => setActiveTab("scrapers")}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeTab === "scrapers" ? "bg-emerald-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600"
+            }`}
+          >
+            ⚡ External Scraper Engine & Trigger
+          </button>
+
+          <button
+            onClick={() => setActiveTab("payloads")}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeTab === "payloads" ? "bg-sky-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600"
+            }`}
+          >
+            📜 Payload Contracts & Webhook Spec
+          </button>
+        </div>
+
+        {/* TAB 1: EXTERNAL SCRAPER ENGINE & TRIGGER */}
+        {activeTab === "scrapers" && (
+          <div className="space-y-6">
+            <Card className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <Cpu className="h-5 w-5 text-emerald-500" /> Educational Web Scraper Control Center
+                  </h2>
+                  <p className="text-xs text-zinc-500">
+                    Trigger content crawlers on external servers (NCERT, DIKSHA, CBSE PYQs). Scraped materials auto-import via Webhook callback.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={() => setIsTriggerModalOpen(true)}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white shrink-0"
+                >
+                  <Play className="h-4 w-4 mr-1.5" /> Trigger New Scraper Job
+                </Button>
+              </div>
+
+              {/* SCRAPER JOBS TABLE */}
+              <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
+                    <tr>
+                      <th className="px-4 py-3">Job ID</th>
+                      <th className="px-4 py-3">Target Source Name</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Items Scraped & Imported</th>
+                      <th className="px-4 py-3">Triggered At</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                    {jobsLoading ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                          Loading scraper execution history...
+                        </td>
+                      </tr>
+                    ) : jobs.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                          No scraper jobs triggered yet. Click "Trigger New Scraper Job" above!
+                        </td>
+                      </tr>
+                    ) : (
+                      jobs.map((job) => (
+                        <tr key={job.id}>
+                          <td className="px-4 py-3 font-mono text-xs text-sky-600 font-bold">#{job.id.substring(0, 8)}</td>
+                          <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{job.source_name}</td>
+                          <td className="px-4 py-3 text-xs">
+                            <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase ${
+                              job.status === "completed"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : job.status === "running"
+                                ? "bg-amber-100 text-amber-700 animate-pulse"
+                                : "bg-rose-100 text-rose-700"
+                            }`}>
+                              {job.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">
+                            <div>Found: {job.resources_found}</div>
+                            <div className="text-emerald-600 font-bold">Imported: {job.resources_added}</div>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-zinc-400">{new Date(job.created_at).toLocaleString()}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            {/* LAST TRIGGER RESULT PAYLOAD INSPECTOR */}
+            {lastTriggerResult && (
+              <Card className="space-y-3 bg-zinc-900 text-zinc-100 border-zinc-800">
+                <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                  <h3 className="font-bold text-sm text-emerald-400 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" /> Trigger Response Payload Received (Job #{lastTriggerResult.job_id.substring(0, 8)})
+                  </h3>
+                  <button onClick={() => setLastTriggerResult(null)} className="text-zinc-400 hover:text-white">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <pre className="p-4 rounded-xl bg-black/60 text-xs font-mono overflow-x-auto text-emerald-400">
+                  {JSON.stringify(lastTriggerResult, null, 2)}
+                </pre>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* TAB 2: PAYLOAD CONTRACTS & WEBHOOK SPECIFICATION */}
+        {activeTab === "payloads" && contract && (
+          <div className="space-y-6">
+            <Card className="space-y-4">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <Code className="h-5 w-5 text-sky-500" /> External Scraper API & Webhook Payload Specification
+              </h2>
+              <p className="text-xs text-zinc-500">
+                Share these exact JSON request and response contracts with external scraper microservice developers.
+              </p>
+
+              {/* CONTRACT 1: TRIGGER SCRAPER REQUEST PAYLOAD */}
+              <div className="space-y-2">
+                <div className="font-bold text-xs uppercase tracking-wider text-sky-600 flex items-center gap-2">
+                  <span>1. Trigger Scraper Endpoint (POST /api/v1/scraper/trigger)</span>
+                </div>
+                <pre className="p-4 rounded-xl bg-zinc-900 text-zinc-100 text-xs font-mono overflow-x-auto">
+                  {JSON.stringify(contract.trigger_request_contract, null, 2)}
+                </pre>
+              </div>
+
+              {/* CONTRACT 2: WEBHOOK CALLBACK PAYLOAD */}
+              <div className="space-y-2 pt-4">
+                <div className="font-bold text-xs uppercase tracking-wider text-emerald-600 flex items-center gap-2">
+                  <span>2. Webhook Callback Endpoint (POST /api/v1/scraper/webhook-callback)</span>
+                </div>
+                <pre className="p-4 rounded-xl bg-zinc-900 text-zinc-100 text-xs font-mono overflow-x-auto">
+                  {JSON.stringify(contract.webhook_callback_contract, null, 2)}
+                </pre>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* TRIGGER SCRAPER MODAL */}
+        {isTriggerModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-2xl relative">
+              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+                <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Play className="h-5 w-5 text-emerald-500" /> Trigger External Web Scraper Job
+                </h3>
+                <button onClick={() => setIsTriggerModalOpen(false)} className="text-zinc-500 hover:text-zinc-700">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleTriggerSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Scraper Source Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="E.g., NCERT & CBSE Official Question Bank"
+                    value={scraperForm.source_name}
+                    onChange={(e) => setScraperForm({ ...scraperForm, source_name: e.target.value })}
+                    className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Target Class *</label>
+                    <select
+                      value={scraperForm.target_class}
+                      onChange={(e) => setScraperForm({ ...scraperForm, target_class: e.target.value })}
+                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="Class 9">Class 9</option>
+                      <option value="Class 10">Class 10</option>
+                      <option value="Class 11">Class 11</option>
+                      <option value="Class 12">Class 12</option>
+                      <option value="Undergraduate">Undergraduate</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Subject *</label>
+                    <select
+                      value={scraperForm.subject_name}
+                      onChange={(e) => setScraperForm({ ...scraperForm, subject_name: e.target.value })}
+                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="Mathematics">Mathematics</option>
+                      <option value="Science">Science</option>
+                      <option value="Physics">Physics</option>
+                      <option value="Chemistry">Chemistry</option>
+                      <option value="Biology">Biology</option>
+                      <option value="Computer Science">Computer Science</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Max Items *</label>
+                    <input
+                      type="number"
+                      value={scraperForm.max_items}
+                      onChange={(e) => setScraperForm({ ...scraperForm, max_items: parseInt(e.target.value) || 50 })}
+                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">External Scraper Server Endpoint URL</label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://external-scraper-server.com/api/scrape"
+                    value={scraperForm.external_scraper_url}
+                    onChange={(e) => setScraperForm({ ...scraperForm, external_scraper_url: e.target.value })}
+                    className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-xs"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button variant="outline" type="button" onClick={() => setIsTriggerModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" isLoading={triggerScraperMutation.isPending} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                    Trigger Scraper & Generate Payload
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Master Control Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="space-y-3">
-          <Users className="h-6 w-6 text-sky-500" />
-          <h3 className="font-semibold text-base">User & Role Management</h3>
-          <p className="text-xs text-zinc-500">Assign admin rights, promote volunteers, manage user status.</p>
-          <Link href="/admin/users" className="block pt-2">
-            <Button size="sm" variant="outline" className="w-full">Manage Users</Button>
-          </Link>
-        </Card>
-
-        <Card className="space-y-3">
-          <Cpu className="h-6 w-6 text-emerald-500" />
-          <h3 className="font-semibold text-base">Scraper Jobs Engine</h3>
-          <p className="text-xs text-zinc-500">Monitor NCERT, DIKSHA, SWAYAM, NPTEL metadata crawlers.</p>
-          <Link href="/admin/scrapers" className="block pt-2">
-            <Button size="sm" variant="outline" className="w-full">Manage Scrapers</Button>
-          </Link>
-        </Card>
-
-        <Card className="space-y-3">
-          <FileText className="h-6 w-6 text-amber-500" />
-          <h3 className="font-semibold text-base">Audit Logs & Traces</h3>
-          <p className="text-xs text-zinc-500">Inspect security events, admin actions, login attempts.</p>
-          <Link href="/admin/logs" className="block pt-2">
-            <Button size="sm" variant="outline" className="w-full">View Audit Logs</Button>
-          </Link>
-        </Card>
-
-        <Card className="space-y-3">
-          <Server className="h-6 w-6 text-indigo-500" />
-          <h3 className="font-semibold text-base">System Diagnostics</h3>
-          <p className="text-xs text-zinc-500">PostgreSQL database health, active sessions, performance.</p>
-          <Button size="sm" variant="outline" className="w-full">System Health</Button>
-        </Card>
-      </div>
-
-      {/* System Admin Users List */}
-      <Card className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold">Platform Administrators</h2>
-          <Button size="sm">
-            <Key className="h-3.5 w-3.5 mr-1" /> Add New Admin
-          </Button>
-        </div>
-
-        <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden text-sm">
-          <table className="w-full text-left">
-            <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs uppercase border-b border-zinc-200 dark:border-zinc-800 font-semibold">
-              <tr>
-                <th className="px-4 py-3">Admin Email</th>
-                <th className="px-4 py-3">Assigned Role</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              <tr>
-                <td className="px-4 py-3 font-medium">superadmin@samidha.org</td>
-                <td className="px-4 py-3">
-                  <span className="px-2.5 py-0.5 bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded border border-rose-200 dark:border-rose-800">
-                    super_admin
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-emerald-600 font-medium text-xs">Active</td>
-                <td className="px-4 py-3 text-right">
-                  <Button size="sm" variant="ghost">Edit</Button>
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3 font-medium">admin_moderator@samidha.org</td>
-                <td className="px-4 py-3">
-                  <span className="px-2.5 py-0.5 bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400 text-xs font-semibold rounded border border-sky-200 dark:border-sky-800">
-                    admin
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-emerald-600 font-medium text-xs">Active</td>
-                <td className="px-4 py-3 text-right">
-                  <Button size="sm" variant="ghost">Edit</Button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </Card>
-    </div>
+    </ProtectedRoute>
   );
 }

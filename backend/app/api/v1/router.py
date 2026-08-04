@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1 import auth, education, resources, community, events, communications, admin, mentorship
+from app.api.v1 import auth, education, resources, community, events, communications, admin, mentorship, scraper
 
 api_v1_router = APIRouter()
 
@@ -11,6 +11,7 @@ api_v1_router.include_router(events.router, prefix="/events", tags=["Events"])
 api_v1_router.include_router(communications.router, prefix="/communications", tags=["Communications"])
 api_v1_router.include_router(admin.router, prefix="/admin", tags=["Administration"])
 api_v1_router.include_router(mentorship.router, prefix="/mentorship", tags=["Alumni Mentorship Pipeline & Chat"])
+api_v1_router.include_router(scraper.router, prefix="/scraper", tags=["External Scraper Engine"])
 
 # Export alias for compatibility
 api_router = api_v1_router
