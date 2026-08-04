@@ -74,8 +74,9 @@ class Resource(Base):
     resource_type_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("resource_types.id"), nullable=True)
     resource_source_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("resource_sources.id"), nullable=True)
     uploader_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    verification_status: Mapped[str] = mapped_column(String(50), default="pending")  # pending, approved, rejected
+    verification_status: Mapped[str] = mapped_column(String(50), default="pending")  # pending, approved, rejected, deletion_pending
     rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    deletion_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     views_count: Mapped[int] = mapped_column(Integer, default=0)
     bookmarks_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

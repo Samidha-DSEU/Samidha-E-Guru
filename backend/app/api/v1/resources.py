@@ -123,6 +123,57 @@ def get_volunteer_resource_stats(
     return StandardResponse.success_response(data=stats, message="Volunteer stats retrieved successfully.")
 
 
+class RequestDeletionRequest(BaseModel):
+    reason: str
+
+
+@router.get("/my-uploads", response_model=StandardResponse[List[dict]])
+def get_my_uploaded_resources(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    resources = db.query(Resource).filter(Resource.uploader_id == current_user.id).order_by(Resource.created_at.desc()).all()
+    data = [
+        {
+            "id": str(r.id),
+            "title": r.title,
+            "description": r.description,
+            "external_url": r.external_url,
+            "target_class": r.target_class or "N/A",
+            "subject_name": r.subject_name or "N/A",
+            "resource_category": r.resource_category or "Notes",
+            "verification_status": r.verification_status,
+            "rejection_reason": r.rejection_reason,
+            "deletion_reason": r.deletion_reason,
+            "views_count": r.views_count,
+            "rating_avg": round(r.rating_avg, 1),
+            "created_at": r.created_at.isoformat()
+        } for r in resources
+    ]
+    return StandardResponse.success_response(data=data, message="Volunteer uploaded resources retrieved.")
+
+
+@router.post("/{id}/request-deletion", response_model=StandardResponse[dict])
+def request_resource_deletion(
+    id: UUID,
+    req: RequestDeletionRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    resource = db.query(Resource).filter(Resource.id == id, Resource.uploader_id == current_user.id).first()
+    if not resource:
+        raise HTTPException(status_code=404, detail="Resource not found or unauthorized")
+
+    resource.verification_status = "deletion_pending"
+    resource.deletion_reason = req.reason.strip()
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={"id": str(id), "verification_status": "deletion_pending"},
+        message="Deletion request submitted! Admin will review your deletion reason note."
+    )
+
+
 @router.post("", response_model=StandardResponse[dict])
 def create_resource(
     req: CreateResourceRequest,

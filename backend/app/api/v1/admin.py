@@ -217,6 +217,82 @@ def reject_resource_admin(
     )
 
 
+@router.get("/pending-resource-deletions", response_model=StandardResponse[List[dict]])
+def get_pending_resource_deletions_admin(
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    pending = db.query(Resource).filter(Resource.verification_status == "deletion_pending").order_by(Resource.created_at.desc()).all()
+    data = [
+        {
+            "id": str(r.id),
+            "title": r.title,
+            "external_url": r.external_url,
+            "target_class": r.target_class or "N/A",
+            "subject_name": r.subject_name or "N/A",
+            "deletion_reason": r.deletion_reason,
+            "uploader_name": r.uploader.profile.full_name if (r.uploader and r.uploader.profile) else (r.uploader.email if r.uploader else "Contributor"),
+            "uploader_email": r.uploader.email if r.uploader else "",
+            "created_at": r.created_at.isoformat()
+        } for r in pending
+    ]
+    return StandardResponse.success_response(data=data, message="Pending deletion requests queue retrieved.")
+
+
+@router.post("/resources/{id}/approve-deletion", response_model=StandardResponse[dict])
+def approve_resource_deletion_admin(
+    id: UUID,
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    resource = db.query(Resource).filter(Resource.id == id).first()
+    if not resource:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    
+    title = resource.title
+    db.delete(resource)
+    
+    log = ActivityLog(
+        user_id=current_user.id,
+        action="RESOURCE_DELETE_APPROVE",
+        details={"resource_id": str(id), "title": title}
+    )
+    db.add(log)
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={"id": str(id), "status": "deleted"},
+        message="Resource deletion request approved and file permanently removed."
+    )
+
+
+@router.post("/resources/{id}/reject-deletion", response_model=StandardResponse[dict])
+def reject_resource_deletion_admin(
+    id: UUID,
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    resource = db.query(Resource).filter(Resource.id == id).first()
+    if not resource:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    
+    resource.verification_status = "approved"
+    resource.deletion_reason = None
+    
+    log = ActivityLog(
+        user_id=current_user.id,
+        action="RESOURCE_DELETE_REJECT",
+        details={"resource_id": str(id), "title": resource.title}
+    )
+    db.add(log)
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={"id": str(id), "verification_status": "approved"},
+        message="Resource deletion request rejected; resource restored to live library."
+    )
+
+
 # EVENT MODERATION ENDPOINTS FOR ADMIN
 @router.get("/pending-events", response_model=StandardResponse[List[dict]])
 def get_pending_events_admin(

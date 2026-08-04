@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ShieldCheck, Users, FileCheck, Activity, Database, Check, X, Clock, AlertCircle, ExternalLink, BookOpen, Calendar, MessageSquare } from "lucide-react";
+import { ShieldCheck, Users, FileCheck, Activity, Database, Check, X, Clock, AlertCircle, ExternalLink, BookOpen, Calendar, MessageSquare, Trash2 } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
 import { StandardResponse } from "@/types/api";
 import { Card, Skeleton } from "@/components/ui/Card";
@@ -29,6 +29,18 @@ interface PendingResourceItem {
   target_class: string;
   subject_name: string;
   resource_category: string;
+  uploader_name: string;
+  uploader_email: string;
+  created_at: string;
+}
+
+interface PendingDeletionItem {
+  id: string;
+  title: string;
+  external_url: string;
+  target_class: string;
+  subject_name: string;
+  deletion_reason?: string;
   uploader_name: string;
   uploader_email: string;
   created_at: string;
@@ -94,6 +106,14 @@ export default function AdminDashboardPage() {
     }
   });
 
+  const { data: deletionsData, isLoading: deletionsLoading } = useQuery({
+    queryKey: ["pendingDeletions"],
+    queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<PendingDeletionItem[]>>("/admin/pending-resource-deletions");
+      return res.data;
+    }
+  });
+
   const { data: eventsData, isLoading: eventsLoading } = useQuery({
     queryKey: ["pendingEvents"],
     queryFn: async () => {
@@ -152,6 +172,29 @@ export default function AdminDashboardPage() {
     }
   });
 
+  // DELETION REQUEST ACTIONS
+  const approveDeletionMutation = useMutation({
+    mutationFn: async (resourceId: string) => {
+      const res = await apiClient.post(`/admin/resources/${resourceId}/approve-deletion`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminMetrics"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingDeletions"] });
+    }
+  });
+
+  const rejectDeletionMutation = useMutation({
+    mutationFn: async (resourceId: string) => {
+      const res = await apiClient.post(`/admin/resources/${resourceId}/reject-deletion`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminMetrics"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingDeletions"] });
+    }
+  });
+
   // EVENT ACTIONS
   const approveEventMutation = useMutation({
     mutationFn: async (eventId: string) => {
@@ -180,6 +223,7 @@ export default function AdminDashboardPage() {
   const metrics = data?.data;
   const pendingVolunteers = volunteersData?.data || [];
   const pendingResources = resourcesData?.data || [];
+  const pendingDeletions = deletionsData?.data || [];
   const pendingEvents = eventsData?.data || [];
 
   return (
@@ -229,7 +273,68 @@ export default function AdminDashboardPage() {
           </Card>
         </div>
 
-        {/* 1. PENDING EVENT VERIFICATION QUEUE */}
+        {/* 1. PENDING RESOURCE DELETION REQUESTS QUEUE */}
+        {pendingDeletions.length > 0 && (
+          <Card className="space-y-4 border-rose-200 dark:border-rose-900 bg-rose-50/30 dark:bg-rose-950/20">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-rose-900 dark:text-rose-200 flex items-center gap-2">
+                <Trash2 className="h-5 w-5 text-rose-500" /> Pending Resource Deletion Requests Queue
+              </h2>
+              <span className="text-xs text-rose-700 font-bold">{pendingDeletions.length} deletion requests</span>
+            </div>
+
+            <div className="border border-rose-200 dark:border-rose-900 rounded-xl overflow-hidden bg-white dark:bg-zinc-900">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-rose-100/50 dark:bg-rose-950/50 text-rose-900 text-xs font-semibold uppercase border-b border-rose-200 dark:border-rose-900">
+                  <tr>
+                    <th className="px-4 py-3">Resource Title</th>
+                    <th className="px-4 py-3">Volunteer Note / Deletion Reason</th>
+                    <th className="px-4 py-3">Uploader (Volunteer)</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-rose-100 dark:divide-zinc-800">
+                  {pendingDeletions.map((del) => (
+                    <tr key={del.id}>
+                      <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                        <div>{del.title}</div>
+                        <div className="text-[10px] text-zinc-500">{del.target_class} • {del.subject_name}</div>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-rose-700 dark:text-rose-300 italic font-medium">
+                        "{del.deletion_reason || "Volunteer requested removal."}"
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        <div className="font-semibold text-zinc-900 dark:text-zinc-200">{del.uploader_name}</div>
+                        <div className="text-[10px] text-zinc-500">{del.uploader_email}</div>
+                      </td>
+                      <td className="px-4 py-3 text-right space-x-2">
+                        <Button
+                          size="sm"
+                          isLoading={approveDeletionMutation.isPending}
+                          onClick={() => approveDeletionMutation.mutate(del.id)}
+                          className="bg-rose-600 hover:bg-rose-500 text-white text-xs h-8"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-1" /> Approve & Permanently Delete
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          isLoading={rejectDeletionMutation.isPending}
+                          onClick={() => rejectDeletionMutation.mutate(del.id)}
+                          className="text-zinc-600 text-xs h-8"
+                        >
+                          Reject Deletion Request
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+
+        {/* 2. PENDING EVENT VERIFICATION QUEUE */}
         <Card className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -316,7 +421,7 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        {/* 2. PENDING RESOURCE MODERATION QUEUE */}
+        {/* 3. PENDING RESOURCE MODERATION QUEUE */}
         <Card className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -406,7 +511,7 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        {/* 3. PENDING VOLUNTEER VERIFICATION QUEUE */}
+        {/* 4. PENDING VOLUNTEER VERIFICATION QUEUE */}
         <Card className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">

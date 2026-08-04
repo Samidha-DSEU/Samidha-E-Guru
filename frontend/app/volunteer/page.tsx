@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Upload, Calendar, Clock, ShieldCheck, CheckCircle2, Lock, Plus, FileText, X, MessageSquare, Users, Eye, Ban, Edit, Sparkles } from "lucide-react";
+import { Upload, Calendar, Clock, ShieldCheck, CheckCircle2, Lock, Plus, FileText, X, MessageSquare, Users, Eye, Ban, Edit, Sparkles, Trash2, ExternalLink, AlertTriangle } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
 import { StandardResponse } from "@/types/api";
 import { Card, Skeleton } from "@/components/ui/Card";
@@ -13,6 +13,22 @@ import { useAuth } from "@/features/auth/context/AuthContext";
 const CLASSES = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "Undergraduate"];
 const SUBJECTS = ["Mathematics", "Science", "Physics", "Chemistry", "Biology", "English", "Social Science", "Computer Science"];
 const CATEGORIES = ["Notes", "Question Paper / PYQ", "Sample Paper", "Worksheet"];
+
+interface MyUploadItem {
+  id: string;
+  title: string;
+  description?: string;
+  external_url: string;
+  target_class: string;
+  subject_name: string;
+  resource_category: string;
+  verification_status: string;
+  rejection_reason?: string;
+  deletion_reason?: string;
+  views_count: number;
+  rating_avg: number;
+  created_at: string;
+}
 
 interface MyEventItem {
   id: string;
@@ -49,7 +65,7 @@ export default function VolunteerDashboardPage() {
 
   const [timeLeft, setTimeLeft] = useState<string>("");
 
-  // RESOURCE MODAL STATE
+  // RESOURCE UPLOAD MODAL STATE
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [resourceData, setResourceData] = useState({
     title: "",
@@ -60,6 +76,10 @@ export default function VolunteerDashboardPage() {
     description: ""
   });
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // RESOURCE DELETION REQUEST MODAL STATE
+  const [deletingResourceId, setDeletingResourceId] = useState<string | null>(null);
+  const [deletionNote, setDeletionNote] = useState("");
 
   // EVENT MANAGEMENT MODAL STATE
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -92,6 +112,16 @@ export default function VolunteerDashboardPage() {
       }>>("/resources/my-stats");
       return res.data;
     }
+  });
+
+  // MY UPLOADED RESOURCES QUERY
+  const { data: myUploadsData, isLoading: myUploadsLoading, refetch: refetchMyUploads } = useQuery({
+    queryKey: ["myUploads"],
+    queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<MyUploadItem[]>>("/resources/my-uploads");
+      return res.data;
+    },
+    enabled: isApproved
   });
 
   // MY CREATED EVENTS QUERY
@@ -132,9 +162,23 @@ export default function VolunteerDashboardPage() {
       });
       setUploadError(null);
       queryClient.invalidateQueries({ queryKey: ["volunteerStats"] });
+      refetchMyUploads();
     },
     onError: (err: any) => {
       setUploadError(err.response?.data?.detail || err.response?.data?.message || "Failed to submit resource.");
+    }
+  });
+
+  const requestDeletionMutation = useMutation({
+    mutationFn: async ({ resourceId, reason }: { resourceId: string; reason: string }) => {
+      const res = await apiClient.post(`/resources/${resourceId}/request-deletion`, { reason });
+      return res.data;
+    },
+    onSuccess: () => {
+      setDeletingResourceId(null);
+      setDeletionNote("");
+      refetchMyUploads();
+      queryClient.invalidateQueries({ queryKey: ["volunteerStats"] });
     }
   });
 
@@ -203,6 +247,7 @@ export default function VolunteerDashboardPage() {
   }, [volunteerProfile, isApproved]);
 
   const stats = statsData?.data;
+  const myUploads = myUploadsData?.data || [];
   const myEvents = myEventsData?.data || [];
   const rosterStudents = rosterData?.data || [];
 
@@ -310,6 +355,108 @@ export default function VolunteerDashboardPage() {
             </div>
           </Card>
         </div>
+
+        {/* MY UPLOADED RESOURCES TRACKING TABLE */}
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <FileText className="h-5 w-5 text-emerald-500" /> My Uploaded Educational Resources
+            </h2>
+            <span className="text-xs text-zinc-500 font-medium">{myUploads.length} uploaded materials</span>
+          </div>
+
+          <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
+                <tr>
+                  <th className="px-4 py-3">Resource Title</th>
+                  <th className="px-4 py-3">Taxonomy</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Views & Rating</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                {myUploadsLoading ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                      Loading your uploaded resources...
+                    </td>
+                  </tr>
+                ) : myUploads.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                      No study resources uploaded yet. Click "Upload New Resource" to add one!
+                    </td>
+                  </tr>
+                ) : (
+                  myUploads.map((res) => (
+                    <tr key={res.id}>
+                      <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                        <div>{res.title}</div>
+                        <div className="text-[11px] text-zinc-500">{new Date(res.created_at).toLocaleDateString()}</div>
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        <div className="flex items-center gap-1">
+                          <span className="px-1.5 py-0.5 bg-sky-50 dark:bg-sky-950 text-sky-600 text-[10px] font-bold rounded">
+                            {res.target_class}
+                          </span>
+                          <span className="px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 text-[10px] font-bold rounded">
+                            {res.subject_name}
+                          </span>
+                          <span className="px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 text-[10px] font-bold rounded">
+                            {res.resource_category}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                          res.verification_status === "approved"
+                            ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
+                            : res.verification_status === "pending"
+                            ? "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
+                            : res.verification_status === "deletion_pending"
+                            ? "bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300"
+                            : "bg-zinc-200 text-zinc-700"
+                        }`}>
+                          {res.verification_status === "deletion_pending" ? "DELETION REQUESTED" : res.verification_status}
+                        </span>
+                        {res.rejection_reason && (
+                          <div className="text-[10px] text-rose-500 italic mt-0.5">Note: {res.rejection_reason}</div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">
+                        <div>👁️ {res.views_count} Views</div>
+                        <div>⭐ {res.rating_avg > 0 ? res.rating_avg.toFixed(1) : "New"}</div>
+                      </td>
+                      <td className="px-4 py-3 text-right space-x-2">
+                        <a
+                          href={res.external_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center text-xs font-semibold text-sky-600 hover:text-sky-500 mr-2"
+                        >
+                          Open Link <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+
+                        {res.verification_status !== "deletion_pending" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setDeletingResourceId(res.id)}
+                            className="text-rose-600 border-rose-200 hover:bg-rose-50 text-xs h-7 px-2.5"
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" /> Request Deletion
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
 
         {/* UPLOAD RESOURCE MODAL */}
         {isUploadModalOpen && (
@@ -420,7 +567,44 @@ export default function VolunteerDashboardPage() {
           </div>
         )}
 
-        {/* EVENT MANAGEMENT & ROSTER MODAL */}
+        {/* RESOURCE DELETION REQUEST MODAL */}
+        {deletingResourceId && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+              <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <Trash2 className="h-5 w-5 text-rose-500" /> Request Resource Deletion
+              </h3>
+              <p className="text-xs text-zinc-500">
+                Please provide a note explaining why you want to delete/take down this resource. Admin will review and approve your request.
+              </p>
+
+              <textarea
+                rows={3}
+                required
+                placeholder="E.g., Outdated syllabus notes, uploading updated version."
+                value={deletionNote}
+                onChange={(e) => setDeletionNote(e.target.value)}
+                className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+              />
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setDeletingResourceId(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  isLoading={requestDeletionMutation.isPending}
+                  onClick={() => requestDeletionMutation.mutate({ resourceId: deletingResourceId, reason: deletionNote || "Volunteer requested resource removal." })}
+                  className="bg-rose-600 hover:bg-rose-500 text-white"
+                >
+                  Submit Deletion Request
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* EVENT MANAGEMENT MODAL */}
         {isEventModalOpen && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-3xl w-full p-6 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -617,7 +801,6 @@ export default function VolunteerDashboardPage() {
                       onChange={(e) => setEventData({ ...eventData, whatsapp_group_url: e.target.value })}
                       className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
-                    <p className="text-[11px] text-zinc-500">Students will receive this WhatsApp link immediately after registering!</p>
                   </div>
 
                   <div className="space-y-1">
@@ -625,7 +808,7 @@ export default function VolunteerDashboardPage() {
                     <textarea
                       rows={3}
                       required
-                      placeholder="Detailed topics covered, prerequisites, and instructions for students..."
+                      placeholder="Detailed topics covered..."
                       value={eventData.description}
                       onChange={(e) => setEventData({ ...eventData, description: e.target.value })}
                       className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
