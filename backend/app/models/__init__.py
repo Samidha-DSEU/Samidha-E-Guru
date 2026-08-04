@@ -9,6 +9,7 @@ from app.models.community import Post, PostImage, Comment, Like
 from app.models.events import Event, EventRegistration
 from app.models.communication import Announcement, Notification, ContactMessage
 from app.models.administration import ScraperSource, ScraperJob, ActivityLog
+from app.models.mentorship import MentorshipRequest, MentorshipMessage
 
 __all__ = [
     "Base",
@@ -42,4 +43,6 @@ __all__ = [
     "ScraperSource",
     "ScraperJob",
     "ActivityLog",
+    "MentorshipRequest",
+    "MentorshipMessage",
 ]
