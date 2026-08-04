@@ -16,7 +16,7 @@ from app.services.notification_service import NotificationService
 router = APIRouter()
 
 
-class RejectVolunteerRequest(BaseModel):
+class RejectRequest(BaseModel):
     reason: str
 
 
@@ -108,7 +108,7 @@ def approve_volunteer(
 @router.post("/volunteers/{user_id}/reject", response_model=StandardResponse[dict])
 def reject_volunteer(
     user_id: UUID,
-    req: RejectVolunteerRequest,
+    req: RejectRequest,
     current_user: User = Depends(require_roles(["admin", "super_admin"])),
     db: Session = Depends(get_db)
 ):
@@ -135,4 +135,82 @@ def reject_volunteer(
     return StandardResponse.success_response(
         data={"user_id": str(user_id), "status": "REJECTED"},
         message="Volunteer account rejected."
+    )
+
+
+# RESOURCE MODERATION ENDPOINTS FOR ADMIN
+@router.get("/pending-resources", response_model=StandardResponse[List[dict]])
+def get_pending_resources_admin(
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    pending = db.query(Resource).filter(Resource.verification_status == "pending").order_by(Resource.created_at.desc()).all()
+    data = [
+        {
+            "id": str(r.id),
+            "title": r.title,
+            "description": r.description,
+            "external_url": r.external_url,
+            "target_class": r.target_class or "N/A",
+            "subject_name": r.subject_name or "N/A",
+            "resource_category": r.resource_category or "Notes",
+            "uploader_name": r.uploader.profile.full_name if (r.uploader and r.uploader.profile) else (r.uploader.email if r.uploader else "Contributor"),
+            "uploader_email": r.uploader.email if r.uploader else "",
+            "created_at": r.created_at.isoformat()
+        } for r in pending
+    ]
+    return StandardResponse.success_response(data=data, message="Pending resources queue retrieved.")
+
+
+@router.post("/resources/{id}/approve", response_model=StandardResponse[dict])
+def approve_resource_admin(
+    id: UUID,
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    resource = db.query(Resource).filter(Resource.id == id).first()
+    if not resource:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    
+    resource.verification_status = "approved"
+    
+    log = ActivityLog(
+        user_id=current_user.id,
+        action="RESOURCE_APPROVE",
+        details={"resource_id": str(id), "title": resource.title}
+    )
+    db.add(log)
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={"id": str(id), "verification_status": "approved"},
+        message="Resource approved and published to SAMIDHA Shiksha Library!"
+    )
+
+
+@router.post("/resources/{id}/reject", response_model=StandardResponse[dict])
+def reject_resource_admin(
+    id: UUID,
+    req: RejectRequest,
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    resource = db.query(Resource).filter(Resource.id == id).first()
+    if not resource:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    
+    resource.verification_status = "rejected"
+    resource.rejection_reason = req.reason.strip()
+    
+    log = ActivityLog(
+        user_id=current_user.id,
+        action="RESOURCE_REJECT",
+        details={"resource_id": str(id), "reason": req.reason}
+    )
+    db.add(log)
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={"id": str(id), "verification_status": "rejected"},
+        message="Resource rejected."
     )
