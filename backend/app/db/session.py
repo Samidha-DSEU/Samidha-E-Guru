@@ -28,7 +28,14 @@ def ensure_schema_migrations(engine):
         "ALTER TABLE volunteer_profiles ADD COLUMN IF NOT EXISTS rejected_at TIMESTAMPTZ;",
         "ALTER TABLE volunteer_profiles ADD COLUMN IF NOT EXISTS rejection_reason TEXT;",
         "ALTER TABLE volunteer_profiles ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;",
-        "ALTER TABLE volunteer_profiles ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;"
+        "ALTER TABLE volunteer_profiles ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;",
+        "ALTER TABLE resources ADD COLUMN IF NOT EXISTS target_class VARCHAR(50);",
+        "ALTER TABLE resources ADD COLUMN IF NOT EXISTS subject_name VARCHAR(100);",
+        "ALTER TABLE resources ADD COLUMN IF NOT EXISTS resource_category VARCHAR(50);",
+        "ALTER TABLE resources ADD COLUMN IF NOT EXISTS source_type VARCHAR(50) DEFAULT 'samidha';",
+        "ALTER TABLE resources ADD COLUMN IF NOT EXISTS rating_sum INTEGER DEFAULT 0;",
+        "ALTER TABLE resources ADD COLUMN IF NOT EXISTS rating_count INTEGER DEFAULT 0;",
+        "ALTER TABLE resources ADD COLUMN IF NOT EXISTS rating_avg FLOAT DEFAULT 0.0;"
     ]
     with engine.connect() as conn:
         for stmt in statements:

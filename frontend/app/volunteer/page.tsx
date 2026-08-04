@@ -2,13 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Upload, Clock, AlertTriangle, ShieldCheck, CheckCircle2, Lock, Plus, FileText, X } from "lucide-react";
+import { Upload, Clock, ShieldCheck, CheckCircle2, Lock, Plus, FileText, X } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
 import { StandardResponse } from "@/types/api";
 import { Card, Skeleton } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { useAuth } from "@/features/auth/context/AuthContext";
+
+const CLASSES = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "Undergraduate"];
+const SUBJECTS = ["Mathematics", "Science", "Physics", "Chemistry", "Biology", "English", "Social Science", "Computer Science"];
+const CATEGORIES = ["Notes", "Question Paper / PYQ", "Sample Paper", "Worksheet"];
 
 export default function VolunteerDashboardPage() {
   const { user } = useAuth();
@@ -21,8 +25,11 @@ export default function VolunteerDashboardPage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
-    description: "",
-    external_url: ""
+    target_class: "Class 9",
+    subject_name: "Science",
+    resource_category: "Notes",
+    external_url: "",
+    description: ""
   });
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -40,13 +47,20 @@ export default function VolunteerDashboardPage() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: async (data: { title: string; description: string; external_url: string }) => {
+    mutationFn: async (data: typeof formData) => {
       const res = await apiClient.post("/resources", data);
       return res.data;
     },
     onSuccess: () => {
       setIsUploadModalOpen(false);
-      setFormData({ title: "", description: "", external_url: "" });
+      setFormData({
+        title: "",
+        target_class: "Class 9",
+        subject_name: "Science",
+        resource_category: "Notes",
+        external_url: "",
+        description: ""
+      });
       setUploadError(null);
       queryClient.invalidateQueries({ queryKey: ["volunteerStats"] });
     },
@@ -175,10 +189,10 @@ export default function VolunteerDashboardPage() {
         {/* UPLOAD RESOURCE MODAL */}
         {isUploadModalOpen && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-2xl relative">
               <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
                 <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <Upload className="h-5 w-5 text-emerald-500" /> Upload Educational Resource
+                  <Upload className="h-5 w-5 text-emerald-500" /> SAMIDHA Shiksha Library Upload
                 </h3>
                 <button onClick={() => setIsUploadModalOpen(false)} className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
                   <X className="h-5 w-5" />
@@ -192,12 +206,53 @@ export default function VolunteerDashboardPage() {
               )}
 
               <form onSubmit={handleUploadSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Target Class *</label>
+                    <select
+                      value={formData.target_class}
+                      onChange={(e) => setFormData({ ...formData, target_class: e.target.value })}
+                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      {CLASSES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Subject *</label>
+                    <select
+                      value={formData.subject_name}
+                      onChange={(e) => setFormData({ ...formData, subject_name: e.target.value })}
+                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      {SUBJECTS.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Type *</label>
+                    <select
+                      value={formData.resource_category}
+                      onChange={(e) => setFormData({ ...formData, resource_category: e.target.value })}
+                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      {CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Resource Title *</label>
                   <input
                     type="text"
                     required
-                    placeholder="E.g., Class 10 Physics Motion Chapter Notes & PYQs"
+                    placeholder="E.g., Ch-1 Real Numbers Complete Formula Sheet & PYQs"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -220,8 +275,8 @@ export default function VolunteerDashboardPage() {
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Description / Topic Summary</label>
                   <textarea
-                    rows={3}
-                    placeholder="Brief description of topics covered in this resource..."
+                    rows={2}
+                    placeholder="Brief summary of topics covered..."
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -233,7 +288,7 @@ export default function VolunteerDashboardPage() {
                     Cancel
                   </Button>
                   <Button type="submit" isLoading={uploadMutation.isPending} className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                    Submit for Approval
+                    Submit for Admin Review
                   </Button>
                 </div>
               </form>

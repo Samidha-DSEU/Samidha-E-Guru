@@ -1,12 +1,13 @@
 from typing import Optional, List
+from datetime import datetime, timezone
 from uuid import UUID
 from fastapi import APIRouter, Depends, Query, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas.common import StandardResponse, MetaSchema
-from app.models.resources import Resource, ResourceType, ResourceSource
+from app.models.resources import Resource, ResourceRating
 from app.middlewares.auth_middleware import get_current_user, require_approved_volunteer
 from app.models.auth import User
 
@@ -17,29 +18,49 @@ class CreateResourceRequest(BaseModel):
     title: str
     description: Optional[str] = None
     external_url: str
+    target_class: Optional[str] = None
+    subject_name: Optional[str] = None
+    resource_category: Optional[str] = None
     thumbnail_url: Optional[str] = None
+
+
+class RateResourceRequest(BaseModel):
+    stars: int = Field(..., ge=1, le=5)
+    feedback: Optional[str] = None
 
 
 @router.get("", response_model=StandardResponse[List[dict]])
 def get_resources(
-    chapter_id: Optional[UUID] = Query(None),
-    resource_type_id: Optional[UUID] = Query(None),
-    resource_source_id: Optional[UUID] = Query(None),
+    source_type: Optional[str] = Query(None),
+    target_class: Optional[str] = Query(None),
+    subject_name: Optional[str] = Query(None),
+    resource_category: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
+    sort_by: Optional[str] = Query("latest"), # latest, top_rated, most_viewed
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
     query = db.query(Resource).filter(Resource.verification_status == "approved")
 
-    if chapter_id:
-        query = query.filter(Resource.chapter_id == chapter_id)
-    if resource_type_id:
-        query = query.filter(Resource.resource_type_id == resource_type_id)
-    if resource_source_id:
-        query = query.filter(Resource.resource_source_id == resource_source_id)
+    if source_type:
+        query = query.filter(Resource.source_type == source_type)
+    if target_class:
+        query = query.filter(Resource.target_class == target_class)
+    if subject_name:
+        query = query.filter(Resource.subject_name.ilike(f"%{subject_name}%"))
+    if resource_category:
+        query = query.filter(Resource.resource_category == resource_category)
     if search:
         query = query.filter(Resource.title.ilike(f"%{search}%"))
+
+    # Sorting
+    if sort_by == "top_rated":
+        query = query.order_by(Resource.rating_avg.desc(), Resource.created_at.desc())
+    elif sort_by == "most_viewed":
+        query = query.order_by(Resource.views_count.desc(), Resource.created_at.desc())
+    else:
+        query = query.order_by(Resource.created_at.desc())
 
     total_items = query.count()
     offset = (page - 1) * limit
@@ -54,6 +75,14 @@ def get_resources(
             "description": r.description,
             "thumbnail_url": r.thumbnail_url,
             "external_url": r.external_url,
+            "target_class": r.target_class,
+            "subject_name": r.subject_name,
+            "resource_category": r.resource_category,
+            "source_type": r.source_type,
+            "uploader_name": r.uploader.profile.full_name if (r.uploader and r.uploader.profile) else "SAMIDHA Contributor",
+            "uploader_role": r.uploader.role.name if r.uploader else "volunteer",
+            "rating_avg": round(r.rating_avg, 1),
+            "rating_count": r.rating_count,
             "views_count": r.views_count,
             "bookmarks_count": r.bookmarks_count,
             "created_at": r.created_at.isoformat()
@@ -104,6 +133,10 @@ def create_resource(
         title=req.title.strip(),
         description=req.description.strip() if req.description else None,
         external_url=req.external_url.strip(),
+        target_class=req.target_class,
+        subject_name=req.subject_name,
+        resource_category=req.resource_category,
+        source_type="samidha",
         thumbnail_url=req.thumbnail_url,
         uploader_id=current_user.id,
         verification_status="pending"
@@ -116,10 +149,59 @@ def create_resource(
         data={
             "id": str(resource.id),
             "title": resource.title,
+            "target_class": resource.target_class,
+            "subject_name": resource.subject_name,
+            "resource_category": resource.resource_category,
             "verification_status": resource.verification_status,
             "created_at": resource.created_at.isoformat()
         },
         message="Resource submitted successfully for admin review."
+    )
+
+
+@router.post("/{id}/rate", response_model=StandardResponse[dict])
+def rate_resource(
+    id: UUID,
+    req: RateResourceRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    resource = db.query(Resource).filter(Resource.id == id).first()
+    if not resource:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found")
+
+    existing_rating = db.query(ResourceRating).filter(
+        ResourceRating.resource_id == id,
+        ResourceRating.user_id == current_user.id
+    ).first()
+
+    if existing_rating:
+        delta = req.stars - existing_rating.stars
+        existing_rating.stars = req.stars
+        existing_rating.feedback = req.feedback.strip() if req.feedback else None
+        resource.rating_sum += delta
+    else:
+        new_rating = ResourceRating(
+            resource_id=id,
+            user_id=current_user.id,
+            stars=req.stars,
+            feedback=req.feedback.strip() if req.feedback else None
+        )
+        db.add(new_rating)
+        resource.rating_sum += req.stars
+        resource.rating_count += 1
+
+    resource.rating_avg = resource.rating_sum / resource.rating_count if resource.rating_count > 0 else 0.0
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={
+            "resource_id": str(id),
+            "user_stars": req.stars,
+            "rating_avg": round(resource.rating_avg, 1),
+            "rating_count": resource.rating_count
+        },
+        message="Thank you! Your rating and feedback have been recorded."
     )
 
 
@@ -129,7 +211,6 @@ def get_resource_by_id(id: UUID, db: Session = Depends(get_db)):
     if not resource:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found")
     
-    # Increment view count
     resource.views_count += 1
     db.commit()
 
@@ -139,6 +220,14 @@ def get_resource_by_id(id: UUID, db: Session = Depends(get_db)):
         "description": resource.description,
         "thumbnail_url": resource.thumbnail_url,
         "external_url": resource.external_url,
+        "target_class": resource.target_class,
+        "subject_name": resource.subject_name,
+        "resource_category": resource.resource_category,
+        "source_type": resource.source_type,
+        "uploader_name": resource.uploader.profile.full_name if (resource.uploader and resource.uploader.profile) else "SAMIDHA Contributor",
+        "uploader_role": resource.uploader.role.name if resource.uploader else "volunteer",
+        "rating_avg": round(resource.rating_avg, 1),
+        "rating_count": resource.rating_count,
         "views_count": resource.views_count,
         "bookmarks_count": resource.bookmarks_count,
         "created_at": resource.created_at.isoformat()
