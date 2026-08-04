@@ -50,7 +50,24 @@ def ensure_schema_migrations(engine):
         "ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);",
         "ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS class_or_college VARCHAR(255);",
         "ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS mobile_number VARCHAR(50);",
-        "ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS address TEXT;"
+        "ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS address TEXT;",
+        """CREATE TABLE IF NOT EXISTS mentorship_requests (
+            id UUID PRIMARY KEY,
+            requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            alumni_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            topic VARCHAR(255) NOT NULL,
+            message_note TEXT,
+            status VARCHAR(50) DEFAULT 'pending',
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );""",
+        """CREATE TABLE IF NOT EXISTS mentorship_messages (
+            id UUID PRIMARY KEY,
+            request_id UUID NOT NULL REFERENCES mentorship_requests(id) ON DELETE CASCADE,
+            sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            message TEXT NOT NULL,
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );"""
     ]
     with engine.connect() as conn:
         for stmt in statements:

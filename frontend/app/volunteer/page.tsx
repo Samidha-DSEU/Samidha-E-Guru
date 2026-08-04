@@ -230,7 +230,8 @@ export default function VolunteerDashboardPage() {
     refetchInterval: 3000
   });
 
-  // MUTATIONS
+  const [mentorshipError, setMentorshipError] = useState<string | null>(null);
+
   const sendMentorshipRequestMutation = useMutation({
     mutationFn: async (data: { alumni_id: string; topic: string; message_note: string }) => {
       const res = await apiClient.post("/mentorship/request", data);
@@ -240,8 +241,12 @@ export default function VolunteerDashboardPage() {
       setRequestingAlumni(null);
       setMentorshipTopic("");
       setMentorshipNote("");
+      setMentorshipError(null);
       refetchSentRequests();
       setActiveTab("chats");
+    },
+    onError: (err: any) => {
+      setMentorshipError(err.response?.data?.detail || err.response?.data?.message || "Failed to send mentorship request.");
     }
   });
 
@@ -644,6 +649,12 @@ export default function VolunteerDashboardPage() {
                   <X className="h-5 w-5" />
                 </button>
               </div>
+
+              {mentorshipError && (
+                <div className="p-3 text-xs bg-rose-50 dark:bg-rose-950 text-rose-600 rounded-xl border border-rose-200">
+                  {mentorshipError}
+                </div>
+              )}
 
               <form onSubmit={handleMentorshipRequestSubmit} className="space-y-3">
                 <div className="space-y-1">

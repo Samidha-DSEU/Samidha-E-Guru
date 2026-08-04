@@ -11,7 +11,8 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 from app.db.session import engine, ensure_schema_migrations
-from app.models.auth import Base
+import app.models
+from app.db.session import Base
 
 logger = logging.getLogger("samidha")
 
