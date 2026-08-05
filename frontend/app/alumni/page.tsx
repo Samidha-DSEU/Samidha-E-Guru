@@ -249,6 +249,15 @@ export default function AlumniDashboardPage() {
     sendMessageMutation.mutate(chatInputMessage);
   };
 
+  const handleResourceSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resourceData.title || !resourceData.external_url) {
+      setUploadError("Please provide a title and document link.");
+      return;
+    }
+    uploadResourceMutation.mutate(resourceData);
+  };
+
   const handleGuideSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     alert("Industry Guide & Market Insight published successfully!");
