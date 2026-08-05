@@ -25,7 +25,7 @@ export const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          const duration = 1500; // 1.5s duration
+          const duration = 1200; // 1.2s smooth count up
           const startTime = performance.now();
 
           const updateNumber = (now: number) => {
@@ -46,7 +46,10 @@ export const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
           setDisplayValue("0" + suffix);
         }
       },
-      { threshold: 0.3 }
+      {
+        threshold: 0.01, // Low 1% threshold so numbers count up immediately on mobile & desktop!
+        rootMargin: "0px 0px 50px 0px",
+      }
     );
 
     if (ref.current) observer.observe(ref.current);

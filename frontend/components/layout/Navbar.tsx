@@ -33,24 +33,24 @@ export function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Brand Logo & Title with Dynamic Glowing Halo */}
-          <Link href={getHomeLink()} className="flex items-center gap-1.5 sm:gap-2.5 group shrink-0 relative">
+          <Link href={getHomeLink()} className="flex items-center gap-1.5 sm:gap-2.5 group shrink-0 relative min-w-0">
             <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 opacity-0 group-hover:opacity-30 blur-md transition-opacity duration-300 pointer-events-none" />
             {!logoError ? (
               <img
                 src="/images/logo.png"
                 alt="SAMIDHA E-GURU Logo"
                 onError={() => setLogoError(true)}
-                className="h-8 sm:h-10 w-auto max-w-[100px] sm:max-w-[140px] object-contain rounded-xl group-hover:scale-105 transition-transform duration-300"
+                className="h-7 sm:h-10 w-auto max-w-[80px] xs:max-w-[100px] sm:max-w-[140px] object-contain rounded-xl group-hover:scale-105 transition-transform duration-300 shrink-0"
               />
             ) : (
-              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-500/20 group-hover:scale-105 transition-transform duration-300">
-                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
+              <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-500/20 group-hover:scale-105 transition-transform duration-300 shrink-0">
+                <BookOpen className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
               </div>
             )}
 
-            <span className="font-semibold text-sm sm:text-lg tracking-tight text-zinc-900 dark:text-zinc-50 leading-none group-hover:text-sky-500 transition-colors">
+            <span className="font-bold text-xs sm:text-lg tracking-tight text-zinc-900 dark:text-zinc-50 leading-none group-hover:text-sky-500 transition-colors whitespace-nowrap overflow-hidden text-ellipsis">
               SAMIDHA <span className="text-sky-600 dark:text-sky-400">E-GURU</span>
             </span>
           </Link>
@@ -99,34 +99,36 @@ export function Navbar() {
                       onClick={() => setIsPortalOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-sky-50 dark:hover:bg-sky-950/50 hover:text-sky-600 rounded-lg transition-colors"
                     >
-                      <GraduationCap className="h-4 w-4 text-sky-500" />
-                      Student Dashboard
+                      <GraduationCap className="h-4 w-4 text-sky-500" /> Student Dashboard
                     </Link>
-
                     <Link
                       href="/volunteer"
                       onClick={() => setIsPortalOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-600 rounded-lg transition-colors"
                     >
-                      <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                      Volunteer Portal
+                      <ShieldCheck className="h-4 w-4 text-emerald-500" /> Volunteer Educator Portal
                     </Link>
-
                     <Link
                       href="/alumni"
                       onClick={() => setIsPortalOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 rounded-lg transition-colors"
                     >
-                      <Award className="h-4 w-4 text-indigo-500" />
-                      Alumni Portal
+                      <Award className="h-4 w-4 text-indigo-500" /> Alumni Mentor Portal
+                    </Link>
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsPortalOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                    >
+                      Admin Control
                     </Link>
                   </div>
                 )}
               </div>
             )}
 
-            {/* GET MENTOR NAV LINK FOR LOGGED-IN STUDENTS */}
-            {user && user.role?.name === "student" && (
+            {!user && (
               <button
                 onClick={() => setIsMentorModalOpen(true)}
                 className="text-sm font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-500 flex items-center gap-1.5 transition-colors bg-sky-50 dark:bg-sky-950/60 px-3 py-1.5 rounded-lg border border-sky-200 dark:border-sky-800"
@@ -141,12 +143,12 @@ export function Navbar() {
             </Link>
           </nav>
 
-          {/* Right Actions & Theme Toggle */}
-          <div className="flex items-center gap-3">
+          {/* Right Actions & Theme Toggle - Responsive on 320px - 375px */}
+          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
             <ThemeToggle />
 
             {user ? (
-              <div className="flex items-center gap-3 ml-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <Link href={getHomeLink()} className="flex flex-col items-end hidden sm:flex group">
                   <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 leading-none group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
                     {user.profile?.full_name || "User"}
@@ -158,7 +160,7 @@ export function Navbar() {
 
                 <button 
                   onClick={() => setIsProfileOpen(true)}
-                  className="h-9 w-9 rounded-full bg-sky-100 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-200 dark:border-sky-800 hover:scale-105 transition-transform overflow-hidden"
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-sky-100 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-200 dark:border-sky-800 hover:scale-105 transition-transform overflow-hidden shrink-0"
                   title="Open Profile Settings"
                 >
                   {user.profile?.avatar_url ? (
@@ -172,10 +174,10 @@ export function Navbar() {
               <>
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center h-9 px-4 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+                  className="inline-flex items-center justify-center h-8 sm:h-9 px-2.5 sm:px-4 text-xs sm:text-sm font-bold whitespace-nowrap text-zinc-800 dark:text-zinc-200 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800/90 dark:hover:bg-zinc-700 rounded-xl transition-all shrink-0 border border-zinc-200/80 dark:border-zinc-700"
                 >
-                  <User className="h-4 w-4 mr-2 text-zinc-500" />
-                  Sign In
+                  <User className="h-3.5 w-3.5 mr-1 sm:mr-1.5 text-sky-500 shrink-0" />
+                  <span>Sign In</span>
                 </Link>
               </>
             )}

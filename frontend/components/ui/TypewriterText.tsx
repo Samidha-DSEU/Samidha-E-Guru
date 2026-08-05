@@ -24,7 +24,10 @@ export const TypewriterText: React.FC<TypewriterTextProps> = ({
       ([entry]) => {
         setIsVisible(entry.isIntersecting);
       },
-      { threshold: 0.15 }
+      {
+        threshold: 0.02, // Trigger immediately on mobile
+        rootMargin: "0px 0px 40px 0px",
+      }
     );
 
     if (ref.current) observer.observe(ref.current);

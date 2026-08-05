@@ -29,8 +29,8 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
         }
       },
       {
-        threshold: 0.12, // Trigger when 12% is in view
-        rootMargin: "0px 0px -30px 0px",
+        threshold: 0.02, // Low 2% threshold so animations trigger reliably on mobile viewports
+        rootMargin: "0px 0px 40px 0px",
       }
     );
 
@@ -47,17 +47,17 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
     if (!isVisible) {
       switch (direction) {
         case "up":
-          return "opacity-0 translate-y-14 scale-[0.96]";
+          return "opacity-0 translate-y-10 scale-[0.97]";
         case "down":
-          return "opacity-0 -translate-y-14 scale-[0.96]";
+          return "opacity-0 -translate-y-10 scale-[0.97]";
         case "left":
-          return "opacity-0 -translate-x-14 scale-[0.96]";
+          return "opacity-0 -translate-x-10 scale-[0.97]";
         case "right":
-          return "opacity-0 translate-x-14 scale-[0.96]";
+          return "opacity-0 translate-x-10 scale-[0.97]";
         case "zoom":
-          return "opacity-0 scale-85";
+          return "opacity-0 scale-90";
         default:
-          return "opacity-0 translate-y-14";
+          return "opacity-0 translate-y-10";
       }
     }
     return "opacity-100 translate-y-0 translate-x-0 scale-100";
@@ -67,7 +67,7 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
     <div
       ref={ref}
       style={{
-        transitionDuration: "750ms",
+        transitionDuration: "650ms",
         transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
         transitionDelay: `${isVisible ? delay : 0}ms`,
       }}

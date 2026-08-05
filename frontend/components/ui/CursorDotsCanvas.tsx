@@ -32,17 +32,18 @@ export const CursorDotsCanvas: React.FC = () => {
     let dpr = 1;
 
     let dots: Dot[] = [];
+    const isMobile = window.innerWidth < 640;
     const mouse = {
       x: -1000,
       y: -1000,
-      radius: 140, // Proximity activation radius in pixels
+      radius: isMobile ? 180 : 140, // Larger proximity activation radius on mobile touchscreen drag!
       active: false,
     };
 
     // Responsive dot density calculation
     const getSpacing = (w: number) => {
-      if (w < 640) return 45; // Mobile: lower density for performance
-      if (w < 1024) return 38; // Tablet
+      if (w < 640) return 40; // Mobile: touch friendly grid spacing
+      if (w < 1024) return 36; // Tablet
       return 32; // Desktop
     };
 
@@ -67,7 +68,7 @@ export const CursorDotsCanvas: React.FC = () => {
           const x = i * spacing;
           const y = j * spacing;
 
-          // Subtle theme palette: Sky blue, Indigo, and Soft Violet
+          // Theme palette: Sky blue, Indigo, and Soft Violet
           const colors = [
             "14, 165, 233", // sky-500
             "99, 102, 241", // indigo-500
@@ -75,7 +76,7 @@ export const CursorDotsCanvas: React.FC = () => {
           ];
           const color = colors[(i + j) % colors.length];
           const baseAlpha = Math.random() * 0.25 + 0.15; // 0.15 - 0.40 opacity
-          const baseSize = Math.random() * 0.8 + 1.2; // 1.2px - 2.0px radius
+          const baseSize = Math.random() * 0.8 + 1.4; // 1.4px - 2.2px radius
 
           dots.push({
             x,
@@ -107,6 +108,16 @@ export const CursorDotsCanvas: React.FC = () => {
       mouse.active = false;
     };
 
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = touch.clientX - rect.left;
+        mouse.y = touch.clientY - rect.top;
+        mouse.active = true;
+      }
+    };
+
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length > 0) {
         const touch = e.touches[0];
@@ -136,45 +147,45 @@ export const CursorDotsCanvas: React.FC = () => {
         const dy = mouse.y - dot.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (mouse.active && dist < mouse.radius) {
-          // Magnetic displacement away from cursor
+        // Magnetic repulsion & size expansion on cursor / touch drag proximity
+        if (dist < mouse.radius && mouse.active) {
+          const force = (1 - dist / mouse.radius);
           const angle = Math.atan2(dy, dx);
-          const force = (mouse.radius - dist) / mouse.radius;
-          const pushX = Math.cos(angle) * force * 15;
-          const pushY = Math.sin(angle) * force * 15;
+          
+          // Repel outward from cursor/touch point
+          const targetX = dot.baseX - Math.cos(angle) * force * 24;
+          const targetY = dot.baseY - Math.sin(angle) * force * 24;
 
-          dot.x += (dot.baseX - pushX - dot.x) * 0.15;
-          dot.y += (dot.baseY - pushY - dot.y) * 0.15;
+          dot.x += (targetX - dot.x) * 0.15;
+          dot.y += (targetY - dot.y) * 0.15;
 
-          // Expand size and brighten alpha
-          dot.size += (dot.baseSize + force * 2.5 - dot.size) * 0.2;
-          dot.alpha += (0.85 - dot.alpha) * 0.2;
+          dot.size = dot.baseSize + force * 2.5;
+          dot.alpha = Math.min(dot.baseAlpha + force * 0.6, 0.95);
 
           activeDotsNearCursor.push(dot);
         } else {
-          // Smooth return to base position & original state
+          // Smooth return to base grid position
           dot.x += (dot.baseX - dot.x) * 0.08;
           dot.y += (dot.baseY - dot.y) * 0.08;
           dot.size += (dot.baseSize - dot.size) * 0.08;
           dot.alpha += (dot.baseAlpha - dot.alpha) * 0.08;
         }
 
-        // Draw dot circle
+        // Draw Dot Particle
         ctx.beginPath();
         ctx.arc(dot.x, dot.y, dot.size, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${dot.color}, ${dot.alpha})`;
         ctx.fill();
       }
 
-      // Draw faint constellation lines between neighboring active dots
+      // Draw Constellation Connecting Lines between nearby active dots
       for (let i = 0; i < activeDotsNearCursor.length; i++) {
         for (let j = i + 1; j < activeDotsNearCursor.length; j++) {
           const d1 = activeDotsNearCursor[i];
           const d2 = activeDotsNearCursor[j];
-
-          const lineDx = d1.x - d2.x;
-          const lineDy = d1.y - d2.y;
-          const lineDist = Math.sqrt(lineDx * lineDx + lineDy * lineDy);
+          const ldx = d1.x - d2.x;
+          const ldy = d1.y - d2.y;
+          const lineDist = Math.sqrt(ldx * ldx + ldy * ldy);
 
           if (lineDist < 60) {
             const lineAlpha = (1 - lineDist / 60) * 0.25;
@@ -196,6 +207,7 @@ export const CursorDotsCanvas: React.FC = () => {
     window.addEventListener("resize", initCanvas);
     window.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseleave", handleMouseLeave);
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
     window.addEventListener("touchmove", handleTouchMove, { passive: true });
     window.addEventListener("touchend", handleTouchEnd);
 
@@ -206,6 +218,7 @@ export const CursorDotsCanvas: React.FC = () => {
       window.removeEventListener("resize", initCanvas);
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeave);
+      window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
     };
