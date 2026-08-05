@@ -11,6 +11,9 @@ import { Card, Skeleton } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { TiltCard } from "@/components/ui/TiltCard";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 
 const CLASSES = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "Undergraduate"];
 const SUBJECTS = ["Mathematics", "Science", "Physics", "Chemistry", "Biology", "English", "Computer Science", "Career Guidance"];
@@ -286,54 +289,70 @@ export default function AlumniDashboardPage() {
 
         {/* METRIC CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
-          <Card
-            onClick={() => setActiveTab("requests")}
-            className={`space-y-2 cursor-pointer transition-all ${
-              activeTab === "requests" ? "ring-2 ring-purple-500 bg-purple-50/40" : ""
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Mentorship Requests</span>
-              <MessageSquare className="h-4 w-4 text-purple-600 animate-pulse" />
-            </div>
-            <div className="text-3xl font-bold text-purple-600">{receivedRequests.length}</div>
-            <div className="text-[11px] text-purple-600 font-semibold">{pendingRequestsCount} Pending Review</div>
-          </Card>
+          <ScrollReveal direction="up" delay={100}>
+            <TiltCard className="h-full">
+              <Card
+                onClick={() => setActiveTab("requests")}
+                className={`space-y-2 cursor-pointer transition-all h-full ${
+                  activeTab === "requests" ? "ring-2 ring-purple-500 bg-purple-50/40" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Mentorship Requests</span>
+                  <MessageSquare className="h-4 w-4 text-purple-600 animate-pulse" />
+                </div>
+                <AnimatedNumber value={String(receivedRequests.length)} className="text-3xl font-bold text-purple-600" />
+                <div className="text-[11px] text-purple-600 font-semibold">{pendingRequestsCount} Pending Review</div>
+              </Card>
+            </TiltCard>
+          </ScrollReveal>
 
-          <Card
-            onClick={() => setActiveTab("guides")}
-            className={`space-y-2 cursor-pointer transition-all ${
-              activeTab === "guides" ? "ring-2 ring-indigo-500 bg-indigo-50/40" : ""
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Market Insights & Guides</span>
-              <BookOpen className="h-4 w-4 text-indigo-500" />
-            </div>
-            <div className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">4</div>
-            <div className="text-[11px] text-indigo-600">Published Industry Advice</div>
-          </Card>
+          <ScrollReveal direction="up" delay={200}>
+            <TiltCard className="h-full">
+              <Card
+                onClick={() => setActiveTab("guides")}
+                className={`space-y-2 cursor-pointer transition-all h-full ${
+                  activeTab === "guides" ? "ring-2 ring-indigo-500 bg-indigo-50/40" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Market Insights & Guides</span>
+                  <BookOpen className="h-4 w-4 text-indigo-500" />
+                </div>
+                <AnimatedNumber value="4" className="text-3xl font-bold text-zinc-900 dark:text-zinc-50" />
+                <div className="text-[11px] text-indigo-600">Published Industry Advice</div>
+              </Card>
+            </TiltCard>
+          </ScrollReveal>
 
-          <Card
-            onClick={() => setIsMenteesModalOpen(true)}
-            className="space-y-2 cursor-pointer transition-all ring-2 ring-sky-500 bg-sky-50/40 border-sky-300"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-sky-800">Active Mentees & Students</span>
-              <Users className="h-4 w-4 text-sky-600" />
-            </div>
-            <div className="text-3xl font-bold text-sky-600">{totalMenteesCount}</div>
-            <div className="text-[11px] text-sky-600 font-semibold">Click to view student contact roster ➔</div>
-          </Card>
+          <ScrollReveal direction="up" delay={300}>
+            <TiltCard className="h-full">
+              <Card
+                onClick={() => setIsMenteesModalOpen(true)}
+                className="space-y-2 cursor-pointer transition-all ring-2 ring-sky-500 bg-sky-50/40 border-sky-300 h-full"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-sky-800">Active Mentees & Students</span>
+                  <Users className="h-4 w-4 text-sky-600" />
+                </div>
+                <AnimatedNumber value={String(totalMenteesCount)} className="text-3xl font-bold text-sky-600" />
+                <div className="text-[11px] text-sky-600 font-semibold">Click to view student contact roster ➔</div>
+              </Card>
+            </TiltCard>
+          </ScrollReveal>
 
-          <Card className="space-y-2 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 border-indigo-200">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-700">Mentorship Status</span>
-              <Award className="h-4 w-4 text-indigo-600" />
-            </div>
-            <div className="text-lg font-bold text-indigo-700">Senior Alumni Mentor</div>
-            <div className="text-[11px] text-indigo-500">Verified Alumni Professional</div>
-          </Card>
+          <ScrollReveal direction="up" delay={400}>
+            <TiltCard className="h-full">
+              <Card className="space-y-2 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 border-indigo-200 h-full">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-700">Mentorship Status</span>
+                  <Award className="h-4 w-4 text-indigo-600" />
+                </div>
+                <div className="text-lg font-bold text-indigo-700">Senior Alumni Mentor</div>
+                <div className="text-[11px] text-indigo-500">Verified Alumni Professional</div>
+              </Card>
+            </TiltCard>
+          </ScrollReveal>
         </div>
 
         {/* NAVIGATION TABS */}

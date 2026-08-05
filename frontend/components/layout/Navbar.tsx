@@ -34,22 +34,23 @@ export function Navbar() {
     <>
       <header className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Brand Logo & Title */}
-          <Link href={getHomeLink()} className="flex items-center gap-1.5 sm:gap-2.5 group shrink-0">
+          {/* Brand Logo & Title with Dynamic Glowing Halo */}
+          <Link href={getHomeLink()} className="flex items-center gap-1.5 sm:gap-2.5 group shrink-0 relative">
+            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 opacity-0 group-hover:opacity-30 blur-md transition-opacity duration-300 pointer-events-none" />
             {!logoError ? (
               <img
                 src="/images/logo.png"
                 alt="SAMIDHA E-GURU Logo"
                 onError={() => setLogoError(true)}
-                className="h-8 sm:h-10 w-auto max-w-[100px] sm:max-w-[140px] object-contain rounded-xl group-hover:scale-105 transition-transform"
+                className="h-8 sm:h-10 w-auto max-w-[100px] sm:max-w-[140px] object-contain rounded-xl group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
-              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-500/20 group-hover:scale-105 transition-transform">
+              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-500/20 group-hover:scale-105 transition-transform duration-300">
                 <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
             )}
 
-            <span className="font-semibold text-sm sm:text-lg tracking-tight text-zinc-900 dark:text-zinc-50 leading-none">
+            <span className="font-semibold text-sm sm:text-lg tracking-tight text-zinc-900 dark:text-zinc-50 leading-none group-hover:text-sky-500 transition-colors">
               SAMIDHA <span className="text-sky-600 dark:text-sky-400">E-GURU</span>
             </span>
           </Link>

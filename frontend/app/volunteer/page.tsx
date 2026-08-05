@@ -11,6 +11,10 @@ import { Card, Skeleton } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { AnimatedText } from "@/components/ui/AnimatedText";
+import { TiltCard } from "@/components/ui/TiltCard";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 
 const CLASSES = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "Undergraduate"];
 const SUBJECTS = ["Mathematics", "Science", "Physics", "Chemistry", "Biology", "English", "Social Science", "Computer Science"];
@@ -401,59 +405,79 @@ export default function VolunteerDashboardPage() {
 
         {/* METRIC CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
-          <Card
-            onClick={() => { setActiveTab("uploads"); setResourceFilter("all"); }}
-            className={`space-y-2 cursor-pointer transition-all ${
-              activeTab === "uploads" && resourceFilter === "all" ? "ring-2 ring-sky-500 bg-sky-50/40" : ""
-            }`}
-          >
-            <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-xs font-bold uppercase tracking-wider">Total Uploaded</span>
-              <FileText className="h-4 w-4 text-sky-600" />
-            </div>
-            <div className="text-3xl font-bold">{isStatsLoading ? <Skeleton className="h-8 w-16" /> : stats?.total_uploaded ?? 0}</div>
-          </Card>
+          <ScrollReveal direction="up" delay={100}>
+            <TiltCard className="h-full">
+              <Card
+                onClick={() => { setActiveTab("uploads"); setResourceFilter("all"); }}
+                className={`space-y-2 cursor-pointer transition-all h-full ${
+                  activeTab === "uploads" && resourceFilter === "all" ? "ring-2 ring-sky-500 bg-sky-50/40" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between text-zinc-500">
+                  <span className="text-xs font-bold uppercase tracking-wider">Total Uploaded</span>
+                  <FileText className="h-4 w-4 text-sky-600" />
+                </div>
+                <div className="text-3xl font-bold">
+                  {isStatsLoading ? <Skeleton className="h-8 w-16" /> : <AnimatedNumber value={String(stats?.total_uploaded ?? 0)} />}
+                </div>
+              </Card>
+            </TiltCard>
+          </ScrollReveal>
 
-          <Card
-            onClick={() => { setActiveTab("uploads"); setResourceFilter("approved"); }}
-            className={`space-y-2 cursor-pointer transition-all ${
-              activeTab === "uploads" && resourceFilter === "approved" ? "ring-2 ring-emerald-500 bg-emerald-50/40" : ""
-            }`}
-          >
-            <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-xs font-bold uppercase tracking-wider">Approved & Live</span>
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-            </div>
-            <div className="text-3xl font-bold text-emerald-600">{isStatsLoading ? <Skeleton className="h-8 w-16" /> : stats?.approved_and_live ?? 0}</div>
-          </Card>
+          <ScrollReveal direction="up" delay={200}>
+            <TiltCard className="h-full">
+              <Card
+                onClick={() => { setActiveTab("uploads"); setResourceFilter("approved"); }}
+                className={`space-y-2 cursor-pointer transition-all h-full ${
+                  activeTab === "uploads" && resourceFilter === "approved" ? "ring-2 ring-emerald-500 bg-emerald-50/40" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between text-zinc-500">
+                  <span className="text-xs font-bold uppercase tracking-wider">Approved & Live</span>
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                </div>
+                <div className="text-3xl font-bold text-emerald-600">
+                  {isStatsLoading ? <Skeleton className="h-8 w-16" /> : <AnimatedNumber value={String(stats?.approved_and_live ?? 0)} />}
+                </div>
+              </Card>
+            </TiltCard>
+          </ScrollReveal>
 
-          <Card
-            onClick={() => setActiveTab("alumni")}
-            className={`space-y-2 cursor-pointer transition-all ${
-              activeTab === "alumni" ? "ring-2 ring-indigo-500 bg-indigo-50/40" : ""
-            }`}
-          >
-            <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-xs font-bold uppercase tracking-wider">Alumni Mentors</span>
-              <Briefcase className="h-4 w-4 text-indigo-600" />
-            </div>
-            <div className="text-3xl font-bold text-indigo-600">{alumniMentors.length}</div>
-            <div className="text-[11px] text-indigo-600 font-semibold">Click to connect LinkedIn-style</div>
-          </Card>
+          <ScrollReveal direction="up" delay={300}>
+            <TiltCard className="h-full">
+              <Card
+                onClick={() => setActiveTab("alumni")}
+                className={`space-y-2 cursor-pointer transition-all h-full ${
+                  activeTab === "alumni" ? "ring-2 ring-indigo-500 bg-indigo-50/40" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between text-zinc-500">
+                  <span className="text-xs font-bold uppercase tracking-wider">Alumni Mentors</span>
+                  <Briefcase className="h-4 w-4 text-indigo-600" />
+                </div>
+                <AnimatedNumber value={String(alumniMentors.length)} className="text-3xl font-bold text-indigo-600" />
+                <div className="text-[11px] text-indigo-600 font-semibold">Click to connect LinkedIn-style</div>
+              </Card>
+            </TiltCard>
+          </ScrollReveal>
 
-          <Card
-            onClick={() => setActiveTab("chats")}
-            className={`space-y-2 cursor-pointer transition-all ${
-              activeTab === "chats" ? "ring-2 ring-purple-500 bg-purple-50/40" : ""
-            }`}
-          >
-            <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-xs font-bold uppercase tracking-wider">Mentorship Chats</span>
-              <MessageSquare className="h-4 w-4 text-purple-600" />
-            </div>
-            <div className="text-3xl font-bold text-purple-600">{sentRequests.length}</div>
-            <div className="text-[11px] text-purple-600 font-semibold">Live 1-on-1 Chat Rooms</div>
-          </Card>
+          <ScrollReveal direction="up" delay={400}>
+            <TiltCard className="h-full">
+              <Card
+                onClick={() => setActiveTab("chats")}
+                className={`space-y-2 cursor-pointer transition-all h-full ${
+                  activeTab === "chats" ? "ring-2 ring-purple-500 bg-purple-50/40" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between text-zinc-500">
+                  <span className="text-xs font-bold uppercase tracking-wider">Mentorship Chats</span>
+                  <MessageSquare className="h-4 w-4 text-purple-600" />
+                </div>
+                <AnimatedNumber value={String(sentRequests.length)} className="text-3xl font-bold text-purple-600" />
+                <div className="text-[11px] text-purple-600 font-semibold">Live 1-on-1 Chat Rooms</div>
+              </Card>
+            </TiltCard>
+          </ScrollReveal>
         </div>
 
         {/* NAVIGATION TABS */}

@@ -12,6 +12,10 @@ import { Card, Skeleton } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { AnimatedText } from "@/components/ui/AnimatedText";
+import { TiltCard } from "@/components/ui/TiltCard";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 
 interface VolunteerApplication {
   id: string;
@@ -383,72 +387,91 @@ export default function AdminDashboardPage() {
           <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1">
             Platform metrics, user directory controls, resource moderation, and real-time health diagnostics.
           </p>
-        </div>
 
         {/* 🌟 INTERACTIVE CLICKABLE METRIC CARDS (FILTER TABS) */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
-          <Card
-            onClick={() => setActiveTab("users")}
-            className={`space-y-2 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
-              activeTab === "users"
-                ? "ring-2 ring-sky-500 bg-sky-50/40 dark:bg-sky-950/30 border-sky-300 dark:border-sky-700"
-                : "hover:border-zinc-300 dark:hover:border-zinc-700"
-            }`}
-          >
-            <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-xs font-bold uppercase tracking-wider">Total Users</span>
-              <Users className="h-4 w-4 text-sky-600" />
-            </div>
-            <div className="text-3xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : metrics?.total_users ?? 0}</div>
-            <div className="text-[11px] text-sky-600 dark:text-sky-400">Click to manage user roles & accounts</div>
-          </Card>
+          <ScrollReveal direction="up" delay={100}>
+            <TiltCard className="h-full">
+              <Card
+                onClick={() => setActiveTab("users")}
+                className={`space-y-2 cursor-pointer transition-all duration-200 h-full ${
+                  activeTab === "users"
+                    ? "ring-2 ring-sky-500 bg-sky-50/40 dark:bg-sky-950/30 border-sky-300 dark:border-sky-700"
+                    : "hover:border-zinc-300 dark:hover:border-zinc-700"
+                }`}
+              >
+                <div className="flex items-center justify-between text-zinc-500">
+                  <span className="text-xs font-bold uppercase tracking-wider">Total Users</span>
+                  <Users className="h-4 w-4 text-sky-600" />
+                </div>
+                <div className="text-3xl font-bold">
+                  {isLoading ? <Skeleton className="h-8 w-16" /> : <AnimatedNumber value={String(metrics?.total_users ?? 0)} />}
+                </div>
+                <div className="text-[11px] text-sky-600 dark:text-sky-400">Click to manage user roles & accounts</div>
+              </Card>
+            </TiltCard>
+          </ScrollReveal>
 
-          <Card
-            onClick={() => setActiveTab("volunteers")}
-            className={`space-y-2 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
-              activeTab === "volunteers"
-                ? "ring-2 ring-amber-500 bg-amber-50/40 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700"
-                : "hover:border-zinc-300 dark:hover:border-zinc-700"
-            }`}
-          >
-            <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-xs font-bold uppercase tracking-wider">Pending Volunteers</span>
-              <Clock className="h-4 w-4 text-amber-600 animate-pulse" />
-            </div>
-            <div className="text-3xl font-bold text-amber-600">{isLoading ? <Skeleton className="h-8 w-16" /> : metrics?.pending_volunteers ?? 0}</div>
-            <div className="text-[11px] text-amber-600 dark:text-amber-400">Click to view 3-day verification queue</div>
-          </Card>
+          <ScrollReveal direction="up" delay={200}>
+            <TiltCard className="h-full">
+              <Card
+                onClick={() => setActiveTab("volunteers")}
+                className={`space-y-2 cursor-pointer transition-all duration-200 h-full ${
+                  activeTab === "volunteers"
+                    ? "ring-2 ring-amber-500 bg-amber-50/40 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700"
+                    : "hover:border-zinc-300 dark:hover:border-zinc-700"
+                }`}
+              >
+                <div className="flex items-center justify-between text-zinc-500">
+                  <span className="text-xs font-bold uppercase tracking-wider">Pending Volunteers</span>
+                  <Clock className="h-4 w-4 text-amber-600 animate-pulse" />
+                </div>
+                <div className="text-3xl font-bold text-amber-600">
+                  {isLoading ? <Skeleton className="h-8 w-16" /> : <AnimatedNumber value={String(metrics?.pending_volunteers ?? 0)} />}
+                </div>
+                <div className="text-[11px] text-amber-600 dark:text-amber-400">Click to view 3-day verification queue</div>
+              </Card>
+            </TiltCard>
+          </ScrollReveal>
 
-          <Card
-            onClick={() => setActiveTab("resources")}
-            className={`space-y-2 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
-              activeTab === "resources"
-                ? "ring-2 ring-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700"
-                : "hover:border-zinc-300 dark:hover:border-zinc-700"
-            }`}
-          >
-            <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-xs font-bold uppercase tracking-wider">Pending Resources</span>
-              <FileCheck className="h-4 w-4 text-indigo-600 animate-pulse" />
-            </div>
-            <div className="text-3xl font-bold text-indigo-600">{isLoading ? <Skeleton className="h-8 w-16" /> : metrics?.pending_resources ?? 0}</div>
-            <div className="text-[11px] text-indigo-600 dark:text-indigo-400">Click to moderate study notes</div>
-          </Card>
+          <ScrollReveal direction="up" delay={300}>
+            <TiltCard className="h-full">
+              <Card
+                onClick={() => setActiveTab("resources")}
+                className={`space-y-2 cursor-pointer transition-all duration-200 h-full ${
+                  activeTab === "resources"
+                    ? "ring-2 ring-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700"
+                    : "hover:border-zinc-300 dark:hover:border-zinc-700"
+                }`}
+              >
+                <div className="flex items-center justify-between text-zinc-500">
+                  <span className="text-xs font-bold uppercase tracking-wider">Pending Resources</span>
+                  <FileCheck className="h-4 w-4 text-indigo-600 animate-pulse" />
+                </div>
+                <div className="text-3xl font-bold text-indigo-600">
+                  {isLoading ? <Skeleton className="h-8 w-16" /> : <AnimatedNumber value={String(metrics?.pending_resources ?? 0)} />}
+                </div>
+                <div className="text-[11px] text-indigo-600 dark:text-indigo-400">Click to moderate study notes</div>
+              </Card>
+            </TiltCard>
+          </ScrollReveal>
 
-          <Card
-            onClick={() => setIsHealthModalOpen(true)}
-            className="space-y-2 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/20 hover:border-emerald-400"
-          >
-            <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">System Health</span>
-              <Cpu className="h-4 w-4 text-emerald-600 animate-spin" />
-            </div>
-            <div className="text-xl font-bold text-emerald-600 flex items-center gap-1.5">
-              <CheckCircle2 className="h-5 w-5" /> Operational
-            </div>
-            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">Click to run Live Diagnostics</div>
-          </Card>
-        </div>
+          <ScrollReveal direction="up" delay={400}>
+            <TiltCard className="h-full">
+              <Card
+                onClick={() => setIsHealthModalOpen(true)}
+                className="space-y-2 cursor-pointer transition-all duration-200 border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/20 hover:border-emerald-400 h-full"
+              >
+                <div className="flex items-center justify-between text-zinc-500">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">System Health</span>
+                  <Activity className="h-4 w-4 text-emerald-600 animate-pulse" />
+                </div>
+                <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">100%</div>
+                <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">Click to run API & DB Diagnostics ➔</div>
+              </Card>
+            </TiltCard>
+          </ScrollReveal>
+        </div>    </div>
 
         {/* NAVIGATION TABS HEADER */}
         <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3 flex-wrap">
