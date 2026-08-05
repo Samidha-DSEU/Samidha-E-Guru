@@ -216,6 +216,7 @@ export default function CommunityPage() {
                     <button className="flex items-center gap-1.5 hover:text-sky-600 transition-colors">
                       <Share2 className="h-4 w-4" /> Share
                     </button>
+                  </div>
                 </Card>
               </TiltCard>
             </ScrollReveal>
