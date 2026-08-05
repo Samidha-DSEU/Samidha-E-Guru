@@ -344,25 +344,51 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FOOTER CALL TO ACTION */}
+      {/* FOOTER CALL TO ACTION - HIGHLY DYNAMIC & INTERACTIVE 3D CARD */}
       <ScrollReveal direction="zoom" delay={0}>
-        <section className="text-center max-w-3xl mx-auto px-4 space-y-6">
-          <div className="h-16 w-16 mx-auto rounded-3xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold shadow-xl">
-            <Globe className="h-8 w-8" />
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
-            Join the SAMIDHA Mission Today
-          </h2>
-          <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-            Whether you want to access free study materials, mentor younger students, or contribute notes — everyone is welcome.
-          </p>
-          <div className="pt-2">
-            <Link href="/login">
-              <Button size="lg" className="h-13 px-8 text-base bg-gradient-to-r from-sky-600 to-indigo-600 text-white rounded-2xl shadow-xl shadow-sky-500/20 font-bold">
-                Get Started for Free ➔
-              </Button>
-            </Link>
-          </div>
+        <section className="max-w-5xl mx-auto px-4">
+          <TiltCard maxTilt={5}>
+            <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-sky-500/10 via-purple-500/10 to-indigo-500/10 dark:from-sky-950/50 dark:via-purple-950/40 dark:to-indigo-950/50 border border-sky-500/30 dark:border-sky-500/40 p-8 sm:p-14 text-center space-y-6 backdrop-blur-2xl shadow-2xl">
+              
+              {/* Glowing Background Radial Beam */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-sky-500/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
+
+              {/* Animated Glowing Globe Icon */}
+              <div className="relative inline-flex items-center justify-center">
+                <span className="absolute inset-0 rounded-3xl bg-sky-500/30 blur-xl animate-ping" />
+                <div className="relative h-16 w-16 rounded-3xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white flex items-center justify-center shadow-xl shadow-sky-500/30">
+                  <Globe className="h-8 w-8 animate-spin-slow" />
+                </div>
+              </div>
+
+              {/* Dynamic Animated Heading */}
+              <AnimatedText
+                text="Join the SAMIDHA Mission Today"
+                gradientWords={["SAMIDHA", "Mission"]}
+                className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50"
+              />
+
+              {/* Dynamic Typewriter Subtext */}
+              <TypewriterText
+                text="Whether you want to access free study materials, mentor younger students, or contribute notes — everyone is welcome."
+                highlightWords={["free", "mentor", "contribute", "welcome"]}
+                speedMs={15}
+                className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed min-h-[3.5rem]"
+              />
+
+              {/* Superb Glowing Magnetic Button */}
+              <div className="pt-4 flex justify-center">
+                <Link href="/login">
+                  <Button size="lg" className="h-14 px-10 text-base sm:text-lg bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 hover:from-sky-400 hover:to-purple-500 text-white font-extrabold rounded-2xl shadow-2xl shadow-sky-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group">
+                    <Sparkles className="h-5 w-5 text-amber-300 group-hover:rotate-12 transition-transform" />
+                    Get Started for Free
+                    <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+              </div>
+
+            </div>
+          </TiltCard>
         </section>
       </ScrollReveal>
 
