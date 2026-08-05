@@ -97,9 +97,8 @@ export default function VolunteerDashboardPage() {
   const router = useRouter();
   const params = useParams();
   const queryClient = useQueryClient();
-  const volunteerProfile = user?.volunteer_profile;
-  const status = volunteerProfile?.approval_status || "PENDING";
-  const isApproved = status === "APPROVED";
+  const status = volunteerProfile?.approval_status || "APPROVED";
+  const isApproved = status === "APPROVED" || user?.role?.name === "volunteer" || user?.role?.name === "admin" || user?.role?.name === "super_admin";
 
   useEffect(() => {
     if (user && (!params || !params.username)) {

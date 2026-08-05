@@ -2,16 +2,19 @@
 
 import React, { useRef, useState } from "react";
 
-interface TiltCardProps {
+interface TiltCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
-  maxTilt?: number; // Max tilt angle in deg (default 10)
+  maxTilt?: number; // Max tilt angle in deg (default 8)
 }
 
 export const TiltCard: React.FC<TiltCardProps> = ({
   children,
   className = "",
   maxTilt = 8,
+  onClick,
+  style = {},
+  ...props
 }) => {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, shineX: 50, shineY: 50 });
@@ -44,13 +47,16 @@ export const TiltCard: React.FC<TiltCardProps> = ({
   return (
     <div
       ref={cardRef}
+      onClick={onClick}
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       style={{
         perspective: "1000px",
+        ...style,
       }}
-      className="group relative"
+      className={`group relative ${onClick ? "cursor-pointer" : ""} ${className}`}
+      {...props}
     >
       <div
         style={{
@@ -59,7 +65,7 @@ export const TiltCard: React.FC<TiltCardProps> = ({
             : "rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)",
           transition: isHovered ? "transform 100ms ease-out" : "transform 500ms ease-in-out",
         }}
-        className={`relative overflow-hidden transform-gpu will-change-transform ${className}`}
+        className="relative overflow-hidden transform-gpu will-change-transform h-full w-full"
       >
         {/* Specular Light Sweep Overlay */}
         {isHovered && (

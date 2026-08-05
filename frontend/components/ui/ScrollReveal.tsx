@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
-interface ScrollRevealProps {
+interface ScrollRevealProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
   delay?: number; // delay in ms (e.g. 100, 200, 300)
@@ -16,6 +16,9 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
   delay = 0,
   direction = "up",
   once = false, // Default false: bi-directional continuous scroll animations!
+  onClick,
+  style = {},
+  ...props
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
@@ -66,12 +69,15 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
   return (
     <div
       ref={ref}
+      onClick={onClick}
       style={{
         transitionDuration: "650ms",
         transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
         transitionDelay: `${isVisible ? delay : 0}ms`,
+        ...style,
       }}
       className={`transition-all transform-gpu will-change-transform ${getDirectionStyles()} ${className}`}
+      {...props}
     >
       {children}
     </div>
