@@ -14,6 +14,7 @@ import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { AnimatedText } from "@/components/ui/AnimatedText";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { TypewriterText } from "@/components/ui/TypewriterText";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { getUserHomeLink } from "@/lib/userUtils";
 
@@ -64,13 +65,11 @@ export default function LandingPage() {
           className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 leading-[1.2] sm:leading-[1.1] px-1"
         />
 
-        <AnimatedText
-          as="p"
+        <TypewriterText
           text="SAMIDHA is dedicated to bridging the educational divide by providing structured study resources, NCERT notes, question banks, and direct 1-on-1 mentorship from experienced alumni — 100% free for all students across India."
           highlightWords={["structured", "NCERT", "1-on-1", "100%", "free"]}
-          staggerMs={20}
-          delayOffsetMs={250}
-          className="text-xs sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed max-w-3xl mx-auto px-1"
+          speedMs={16}
+          className="text-xs sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed max-w-3xl mx-auto px-1 min-h-[4rem]"
         />
 
         {/* Action Buttons */}
