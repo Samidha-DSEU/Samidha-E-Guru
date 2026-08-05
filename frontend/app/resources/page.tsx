@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/Button";
 import { Card, Skeleton } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { CursorDotsCanvas } from "@/components/ui/CursorDotsCanvas";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { AnimatedText } from "@/components/ui/AnimatedText";
+import { TiltCard } from "@/components/ui/TiltCard";
+import { TypewriterText } from "@/components/ui/TypewriterText";
 
 interface ResourceLibraryItem {
   id: string;
@@ -90,16 +95,25 @@ export default function ResourcesPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="relative overflow-hidden space-y-8 selection:bg-sky-500 selection:text-white">
+      <CursorDotsCanvas />
+
       {/* Header Banner */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-3">
-          <BookOpen className="h-8 w-8 text-sky-500" /> Educational Resource Hub
-        </h1>
-        <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-          Browse verified NCERT, DIKSHA, SWAYAM, NPTEL, and SAMIDHA Shiksha Library materials.
-        </p>
-      </div>
+      <ScrollReveal direction="zoom" delay={0}>
+        <div className="space-y-3">
+          <AnimatedText
+            text="Educational Resource Hub"
+            gradientWords={["Resource", "Hub"]}
+            className="text-3xl sm:text-5xl font-extrabold tracking-tight justify-start"
+          />
+          <TypewriterText
+            text="Browse verified NCERT, DIKSHA, SWAYAM, NPTEL, and SAMIDHA Shiksha Library materials 100% free."
+            highlightWords={["NCERT", "SAMIDHA", "free"]}
+            speedMs={15}
+            className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400"
+          />
+        </div>
+      </ScrollReveal>
 
       {/* SOURCE TABS */}
       <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3">

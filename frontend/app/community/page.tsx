@@ -9,6 +9,11 @@ import { communityService } from "@/features/community/services/communityService
 import { useAuth } from "@/features/auth/context/AuthContext";
 
 import { CommunityPostItem } from "@/types/api";
+import { CursorDotsCanvas } from "@/components/ui/CursorDotsCanvas";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { AnimatedText } from "@/components/ui/AnimatedText";
+import { TiltCard } from "@/components/ui/TiltCard";
+import { TypewriterText } from "@/components/ui/TypewriterText";
 
 export default function CommunityPage() {
   const { user } = useAuth();
@@ -129,22 +134,32 @@ export default function CommunityPage() {
 
   return (
     <ProtectedRoute>
-      <div className="space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-              Educational Community & Mentorship
-            </h1>
-            <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-              Ask questions, share career guidance, and interact with alumni mentors and peers.
-            </p>
-          </div>
+      <div className="relative overflow-hidden space-y-8 selection:bg-sky-500 selection:text-white">
+        <CursorDotsCanvas />
 
-          <Button onClick={() => setIsModalOpen(true)} className="bg-sky-600 hover:bg-sky-500 text-white">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Post
-          </Button>
-        </div>
+        {/* Header Section */}
+        <ScrollReveal direction="zoom" delay={0}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <AnimatedText
+                text="Educational Community & Mentorship"
+                gradientWords={["Community", "Mentorship"]}
+                className="text-3xl sm:text-4xl font-extrabold tracking-tight justify-start"
+              />
+              <TypewriterText
+                text="Ask questions, share career guidance, and interact with alumni mentors and peers."
+                highlightWords={["questions", "guidance", "mentors"]}
+                speedMs={16}
+                className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400"
+              />
+            </div>
+
+            <Button onClick={() => setIsModalOpen(true)} className="bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-2xl shadow-lg shadow-sky-500/20 shrink-0">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Post
+            </Button>
+          </div>
+        </ScrollReveal>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Community Posts Feed */}
@@ -160,16 +175,18 @@ export default function CommunityPage() {
                 <p className="text-sm text-zinc-500">Be the first to share a question or article with the community.</p>
               </Card>
             ) : (
-              posts.map((post) => (
-                <Card key={post.id} className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center font-bold text-sm overflow-hidden border border-sky-200 dark:border-sky-800">
-                      {post.author_avatar ? (
-                        <img src={post.author_avatar} alt={post.author_name || "Author"} className="w-full h-full object-cover" />
-                      ) : (
-                        (post.author_name || "User").slice(0, 2).toUpperCase()
-                      )}
-                    </div>
+              posts.map((post, idx) => (
+                <ScrollReveal key={post.id} direction="up" delay={idx * 100}>
+                  <TiltCard>
+                    <Card className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center font-bold text-sm overflow-hidden border border-sky-200 dark:border-sky-800">
+                          {post.author_avatar ? (
+                            <img src={post.author_avatar} alt={post.author_name || "Author"} className="w-full h-full object-cover" />
+                          ) : (
+                            (post.author_name || "User").slice(0, 2).toUpperCase()
+                          )}
+                        </div>
                     <div>
                       <h4 className="font-semibold text-sm">{post.author_name || "Community Member"}</h4>
                       <span className="text-[11px] text-sky-600 dark:text-sky-400 font-medium inline-flex items-center gap-1 capitalize">
@@ -199,10 +216,11 @@ export default function CommunityPage() {
                     <button className="flex items-center gap-1.5 hover:text-sky-600 transition-colors">
                       <Share2 className="h-4 w-4" /> Share
                     </button>
-                  </div>
                 </Card>
-              ))
-            )}
+              </TiltCard>
+            </ScrollReveal>
+          ))
+        )}
           </div>
 
           {/* Sidebar Mentorship Topics */}
