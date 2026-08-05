@@ -621,6 +621,114 @@ export default function AlumniDashboardPage() {
             </div>
           </div>
         )}
+        {/* UPLOAD RESOURCE MODAL */}
+        {isUploadModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl relative">
+              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+                <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Upload className="h-5 w-5 text-emerald-500" /> Upload Career & Educational Resource
+                </h3>
+                <button onClick={() => setIsUploadModalOpen(false)} className="text-zinc-500 hover:text-zinc-700">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {uploadError && (
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-medium rounded-xl">
+                  {uploadError}
+                </div>
+              )}
+
+              <form onSubmit={handleResourceSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Document Title *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="E.g., Tech Placement & Interview Preparation Handbook 2026"
+                    value={resourceData.title}
+                    onChange={(e) => setResourceData({ ...resourceData, title: e.target.value })}
+                    className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Target Class *</label>
+                    <select
+                      value={resourceData.target_class}
+                      onChange={(e) => setResourceData({ ...resourceData, target_class: e.target.value })}
+                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      {CLASSES.map((cls) => (
+                        <option key={cls} value={cls}>{cls}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Subject *</label>
+                    <select
+                      value={resourceData.subject_name}
+                      onChange={(e) => setResourceData({ ...resourceData, subject_name: e.target.value })}
+                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      {SUBJECTS.map((sub) => (
+                        <option key={sub} value={sub}>{sub}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Category *</label>
+                    <select
+                      value={resourceData.resource_category}
+                      onChange={(e) => setResourceData({ ...resourceData, resource_category: e.target.value })}
+                      className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      {CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">External Document / Drive Link *</label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://drive.google.com/file/d/..."
+                    value={resourceData.external_url}
+                    onChange={(e) => setResourceData({ ...resourceData, external_url: e.target.value })}
+                    className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Description / Summary</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Brief summary of advice or guide contents..."
+                    value={resourceData.description}
+                    onChange={(e) => setResourceData({ ...resourceData, description: e.target.value })}
+                    className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" type="button" onClick={() => setIsUploadModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" isLoading={uploadResourceMutation.isPending} className="bg-emerald-600 text-white font-bold">
+                    Publish Alumni Guide
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   );
