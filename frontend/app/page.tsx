@@ -64,11 +64,14 @@ export default function LandingPage() {
           className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 leading-[1.2] sm:leading-[1.1] px-1"
         />
 
-        <ScrollReveal direction="up" delay={200}>
-          <p className="text-xs sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed max-w-3xl mx-auto px-1">
-            SAMIDHA is dedicated to bridging the educational divide by providing structured study resources, NCERT notes, question banks, and direct 1-on-1 mentorship from experienced alumni — 100% free for all students across India.
-          </p>
-        </ScrollReveal>
+        <AnimatedText
+          as="p"
+          text="SAMIDHA is dedicated to bridging the educational divide by providing structured study resources, NCERT notes, question banks, and direct 1-on-1 mentorship from experienced alumni — 100% free for all students across India."
+          highlightWords={["structured", "NCERT", "1-on-1", "100%", "free"]}
+          staggerMs={20}
+          delayOffsetMs={250}
+          className="text-xs sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed max-w-3xl mx-auto px-1"
+        />
 
         {/* Action Buttons */}
         <ScrollReveal direction="up" delay={300}>
