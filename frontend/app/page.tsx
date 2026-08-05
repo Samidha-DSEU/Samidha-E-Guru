@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { CursorDotsCanvas } from "@/components/ui/CursorDotsCanvas";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { AnimatedText } from "@/components/ui/AnimatedText";
+import { TiltCard } from "@/components/ui/TiltCard";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { getUserHomeLink } from "@/lib/userUtils";
 
@@ -54,15 +57,12 @@ export default function LandingPage() {
           </div>
         </ScrollReveal>
 
-        {/* Main Mission Title */}
-        <ScrollReveal direction="up" delay={100}>
-          <h1 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 leading-[1.2] sm:leading-[1.1] px-1">
-            Empowering Every Student with <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
-              Free, Quality Education & Mentorship
-            </span>
-          </h1>
-        </ScrollReveal>
+        {/* Dynamic Word-by-Word Reveal Heading */}
+        <AnimatedText
+          text="Empowering Every Student with Free, Quality Education & Mentorship"
+          gradientWords={["Free,", "Quality", "Education", "&", "Mentorship"]}
+          className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 leading-[1.2] sm:leading-[1.1] px-1"
+        />
 
         <ScrollReveal direction="up" delay={200}>
           <p className="text-xs sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed max-w-3xl mx-auto px-1">
@@ -90,34 +90,46 @@ export default function LandingPage() {
           </div>
         </ScrollReveal>
 
-        {/* 3D STATS BAR */}
+        {/* 3D ANIMATED TICKER STATS BAR */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-10">
           <ScrollReveal direction="up" delay={100}>
-            <div className="p-6 rounded-3xl bg-white/70 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 backdrop-blur-xl shadow-xl hover:-translate-y-1 transition-transform">
-              <div className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-sky-500 to-indigo-600">10,000+</div>
+            <TiltCard className="p-6 rounded-3xl bg-white/70 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 backdrop-blur-xl shadow-xl">
+              <AnimatedNumber
+                value="10,000+"
+                className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-sky-500 to-indigo-600"
+              />
               <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mt-1 uppercase tracking-wider">Free Study Materials</div>
-            </div>
+            </TiltCard>
           </ScrollReveal>
 
           <ScrollReveal direction="up" delay={200}>
-            <div className="p-6 rounded-3xl bg-white/70 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 backdrop-blur-xl shadow-xl hover:-translate-y-1 transition-transform">
-              <div className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-emerald-500 to-teal-600">500+</div>
+            <TiltCard className="p-6 rounded-3xl bg-white/70 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 backdrop-blur-xl shadow-xl">
+              <AnimatedNumber
+                value="500+"
+                className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-emerald-500 to-teal-600"
+              />
               <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mt-1 uppercase tracking-wider">Volunteer Educators</div>
-            </div>
+            </TiltCard>
           </ScrollReveal>
 
           <ScrollReveal direction="up" delay={300}>
-            <div className="p-6 rounded-3xl bg-white/70 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 backdrop-blur-xl shadow-xl hover:-translate-y-1 transition-transform">
-              <div className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-purple-500 to-indigo-600">200+</div>
+            <TiltCard className="p-6 rounded-3xl bg-white/70 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 backdrop-blur-xl shadow-xl">
+              <AnimatedNumber
+                value="200+"
+                className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-purple-500 to-indigo-600"
+              />
               <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mt-1 uppercase tracking-wider">Alumni Mentors</div>
-            </div>
+            </TiltCard>
           </ScrollReveal>
 
           <ScrollReveal direction="up" delay={400}>
-            <div className="p-6 rounded-3xl bg-white/70 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 backdrop-blur-xl shadow-xl hover:-translate-y-1 transition-transform">
-              <div className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-rose-500 to-amber-600">100%</div>
+            <TiltCard className="p-6 rounded-3xl bg-white/70 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 backdrop-blur-xl shadow-xl">
+              <AnimatedNumber
+                value="100%"
+                className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-rose-500 to-amber-600"
+              />
               <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mt-1 uppercase tracking-wider">Free & Equal Access</div>
-            </div>
+            </TiltCard>
           </ScrollReveal>
         </div>
       </section>
@@ -142,41 +154,47 @@ export default function LandingPage() {
           
           {/* PILLAR 1 */}
           <ScrollReveal direction="up" delay={100}>
-            <div className="p-8 rounded-3xl bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 backdrop-blur-xl shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all space-y-4 h-full">
-              <div className="h-14 w-14 rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold">
-                <BookOpen className="h-7 w-7" />
+            <TiltCard className="h-full">
+              <div className="p-8 rounded-3xl bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all space-y-4 h-full">
+                <div className="h-14 w-14 rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold">
+                  <BookOpen className="h-7 w-7" />
+                </div>
+                <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Structured Study Resources</h3>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  Curated Class 6 to 12 & Undergraduate notes, official NCERT solutions, previous year question papers (PYQs), and chapter summaries neatly structured without cluttered ads.
+                </p>
               </div>
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Structured Study Resources</h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Curated Class 6 to 12 & Undergraduate notes, official NCERT solutions, previous year question papers (PYQs), and chapter summaries neatly structured without cluttered ads.
-              </p>
-            </div>
+            </TiltCard>
           </ScrollReveal>
 
           {/* PILLAR 2 */}
           <ScrollReveal direction="up" delay={250}>
-            <div className="p-8 rounded-3xl bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 backdrop-blur-xl shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all space-y-4 h-full">
-              <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
-                <Award className="h-7 w-7" />
+            <TiltCard className="h-full">
+              <div className="p-8 rounded-3xl bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all space-y-4 h-full">
+                <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                  <Award className="h-7 w-7" />
+                </div>
+                <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Volunteer-Alumni Pipeline</h3>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  Direct mentorship pipeline for volunteers to connect with experienced alumni for 1-on-1 career guidance, industry trends, and professional mentoring.
+                </p>
               </div>
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Volunteer-Alumni Pipeline</h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Direct mentorship pipeline for volunteers to connect with experienced alumni for 1-on-1 career guidance, industry trends, and professional mentoring.
-              </p>
-            </div>
+            </TiltCard>
           </ScrollReveal>
 
           {/* PILLAR 3 */}
           <ScrollReveal direction="up" delay={400}>
-            <div className="p-8 rounded-3xl bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 backdrop-blur-xl shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all space-y-4 h-full">
-              <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
-                <Heart className="h-7 w-7" />
+            <TiltCard className="h-full">
+              <div className="p-8 rounded-3xl bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all space-y-4 h-full">
+                <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                  <Heart className="h-7 w-7" />
+                </div>
+                <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Volunteer Community</h3>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  Driven by volunteer teachers and college student mentors giving back to society by creating high-quality study materials and hosting free educational workshops.
+                </p>
               </div>
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Volunteer Community</h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Driven by volunteer teachers and college student mentors giving back to society by creating high-quality study materials and hosting free educational workshops.
-              </p>
-            </div>
+            </TiltCard>
           </ScrollReveal>
 
         </div>
@@ -211,39 +229,45 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               <ScrollReveal direction="up" delay={150}>
-                <div className="p-6 rounded-2xl bg-zinc-800/70 border border-zinc-700/60 backdrop-blur-md space-y-3 h-full">
-                  <div className="h-10 w-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
-                    <Compass className="h-5 w-5" />
+                <TiltCard className="h-full">
+                  <div className="p-6 rounded-2xl bg-zinc-800/70 border border-zinc-700/60 backdrop-blur-md space-y-3 h-full">
+                    <div className="h-10 w-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
+                      <Compass className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-zinc-100">NCERT & CBSE Textbooks</h3>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      Chapter-wise PDF downloads, verified notes, and textbook exercise solutions for Science, Maths, Social Sciences & Languages.
+                    </p>
                   </div>
-                  <h3 className="text-lg font-bold text-zinc-100">NCERT & CBSE Textbooks</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
-                    Chapter-wise PDF downloads, verified notes, and textbook exercise solutions for Science, Maths, Social Sciences & Languages.
-                  </p>
-                </div>
+                </TiltCard>
               </ScrollReveal>
 
               <ScrollReveal direction="up" delay={300}>
-                <div className="p-6 rounded-2xl bg-zinc-800/70 border border-zinc-700/60 backdrop-blur-md space-y-3 h-full">
-                  <div className="h-10 w-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
-                    <Sparkles className="h-5 w-5" />
+                <TiltCard className="h-full">
+                  <div className="p-6 rounded-2xl bg-zinc-800/70 border border-zinc-700/60 backdrop-blur-md space-y-3 h-full">
+                    <div className="h-10 w-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
+                      <Sparkles className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-zinc-100">Question Banks & PYQs</h3>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      10+ years of previous board examination question papers with model answers to help students build exam confidence.
+                    </p>
                   </div>
-                  <h3 className="text-lg font-bold text-zinc-100">Question Banks & PYQs</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
-                    10+ years of previous board examination question papers with model answers to help students build exam confidence.
-                  </p>
-                </div>
+                </TiltCard>
               </ScrollReveal>
 
               <ScrollReveal direction="up" delay={450}>
-                <div className="p-6 rounded-2xl bg-zinc-800/70 border border-zinc-700/60 backdrop-blur-md space-y-3 h-full">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-                    <Lightbulb className="h-5 w-5" />
+                <TiltCard className="h-full">
+                  <div className="p-6 rounded-2xl bg-zinc-800/70 border border-zinc-700/60 backdrop-blur-md space-y-3 h-full">
+                    <div className="h-10 w-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                      <Lightbulb className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-zinc-100">Career & Higher Ed Guides</h3>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      Specialized industry guidance, engineering & medical entrance exam tips, and vocational training resources written by alumni.
+                    </p>
                   </div>
-                  <h3 className="text-lg font-bold text-zinc-100">Career & Higher Ed Guides</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
-                    Specialized industry guidance, engineering & medical entrance exam tips, and vocational training resources written by alumni.
-                  </p>
-                </div>
+                </TiltCard>
               </ScrollReveal>
 
             </div>
@@ -270,41 +294,49 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           
           <ScrollReveal direction="left" delay={150}>
-            <div className="p-8 rounded-3xl bg-gradient-to-br from-indigo-500/10 via-white/80 to-white dark:from-indigo-950/40 dark:via-zinc-900/90 dark:to-zinc-900 border border-indigo-200/80 dark:border-indigo-800/60 shadow-xl space-y-4 h-full">
-              <div className="h-12 w-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold">
-                <MessageSquare className="h-6 w-6" />
+            <TiltCard className="h-full">
+              <div className="p-8 rounded-3xl bg-gradient-to-br from-indigo-500/10 via-white/80 to-white dark:from-indigo-950/40 dark:via-zinc-900/90 dark:to-zinc-900 border border-indigo-200/80 dark:border-indigo-800/60 shadow-xl space-y-4 h-full flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="h-12 w-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold">
+                    <MessageSquare className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Volunteer Mentorship Requests</h3>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    Volunteers can send targeted mentorship requests to verified alumni mentors specifying topics like Career Guidance, Industry Trends, or Exam Preparation.
+                  </p>
+                </div>
+                <div className="pt-4">
+                  <Link href="/community">
+                    <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl w-full sm:w-auto">
+                      Volunteer Mentorship Directory ➔
+                    </Button>
+                  </Link>
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Volunteer Mentorship Requests</h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Volunteers can send targeted mentorship requests to verified alumni mentors specifying topics like Career Guidance, Industry Trends, or Exam Preparation.
-              </p>
-              <div className="pt-2">
-                <Link href="/community">
-                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl">
-                    Volunteer Mentorship Directory ➔
-                  </Button>
-                </Link>
-              </div>
-            </div>
+            </TiltCard>
           </ScrollReveal>
 
           <ScrollReveal direction="right" delay={300}>
-            <div className="p-8 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-white/80 to-white dark:from-emerald-950/40 dark:via-zinc-900/90 dark:to-zinc-900 border border-emerald-200/80 dark:border-emerald-800/60 shadow-xl space-y-4 h-full">
-              <div className="h-12 w-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold">
-                <GraduationCap className="h-6 w-6" />
+            <TiltCard className="h-full">
+              <div className="p-8 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-white/80 to-white dark:from-emerald-950/40 dark:via-zinc-900/90 dark:to-zinc-900 border border-emerald-200/80 dark:border-emerald-800/60 shadow-xl space-y-4 h-full flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="h-12 w-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+                    <GraduationCap className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Interactive Educational Bootcamps</h3>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    Join online workshops and mentorship webinars organized by volunteer educators to clear doubts and learn practical skills.
+                  </p>
+                </div>
+                <div className="pt-4">
+                  <Link href="/events">
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl w-full sm:w-auto">
+                      View Upcoming Events ➔
+                    </Button>
+                  </Link>
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Interactive Educational Bootcamps</h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Join online workshops and mentorship webinars organized by volunteer educators to clear doubts and learn practical skills.
-              </p>
-              <div className="pt-2">
-                <Link href="/events">
-                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl">
-                    View Upcoming Events ➔
-                  </Button>
-                </Link>
-              </div>
-            </div>
+            </TiltCard>
           </ScrollReveal>
 
         </div>
