@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { CursorDotsCanvas } from "@/components/ui/CursorDotsCanvas";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { getUserHomeLink } from "@/lib/userUtils";
 
@@ -29,6 +30,9 @@ export default function LandingPage() {
   return (
     <div className="relative overflow-hidden space-y-16 sm:space-y-28 py-6 sm:py-10 selection:bg-sky-500 selection:text-white">
       
+      {/* INTERACTIVE CURSOR DOTS CANVAS */}
+      <CursorDotsCanvas />
+
       {/* 3D BACKGROUND GLOWING ORBS & ANIMATED MESH GRADIENTS */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[650px] pointer-events-none -z-10 overflow-hidden">
         <div className="absolute top-10 left-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-sky-500/20 dark:bg-sky-500/15 rounded-full blur-[100px] sm:blur-[120px] animate-pulse" />
