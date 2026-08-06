@@ -222,3 +222,36 @@ class AuthService:
         db.commit()
         db.refresh(current_user)
         return UserMeResponse.model_validate(current_user)
+
+    @staticmethod
+    def delete_me(db: Session, current_user: User) -> dict:
+        role_name = current_user.role.name if current_user.role else "student"
+        
+        # Restrict verified volunteers and verified alumni from self-deletion
+        is_verified_volunteer = (
+            role_name == "volunteer" and 
+            current_user.volunteer_profile and 
+            current_user.volunteer_profile.approval_status == ApprovalStatus.APPROVED.value
+        )
+        is_verified_alumni = (
+            role_name == "alumni" and 
+            current_user.alumni_profile is not None
+        )
+
+        if is_verified_volunteer or is_verified_alumni:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Verified Volunteer Educator and Alumni Mentor accounts cannot be self-deleted to preserve student learning records. Please contact an Administrator."
+            )
+
+        if role_name in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Administrator accounts cannot be self-deleted. Contact Super Admin."
+            )
+
+        user_id = str(current_user.id)
+        email = current_user.email
+        db.delete(current_user)
+        db.commit()
+        return {"deleted_user_id": user_id, "email": email, "status": "deleted"}

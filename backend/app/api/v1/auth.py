@@ -58,3 +58,15 @@ def update_current_user_profile(
         data=user_data,
         message="User profile updated successfully."
     )
+
+
+@router.delete("/me", response_model=StandardResponse[dict])
+def delete_current_user_account(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    result = AuthService.delete_me(db, current_user)
+    return StandardResponse.success_response(
+        data=result,
+        message="User account deleted successfully."
+    )
