@@ -33,43 +33,13 @@ export default function CommunityPage() {
     try {
       setLoading(true);
       const res = await communityService.getPosts();
-      if (res.data && res.data.length > 0) {
+      if (res.data) {
         setPosts(res.data);
       } else {
-        // Sample default post if DB has none yet
-        setPosts([
-          {
-            id: "sample-1",
-            author_id: "sample-author-1",
-            title: "Tips for preparing for Engineering Entrance Exams while balancing Class 12 Boards",
-            content: "When preparing for both board exams and competitive entrance tests, consistency in revision outweighs cramming long hours. Focus heavily on NCERT fundamentals first...",
-            post_type: "career_guidance",
-            likes_count: 42,
-            comments_count: 18,
-            author_name: "Ananya Sharma",
-            author_avatar: null,
-            author_role: "alumni",
-            created_at: new Date().toISOString()
-          }
-        ]);
+        setPosts([]);
       }
     } catch {
-      // Fallback
-      setPosts([
-        {
-          id: "sample-1",
-          author_id: "sample-author-1",
-          title: "Tips for preparing for Engineering Entrance Exams while balancing Class 12 Boards",
-          content: "When preparing for both board exams and competitive entrance tests, consistency in revision outweighs cramming long hours. Focus heavily on NCERT fundamentals first...",
-          post_type: "career_guidance",
-          likes_count: 42,
-          comments_count: 18,
-          author_name: "Ananya Sharma",
-          author_avatar: null,
-          author_role: "alumni",
-          created_at: new Date().toISOString()
-        }
-      ]);
+      setPosts([]);
     } finally {
       setLoading(false);
     }

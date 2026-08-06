@@ -60,7 +60,7 @@ export default function DashboardPage() {
                   <span className="text-xs font-semibold uppercase tracking-wider">Bookmarks</span>
                   <Bookmark className="h-4 w-4 text-sky-600" />
                 </div>
-                <AnimatedNumber value="12" className="text-3xl font-bold" />
+                <AnimatedNumber value="0" className="text-3xl font-bold" />
                 <p className="text-xs text-zinc-400">Saved resources</p>
               </Card>
             </TiltCard>
@@ -73,7 +73,7 @@ export default function DashboardPage() {
                   <span className="text-xs font-semibold uppercase tracking-wider">Chapter Progress</span>
                   <CheckCircle className="h-4 w-4 text-emerald-600" />
                 </div>
-                <AnimatedNumber value="75%" className="text-3xl font-bold" />
+                <AnimatedNumber value="0%" className="text-3xl font-bold" />
                 <p className="text-xs text-zinc-400">Average completion</p>
               </Card>
             </TiltCard>
@@ -86,7 +86,7 @@ export default function DashboardPage() {
                   <span className="text-xs font-semibold uppercase tracking-wider">Registered Events</span>
                   <Award className="h-4 w-4 text-indigo-600" />
                 </div>
-                <AnimatedNumber value="2" className="text-3xl font-bold" />
+                <AnimatedNumber value="0" className="text-3xl font-bold" />
                 <p className="text-xs text-zinc-400">Upcoming workshops</p>
               </Card>
             </TiltCard>
@@ -111,52 +111,26 @@ export default function DashboardPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <TiltCard>
-                <div className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex flex-col justify-between gap-4 h-full">
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0">
-                      VS
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Vikram Singh</h4>
-                        <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 text-[10px] font-semibold uppercase rounded border border-emerald-200 dark:border-emerald-800">
-                          Volunteer Teacher
-                        </span>
-                      </div>
-                      <p className="text-xs text-zinc-500">Mathematics & Physics (Class 9-12)</p>
-                      <p className="text-xs text-zinc-400">Available for doubt resolution & JEE prep strategy.</p>
-                    </div>
-                  </div>
-                  <Button size="sm" onClick={() => handleRequestMentorship("Vikram Singh")} className="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold">
-                    Request Guidance ➔
-                  </Button>
-                </div>
-              </TiltCard>
-
-              <TiltCard>
-                <div className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex flex-col justify-between gap-4 h-full">
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
-                      AK
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Ananya Kapoor</h4>
-                        <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 text-[10px] font-semibold uppercase rounded border border-indigo-200 dark:border-indigo-800">
-                          Alumni Mentor
-                        </span>
-                      </div>
-                      <p className="text-xs text-zinc-500">Computer Science & Higher Ed</p>
-                      <p className="text-xs text-zinc-400">Career pathing, coding roadmap & college prep.</p>
-                    </div>
-                  </div>
-                  <Button size="sm" onClick={() => handleRequestMentorship("Ananya Kapoor")} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">
-                    Request Mentorship ➔
-                  </Button>
-                </div>
-              </TiltCard>
+            <div className="p-8 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-center space-y-4">
+              <div className="h-12 w-12 rounded-full bg-sky-500/10 text-sky-500 mx-auto flex items-center justify-center border border-sky-500/20">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <div className="space-y-1 max-w-md mx-auto">
+                <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Connect with Verified SAMIDHA Volunteer Heads</h4>
+                <p className="text-xs text-zinc-500">
+                  Request 1-on-1 academic assistance and doubt resolution directly from active 3rd & 4th year Operational & Volunteer Heads via Email & Instant WhatsApp.
+                </p>
+              </div>
+              <Button
+                onClick={() => {
+                  const getMentorBtn = document.querySelector('button:has(svg.lucide-sparkles)') as HTMLButtonElement;
+                  if (getMentorBtn) getMentorBtn.click();
+                  else router.push('/resources');
+                }}
+                className="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md shadow-sky-500/20"
+              >
+                <Sparkles className="h-4 w-4 mr-1.5" /> Find & Connect with Volunteer Head
+              </Button>
             </div>
           </Card>
         </ScrollReveal>
