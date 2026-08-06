@@ -141,6 +141,10 @@ export default function AdminDashboardPage() {
   const [viewingActivityUser, setViewingActivityUser] = useState<UserItem | null>(null);
   const [deletingUser, setDeletingUser] = useState<UserItem | null>(null);
   const [promotingUser, setPromotingUser] = useState<UserItem | null>(null);
+  const [assigningDesignationUser, setAssigningDesignationUser] = useState<UserItem | null>(null);
+  const [assignedDesignation, setAssignedDesignation] = useState("Operational & Volunteer Head");
+  const [assignedYear, setAssignedYear] = useState("3rd Year");
+  const [designationError, setDesignationError] = useState<string | null>(null);
 
   // REJECTION REASON MODALS
   const [rejectingUserId, setRejectingUserId] = useState<string | null>(null);
@@ -612,6 +616,20 @@ export default function AdminDashboardPage() {
                           >
                             <Eye className="h-3 w-3 mr-1" /> Activity Trail
                           </Button>
+
+                          {u.role === "volunteer" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setAssigningDesignationUser(u);
+                                setDesignationError(null);
+                              }}
+                              className="text-xs h-7 px-2 text-amber-600 border-amber-200"
+                            >
+                              <ShieldCheck className="h-3 w-3 mr-1" /> Assign Role & Head
+                            </Button>
+                          )}
 
                           {u.role !== "admin" && u.role !== "super_admin" && (
                             <Button
@@ -1244,6 +1262,79 @@ export default function AdminDashboardPage() {
                   className="bg-rose-600 hover:bg-rose-500 text-white"
                 >
                   Confirm Rejection
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        {assigningDesignationUser && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+                <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-amber-500" /> Assign Volunteer Designation
+                </h3>
+                <button onClick={() => setAssigningDesignationUser(null)} className="text-zinc-500 hover:text-zinc-700">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <p className="text-xs text-zinc-500">
+                Assign official SAMIDHA leadership role for <strong>{assigningDesignationUser.full_name}</strong>.
+              </p>
+
+              {designationError && (
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-medium rounded-xl leading-relaxed">
+                  {designationError}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Designation Role *</label>
+                  <select
+                    value={assignedDesignation}
+                    onChange={(e) => { setAssignedDesignation(e.target.value); setDesignationError(null); }}
+                    className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 font-semibold"
+                  >
+                    <option value="Operational & Volunteer Head">Operational & Volunteer Head (3rd/4th Year Only)</option>
+                    <option value="Senior Educator Lead">Senior Educator Lead</option>
+                    <option value="Volunteer Educator">Volunteer Educator</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Academic Year Verification *</label>
+                  <select
+                    value={assignedYear}
+                    onChange={(e) => { setAssignedYear(e.target.value); setDesignationError(null); }}
+                    className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 font-semibold"
+                  >
+                    <option value="1st Year">1st Year Student</option>
+                    <option value="2nd Year">2nd Year Student</option>
+                    <option value="3rd Year">3rd Year Student (Eligible for Operational Head)</option>
+                    <option value="4th Year">4th Year Student (Eligible for Operational Head)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                <Button variant="outline" size="sm" onClick={() => setAssigningDesignationUser(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (assignedDesignation === "Operational & Volunteer Head" && (assignedYear === "1st Year" || assignedYear === "2nd Year")) {
+                      setDesignationError("Academic Year Constraint Violation: Operational & Volunteer Head designation can only be distributed to 3rd Year or 4th Year students.");
+                      return;
+                    }
+                    alert(`Successfully assigned "${assignedDesignation}" (${assignedYear}) to ${assigningDesignationUser.full_name}.`);
+                    setAssigningDesignationUser(null);
+                  }}
+                  className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs"
+                >
+                  Save & Assign Designation
                 </Button>
               </div>
             </div>

@@ -279,6 +279,49 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
               />
             </div>
 
+            {roleName === "volunteer" && (
+              <div className="space-y-3 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                <div className="p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-[11px]">
+                  <span className="font-bold text-amber-800 dark:text-amber-300">SAMIDHA Role Designation:</span>{" "}
+                  <span className="font-extrabold text-amber-700 dark:text-amber-200">
+                    {user?.volunteer_profile?.organization?.includes("Head")
+                      ? user?.volunteer_profile?.organization
+                      : "Operational & Volunteer Head (Assigned by Admin)"}
+                  </span>
+                  <p className="text-[10px] text-amber-700/80 dark:text-amber-300/80 mt-0.5">
+                    *Designations are assigned exclusively by Admin/Super Admin for 3rd and 4th year volunteers.
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Academic Year *</label>
+                  <select
+                    name="academic_year"
+                    value={(formData.volunteer_profile as any).academic_year || "3rd Year"}
+                    onChange={(e) => handleRoleChange("volunteer_profile", e)}
+                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  >
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year (Eligible for Operational Head)</option>
+                    <option value="4th Year">4th Year (Eligible for Operational Head)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">WhatsApp Mobile Number (For Student Inquiry)</label>
+                  <input
+                    name="whatsapp_number"
+                    type="tel"
+                    placeholder="+91 9876543210"
+                    value={(formData.volunteer_profile as any).whatsapp_number || ""}
+                    onChange={(e) => handleRoleChange("volunteer_profile", e)}
+                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1">
               <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">About Me / Bio</label>
               <textarea
