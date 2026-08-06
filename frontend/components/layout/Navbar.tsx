@@ -97,21 +97,21 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md transition-colors">
-      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2 group shrink-0">
-          <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 bg-sky-500/20 rounded-full blur-md group-hover:bg-sky-500/40 transition-all" />
+    <header className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        {/* Brand Logo - Fixed Padding & Unclipped Artwork */}
+        <Link href="/" className="flex items-center gap-2.5 group shrink-0 py-1">
+          <div className="relative flex items-center justify-center h-9 w-9 shrink-0">
+            <div className="absolute inset-0 bg-sky-500/20 rounded-xl blur-md group-hover:bg-sky-500/40 transition-all" />
             {!logoError ? (
               <img
                 src="/assets/samidha-logo.svg"
                 alt="SAMIDHA E-GURU Logo"
-                className="h-9 w-9 relative z-10 rounded-full object-cover transition-transform group-hover:scale-105"
+                className="h-9 w-9 relative z-10 object-contain shrink-0 transition-transform group-hover:scale-105"
                 onError={() => setLogoError(true)}
               />
             ) : (
-              <div className="h-9 w-9 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center font-bold text-base relative z-10 border border-sky-200 dark:border-sky-800">
+              <div className="h-9 w-9 rounded-xl bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center font-bold text-base relative z-10 border border-sky-200 dark:border-sky-800">
                 S
               </div>
             )}
@@ -121,37 +121,37 @@ export function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-6">
-          <Link href="/" className="text-sm font-medium text-zinc-600 hover:text-sky-600 dark:text-zinc-400 dark:hover:text-sky-400 transition-colors">
+        {/* Desktop Navigation Links with Spacious Gapping */}
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8">
+          <Link href="/" className="text-sm font-semibold text-zinc-600 hover:text-sky-600 dark:text-zinc-300 dark:hover:text-sky-400 transition-colors px-1 py-1">
             Home
           </Link>
-          <Link href="/resources" className="text-sm font-medium text-zinc-600 hover:text-sky-600 dark:text-zinc-400 dark:hover:text-sky-400 transition-colors">
+          <Link href="/resources" className="text-sm font-semibold text-zinc-600 hover:text-sky-600 dark:text-zinc-300 dark:hover:text-sky-400 transition-colors px-1 py-1">
             Resources
           </Link>
-          <Link href="/community" className="text-sm font-medium text-zinc-600 hover:text-sky-600 dark:text-zinc-400 dark:hover:text-sky-400 transition-colors">
+          <Link href="/community" className="text-sm font-semibold text-zinc-600 hover:text-sky-600 dark:text-zinc-300 dark:hover:text-sky-400 transition-colors px-1 py-1">
             Community
           </Link>
 
           <button
             onClick={() => setIsMentorModalOpen(true)}
-            className="text-xs font-bold text-sky-600 dark:text-sky-400 hover:text-sky-500 flex items-center gap-1.5 transition-all bg-sky-50 dark:bg-sky-950/60 px-3 py-1.5 rounded-xl border border-sky-200 dark:border-sky-800 shadow-sm hover:scale-105"
+            className="text-xs font-bold text-sky-600 dark:text-sky-400 hover:text-sky-500 flex items-center gap-1.5 transition-all bg-sky-500/10 dark:bg-sky-500/15 px-3.5 py-1.5 rounded-xl border border-sky-500/30 shadow-sm hover:scale-105"
           >
             <Sparkles className="h-4 w-4 text-sky-500" />
             Get Mentor
           </button>
 
-          <Link href="/about" className="text-sm font-medium text-zinc-600 hover:text-sky-600 dark:text-zinc-400 dark:hover:text-sky-400 transition-colors">
+          <Link href="/about" className="text-sm font-semibold text-zinc-600 hover:text-sky-600 dark:text-zinc-300 dark:hover:text-sky-400 transition-colors px-1 py-1">
             About
           </Link>
         </nav>
 
         {/* Right Actions & Theme Toggle */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <ThemeToggle />
 
           {user ? (
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0">
               <Link href={getHomeLink()} className="flex flex-col items-end hidden sm:flex group">
                 <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 leading-none group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
                   {user.profile?.full_name || "User"}
@@ -173,10 +173,10 @@ export function Navbar() {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <Link
                 href="/login"
-                className="text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 px-3 py-1.5 rounded-xl transition-all shadow-md shadow-sky-500/20 whitespace-nowrap shrink-0"
+                className="text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 px-4 py-2 rounded-xl transition-all shadow-md shadow-sky-500/20 whitespace-nowrap shrink-0"
               >
                 Sign In
               </Link>
