@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { X, Save, User, Camera, LogOut, Trash2, ShieldAlert, GraduationCap, ShieldCheck, Award, Settings, BookOpen, MessageSquare, BookmarkCheck, Calendar, Users, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -16,6 +17,7 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
   const { user, updateProfile, logout } = useAuth();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const [mounted, setMounted] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -38,6 +40,10 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
       designation: ""
     }
   });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -63,7 +69,7 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
     }
   }, [user]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const roleName = user?.role?.name || "student";
   const isVolunteerOrAlumniVerified =
@@ -123,16 +129,16 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
     }
   };
 
-  return (
+  return createPortal(
     <>
-      {/* FULLSCREEN BACKDROP */}
+      {/* FULLSCREEN BACKDROP - MOUNTED DIRECTLY TO BODY TO PREVENT HEADER CLIPPING */}
       <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-md z-[990] transition-opacity animate-in fade-in" 
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[99998] transition-opacity animate-in fade-in" 
         onClick={onClose}
       />
 
-      {/* ULTRA-PREMIUM SLIDE-OVER DRAWER */}
-      <aside className="fixed inset-y-0 right-0 h-full w-full max-w-md bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 z-[999] shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+      {/* ULTRA-PREMIUM FULL HEIGHT SLIDE-OVER DRAWER */}
+      <aside className="fixed inset-y-0 right-0 top-0 bottom-0 h-screen h-[100dvh] w-full sm:w-[420px] max-w-full bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 z-[99999] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
         
         {/* SIDEBAR HEADER */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 shrink-0">
@@ -155,7 +161,7 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
         </div>
 
         {/* SCROLLABLE SIDEBAR BODY */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
           
           {/* USER AVATAR & BADGES */}
           <div className="flex flex-col items-center gap-3 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800">
@@ -392,7 +398,7 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
 
       {/* DELETE ACCOUNT CONFIRMATION / RESTRICTION MODAL */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100000] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
             <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
               <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -441,6 +447,7 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
           </div>
         </div>
       )}
-    </>
+    </>,
+    document.body
   );
 }
