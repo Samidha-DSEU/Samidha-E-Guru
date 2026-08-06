@@ -36,6 +36,10 @@ class AuthService:
                 role = db.query(Role).filter(Role.name == target_role).first()
                 if not role:
                     role = db.query(Role).filter(Role.name == "student").first()
+                if not role:
+                    role = Role(name=target_role, description=f"{target_role} role")
+                    db.add(role)
+                    db.flush()
                 
                 user = User(
                     email=email,
