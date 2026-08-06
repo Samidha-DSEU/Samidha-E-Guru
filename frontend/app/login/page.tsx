@@ -118,23 +118,16 @@ export default function LoginPage() {
   const customGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setError(null);
-      try {
-        await loginWithGoogle(selectedRole, tokenResponse.access_token);
-        if (selectedRole === "admin" || selectedRole === "super_admin") {
-          router.push("/admin");
-        } else if (selectedRole === "volunteer") {
-          router.push("/volunteer");
-        } else if (selectedRole === "alumni") {
-          router.push("/alumni");
-        } else {
-          router.push("/dashboard");
-        }
-      } catch (err: any) {
-        // Fallback login routing
-        if (selectedRole === "volunteer") router.push("/volunteer");
-        else if (selectedRole === "alumni") router.push("/alumni");
-        else router.push("/dashboard");
-      }
+      await loginWithGoogle(selectedRole, tokenResponse.access_token);
+      const targetPath =
+        selectedRole === "admin" || selectedRole === "super_admin"
+          ? "/admin"
+          : selectedRole === "volunteer"
+          ? "/volunteer"
+          : selectedRole === "alumni"
+          ? "/alumni"
+          : "/dashboard";
+      router.replace(targetPath);
     },
     onError: handleGoogleError
   });
