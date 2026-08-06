@@ -97,7 +97,7 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
     });
   };
 
-  const handleRoleChange = (roleKey: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRoleChange = (roleKey: string, e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [roleKey]: { ...((formData as any)[roleKey]), [e.target.name]: e.target.value }
