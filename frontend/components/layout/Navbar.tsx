@@ -1,59 +1,36 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { BookOpen, Sparkles, User, ChevronDown, ShieldCheck, GraduationCap, Award, X, Mail, Menu, Phone, MessageSquare, Send, CheckCircle2 } from "lucide-react";
+import { Sparkles, User, ShieldCheck, GraduationCap, Award, X, Mail, Menu, MessageSquare, Send, CheckCircle2 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { ProfileSidebar } from "./ProfileSidebar";
 import { Button } from "@/components/ui/Button";
-
+import { apiClient } from "@/services/apiClient";
 import { getUserHomeLink } from "@/lib/userUtils";
 
-// Mock Verified Operational & Volunteer Heads (3rd & 4th Year Students assigned by Admin)
-const VOLUNTEER_HEADS = [
-  {
-    id: "vol-head-1",
-    full_name: "Rahul Sharma",
-    academic_year: "4th Year",
-    samidha_designation: "Operational & Volunteer Head",
-    subjects: "Physics & Mathematics (Class 9 - 12)",
-    email: "rahul.sharma.vol@samidha.org",
-    whatsapp_number: "919876543210",
-    avatar_initials: "RS"
-  },
-  {
-    id: "vol-head-2",
-    full_name: "Priya Verma",
-    academic_year: "3rd Year",
-    samidha_designation: "Operational & Volunteer Head",
-    subjects: "Chemistry & Biology (Class 8 - 12)",
-    email: "priya.verma.vol@samidha.org",
-    whatsapp_number: "919812345678",
-    avatar_initials: "PV"
-  },
-  {
-    id: "vol-head-3",
-    full_name: "Aman Gupta",
-    academic_year: "4th Year",
-    samidha_designation: "Operational & Volunteer Head",
-    subjects: "Computer Science & Coding Fundamentals",
-    email: "aman.gupta.vol@samidha.org",
-    whatsapp_number: "919899887766",
-    avatar_initials: "AG"
-  }
-];
+interface VolunteerHeadItem {
+  id: string;
+  full_name: string;
+  academic_year: string;
+  samidha_designation: string;
+  subjects?: string;
+  email: string;
+  whatsapp_number?: string;
+  avatar_initials?: string;
+}
 
 export function Navbar() {
-  const [isPortalOpen, setIsPortalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const { user } = useAuth();
 
-  // GET MENTOR STUDENT INQUIRY FORM STATE
-  const [selectedVolunteer, setSelectedVolunteer] = useState<typeof VOLUNTEER_HEADS[0] | null>(null);
+  // DYNAMIC VOLUNTEER HEADS STATE
+  const [volunteerHeads, setVolunteerHeads] = useState<VolunteerHeadItem[]>([]);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<VolunteerHeadItem | null>(null);
   const [studentForm, setStudentForm] = useState({
     full_name: "",
     mobile: "",
@@ -62,6 +39,25 @@ export function Navbar() {
     message: ""
   });
   const [inquirySent, setInquirySent] = useState(false);
+
+  useEffect(() => {
+    // Fetch real active Operational & Volunteer Heads from API if available
+    const fetchVolunteerHeads = async () => {
+      try {
+        const res = await apiClient.get<{ data: VolunteerHeadItem[] }>("/mentorship/volunteer-heads");
+        if (res.data?.data) {
+          setVolunteerHeads(res.data.data);
+        } else {
+          setVolunteerHeads([]);
+        }
+      } catch {
+        setVolunteerHeads([]);
+      }
+    };
+    if (isMentorModalOpen) {
+      fetchVolunteerHeads();
+    }
+  }, [isMentorModalOpen]);
 
   const getHomeLink = () => {
     return getUserHomeLink(user);
@@ -99,7 +95,7 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Brand Logo - Fixed Padding & Unclipped Artwork */}
+        {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 group shrink-0 py-1">
           <div className="relative flex items-center justify-center h-9 w-9 shrink-0">
             <div className="absolute inset-0 bg-sky-500/20 rounded-xl blur-md group-hover:bg-sky-500/40 transition-all" />
@@ -121,7 +117,7 @@ export function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop Navigation Links with Spacious Gapping */}
+        {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-6 lg:gap-8">
           <Link href="/" className="text-sm font-semibold text-zinc-600 hover:text-sky-600 dark:text-zinc-300 dark:hover:text-sky-400 transition-colors px-1 py-1">
             Home
@@ -220,7 +216,7 @@ export function Navbar() {
       {/* Profile Sidebar */}
       <ProfileSidebar isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
 
-      {/* GET MENTOR MODAL (EXCLUSIVELY FOR OPERATIONAL & VOLUNTEER HEADS - 3RD/4TH YEAR STUDENTS) */}
+      {/* GET MENTOR MODAL (EXCLUSIVELY FOR OPERATIONAL & VOLUNTEER HEADS - DYNAMIC OR EMPTY STATE) */}
       {isMentorModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-xl w-full p-6 space-y-6 shadow-2xl relative">
@@ -241,32 +237,46 @@ export function Navbar() {
             {!selectedVolunteer ? (
               /* VOLUNTEER HEADS DIRECTORY LIST */
               <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-                {VOLUNTEER_HEADS.map((vol) => (
-                  <div key={vol.id} className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/60 flex items-start gap-4 hover:border-sky-500/40 transition-all">
-                    <div className="h-12 w-12 rounded-2xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold text-sm border border-amber-300/40 shrink-0">
-                      {vol.avatar_initials}
+                {volunteerHeads.length === 0 ? (
+                  <div className="p-8 text-center space-y-3 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
+                    <div className="h-12 w-12 rounded-full bg-amber-500/10 text-amber-500 mx-auto flex items-center justify-center border border-amber-500/20">
+                      <Award className="h-6 w-6" />
                     </div>
-                    <div className="flex-1 space-y-1.5">
-                      <div className="flex flex-wrap items-center justify-between gap-1">
-                        <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{vol.full_name}</h4>
-                        <span className="px-2 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px] font-extrabold rounded-full border border-amber-500/30">
-                          👑 {vol.samidha_designation} ({vol.academic_year})
-                        </span>
-                      </div>
-                      <p className="text-xs text-zinc-500">Specialization: {vol.subjects}</p>
-                      
-                      <div className="pt-2 flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => setSelectedVolunteer(vol)}
-                          className="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-sm"
-                        >
-                          <Send className="h-3.5 w-3.5 mr-1.5" /> Connect & Request Guidance
-                        </Button>
-                      </div>
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">No Operational & Volunteer Heads Designated Yet</h4>
+                      <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+                        SAMIDHA Administrators assign Operational & Volunteer Head designations to verified 3rd & 4th year volunteer educators in the Admin Control Panel.
+                      </p>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  volunteerHeads.map((vol) => (
+                    <div key={vol.id} className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/60 flex items-start gap-4 hover:border-sky-500/40 transition-all">
+                      <div className="h-12 w-12 rounded-2xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold text-sm border border-amber-300/40 shrink-0">
+                        {vol.avatar_initials || vol.full_name?.split(' ').map(n=>n[0]).join('') || "VH"}
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <div className="flex flex-wrap items-center justify-between gap-1">
+                          <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{vol.full_name}</h4>
+                          <span className="px-2 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px] font-extrabold rounded-full border border-amber-500/30">
+                            👑 {vol.samidha_designation} ({vol.academic_year})
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-500">Specialization: {vol.subjects || "Academic & Career Guidance"}</p>
+                        
+                        <div className="pt-2 flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => setSelectedVolunteer(vol)}
+                            className="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-sm"
+                          >
+                            <Send className="h-3.5 w-3.5 mr-1.5" /> Connect & Request Guidance
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             ) : !inquirySent ? (
               /* STUDENT INQUIRY FORM */
@@ -274,7 +284,7 @@ export function Navbar() {
                 <div className="p-3 bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 rounded-2xl flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-xs">
-                      {selectedVolunteer.avatar_initials}
+                      {selectedVolunteer.avatar_initials || "VH"}
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">{selectedVolunteer.full_name}</h4>
@@ -374,7 +384,7 @@ export function Navbar() {
                   </span>
                   
                   <a
-                    href={`https://wa.me/${selectedVolunteer.whatsapp_number}?text=${encodeURIComponent(
+                    href={`https://wa.me/${selectedVolunteer.whatsapp_number || "919876543210"}?text=${encodeURIComponent(
                       `Hi ${selectedVolunteer.full_name}, I am ${studentForm.full_name} (Mobile: ${studentForm.mobile}). I am seeking guidance for ${studentForm.needed_subject} on SAMIDHA E-GURU.`
                     )}`}
                     target="_blank"
