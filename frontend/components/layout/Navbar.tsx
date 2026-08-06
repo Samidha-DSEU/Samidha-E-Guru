@@ -105,9 +105,9 @@ export function Navbar() {
             <div className="absolute inset-0 bg-sky-500/20 rounded-xl blur-md group-hover:bg-sky-500/40 transition-all" />
             {!logoError ? (
               <img
-                src="/assets/samidha-logo.svg"
+                src="/logo.png"
                 alt="SAMIDHA E-GURU Logo"
-                className="h-9 w-9 relative z-10 object-contain shrink-0 transition-transform group-hover:scale-105"
+                className="h-9 w-9 relative z-10 object-contain shrink-0 rounded-lg transition-transform group-hover:scale-105"
                 onError={() => setLogoError(true)}
               />
             ) : (
