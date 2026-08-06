@@ -6,8 +6,13 @@ import { useAuth } from "@/features/auth/context/AuthContext";
 import { UserRole } from "@/types/api";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { BookOpen, GraduationCap, ShieldCheck, Award, Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
+import { BookOpen, GraduationCap, ShieldCheck, Award, Eye, EyeOff, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
+import { CursorDotsCanvas } from "@/components/ui/CursorDotsCanvas";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { AnimatedText } from "@/components/ui/AnimatedText";
+import { TypewriterText } from "@/components/ui/TypewriterText";
+import { TiltCard } from "@/components/ui/TiltCard";
 
 export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
@@ -67,7 +72,7 @@ export default function LoginPage() {
       if (activeTab === "register") {
         await register({ ...formData, role_name: selectedRole });
       } else {
-        await login({ email: formData.email, password: formData.password });
+        await login({ email: formData.email, password: formData.password, role_name: selectedRole });
       }
       
       if (selectedRole === "admin" || selectedRole === "super_admin") {
@@ -80,7 +85,7 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.response?.data?.message || "An error occurred");
+      setError(err.response?.data?.detail || err.response?.data?.message || "An error occurred during authentication.");
     }
   };
 
@@ -101,266 +106,270 @@ export default function LoginPage() {
         }
       }
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.response?.data?.message || "An error occurred during Google sign in");
+      setError(err.response?.data?.detail || err.response?.data?.message || "An error occurred during Google sign in.");
     }
   };
 
   const handleGoogleError = () => {
-    setError("Google Login Failed. Please try again.");
+    setError("Google Sign-In failed. Please try again.");
   };
 
   return (
-    <div className="max-w-md mx-auto py-12 space-y-6">
-      <div className="text-center space-y-2">
-        <div className="h-12 w-12 rounded-2xl bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center mx-auto border border-sky-200 dark:border-sky-800 shadow-sm">
-          <BookOpen className="h-6 w-6" />
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Welcome to SAMIDHA E-GURU
-        </h1>
-        <p className="text-xs text-zinc-500">
-          Access educational resources, bookmarks, progress, and community.
-        </p>
-      </div>
+    <div className="relative min-h-[85vh] flex items-center justify-center py-10 px-4 selection:bg-sky-500 selection:text-white">
+      <CursorDotsCanvas />
 
-      <Card className="space-y-6">
-        <div className="flex border-b border-zinc-200 dark:border-zinc-800">
-          <button
-            type="button"
-            className={`flex-1 pb-3 text-sm font-medium transition-colors ${
-              activeTab === "login"
-                ? "text-sky-600 border-b-2 border-sky-600 dark:text-sky-400 dark:border-sky-400 font-semibold"
-                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-            }`}
-            onClick={() => {
-              setActiveTab("login");
-              setError(null);
-              setTouched({ email: false, password: false, full_name: false });
-            }}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            className={`flex-1 pb-3 text-sm font-medium transition-colors ${
-              activeTab === "register"
-                ? "text-sky-600 border-b-2 border-sky-600 dark:text-sky-400 dark:border-sky-400 font-semibold"
-                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-            }`}
-            onClick={() => {
-              setActiveTab("register");
-              setError(null);
-              setTouched({ email: false, password: false, full_name: false });
-            }}
-          >
-            Create Account
-          </button>
-        </div>
-
-        <form onSubmit={handleEmailSubmit} className="space-y-4">
-          <div className="space-y-3">
-            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Select Your Role
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedRole("student")}
-                className={`p-3 rounded-xl border text-xs font-medium flex flex-col items-center gap-1.5 transition-all ${
-                  selectedRole === "student"
-                    ? "border-sky-500 bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 shadow-sm"
-                    : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                }`}
-              >
-                <GraduationCap className="h-4 w-4" />
-                Student
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSelectedRole("volunteer")}
-                className={`p-3 rounded-xl border text-xs font-medium flex flex-col items-center gap-1.5 transition-all ${
-                  selectedRole === "volunteer"
-                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 shadow-sm"
-                    : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                }`}
-              >
-                <ShieldCheck className="h-4 w-4" />
-                Volunteer
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSelectedRole("alumni")}
-                className={`p-3 rounded-xl border text-xs font-medium flex flex-col items-center gap-1.5 transition-all ${
-                  selectedRole === "alumni"
-                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 shadow-sm"
-                    : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                }`}
-              >
-                <Award className="h-4 w-4" />
-                Alumni
-              </button>
+      <div className="w-full max-w-md space-y-6 relative z-10">
+        {/* Header Title with Blur-Fade Reveal */}
+        <ScrollReveal direction="down" delay={0}>
+          <div className="text-center space-y-2">
+            <div className="h-14 w-14 rounded-2xl bg-sky-500/10 dark:bg-sky-400/10 text-sky-600 dark:text-sky-400 flex items-center justify-center mx-auto border border-sky-500/20 shadow-lg shadow-sky-500/10">
+              <BookOpen className="h-7 w-7" />
             </div>
+            
+            <AnimatedText
+              text="Welcome to SAMIDHA E-GURU"
+              gradientWords={["SAMIDHA", "E-GURU"]}
+              className="text-2xl sm:text-3xl font-extrabold tracking-tight"
+            />
+            
+            <TypewriterText
+              text="Access educational resources, bookmarks, progress tracking, and mentorship community."
+              highlightWords={["resources", "progress", "mentorship"]}
+              speedMs={15}
+              className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400"
+            />
           </div>
+        </ScrollReveal>
 
-          {error && (
-            <div className="p-3 text-xs sm:text-sm text-rose-600 bg-rose-50 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 rounded-xl flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {activeTab === "register" && (
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Full Name
-              </label>
-              <input
-                name="full_name"
-                type="text"
-                required
-                value={formData.full_name}
-                onChange={handleInputChange}
-                onBlur={() => handleBlur("full_name")}
-                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all"
-                placeholder="John Doe"
-              />
-            </div>
-          )}
-
-          {/* EMAIL INPUT WITH VALIDATION ICON */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Email Address
-              </label>
-            </div>
-            <div className="relative flex items-center">
-              <input
-                name="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleInputChange}
-                onBlur={() => handleBlur("email")}
-                className={`w-full px-3 py-2 pr-10 border rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 transition-all ${
-                  isEmailTouched && !isEmailValid
-                    ? "border-rose-400 dark:border-rose-600 focus:ring-rose-500"
-                    : formData.email.length > 0 && isEmailValid
-                    ? "border-emerald-400 dark:border-emerald-600 focus:ring-emerald-500"
-                    : "border-zinc-300 dark:border-zinc-700 focus:ring-sky-500"
-                }`}
-                placeholder="you@example.com"
-              />
-              <div className="absolute right-3 pointer-events-none flex items-center">
-                {formData.email.length > 0 && (
-                  isEmailValid ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500 animate-in fade-in" />
-                  ) : (
-                    isEmailTouched && <AlertCircle className="h-4 w-4 text-rose-500 animate-in fade-in" />
-                  )
-                )}
+        {/* Auth Glassmorphism Card Container */}
+        <ScrollReveal direction="up" delay={100}>
+          <TiltCard>
+            <div className="bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+              
+              {/* Sign In vs Create Account Tabs */}
+              <div className="flex border-b border-zinc-200 dark:border-zinc-800 pb-2">
+                <button
+                  type="button"
+                  className={`flex-1 pb-2 text-sm font-bold transition-all relative ${
+                    activeTab === "login"
+                      ? "text-sky-600 dark:text-sky-400"
+                      : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  }`}
+                  onClick={() => {
+                    setActiveTab("login");
+                    setError(null);
+                    setTouched({ email: false, password: false, full_name: false });
+                  }}
+                >
+                  Sign In
+                  {activeTab === "login" && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-500 rounded-full" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className={`flex-1 pb-2 text-sm font-bold transition-all relative ${
+                    activeTab === "register"
+                      ? "text-sky-600 dark:text-sky-400"
+                      : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  }`}
+                  onClick={() => {
+                    setActiveTab("register");
+                    setError(null);
+                    setTouched({ email: false, password: false, full_name: false });
+                  }}
+                >
+                  Create Account
+                  {activeTab === "register" && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-500 rounded-full" />
+                  )}
+                </button>
               </div>
-            </div>
-            {isEmailTouched && !isEmailValid && (
-              <p className="text-[11px] text-rose-500 flex items-center gap-1 mt-1 font-medium">
-                <AlertCircle className="h-3 w-3 shrink-0" /> Please enter a valid email address (e.g. user@domain.com)
-              </p>
-            )}
-          </div>
 
-          {/* PASSWORD INPUT WITH EYE TOGGLE & STRENGTH BADGES */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Password
-              </label>
-            </div>
-            <div className="relative flex items-center">
-              <input
-                name="password"
-                type={showPassword ? "text" : "password"}
-                required
-                value={formData.password}
-                onChange={handleInputChange}
-                onBlur={() => handleBlur("password")}
-                className={`w-full px-3 py-2 pr-10 border rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 transition-all ${
-                  activeTab === "register" && isPasswordTouched && !isPasswordStrong
-                    ? "border-rose-400 dark:border-rose-600 focus:ring-rose-500"
-                    : activeTab === "register" && isPasswordStrong
-                    ? "border-emerald-400 dark:border-emerald-600 focus:ring-emerald-500"
-                    : "border-zinc-300 dark:border-zinc-700 focus:ring-sky-500"
-                }`}
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 focus:outline-none transition-colors"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-
-            {/* Password Validation Hints for Registration */}
-            {activeTab === "register" && formData.password.length > 0 && (
-              <div className="pt-1.5 space-y-1">
-                <div className="flex items-center gap-3 text-[11px]">
-                  <span className={`flex items-center gap-1 font-medium transition-colors ${
-                    isPasswordMinLength ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"
-                  }`}>
-                    <CheckCircle2 className={`h-3 w-3 ${isPasswordMinLength ? "text-emerald-500" : "text-zinc-300 dark:text-zinc-600"}`} />
-                    8+ characters
+              {/* Role Selection Grid */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    Target Access Role
+                  </label>
+                  <span className="text-[10px] text-sky-600 dark:text-sky-400 font-medium">
+                    Multi-Role Portal Access
                   </span>
-                  <span className={`flex items-center gap-1 font-medium transition-colors ${
-                    hasLetter && hasNumber ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"
-                  }`}>
-                    <CheckCircle2 className={`h-3 w-3 ${hasLetter && hasNumber ? "text-emerald-500" : "text-zinc-300 dark:text-zinc-600"}`} />
-                    Letters & numbers
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole("student")}
+                    className={`p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                      selectedRole === "student"
+                        ? "border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 shadow-md shadow-sky-500/10"
+                        : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    }`}
+                  >
+                    <GraduationCap className="h-4 w-4" />
+                    Student
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole("volunteer")}
+                    className={`p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                      selectedRole === "volunteer"
+                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 shadow-md shadow-emerald-500/10"
+                        : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    }`}
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Volunteer
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole("alumni")}
+                    className={`p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                      selectedRole === "alumni"
+                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-md shadow-indigo-500/10"
+                        : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    }`}
+                  >
+                    <Award className="h-4 w-4" />
+                    Alumni
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-3 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 rounded-2xl flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Email / Password Form */}
+              <form onSubmit={handleEmailSubmit} className="space-y-4">
+                {activeTab === "register" && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                      Full Name
+                    </label>
+                    <input
+                      name="full_name"
+                      type="text"
+                      required
+                      value={formData.full_name}
+                      onChange={handleInputChange}
+                      onBlur={() => handleBlur("full_name")}
+                      className="w-full px-3.5 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all"
+                      placeholder="E.g., Rahul Sharma"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                    Email Address
+                  </label>
+                  <div className="relative flex items-center">
+                    <input
+                      name="email"
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      onBlur={() => handleBlur("email")}
+                      className={`w-full px-3.5 py-2.5 pr-10 border rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 transition-all ${
+                        isEmailTouched && !isEmailValid
+                          ? "border-rose-400 dark:border-rose-600 focus:ring-rose-500"
+                          : formData.email.length > 0 && isEmailValid
+                          ? "border-emerald-400 dark:border-emerald-600 focus:ring-emerald-500"
+                          : "border-zinc-300 dark:border-zinc-700 focus:ring-sky-500"
+                      }`}
+                      placeholder="you@example.com"
+                    />
+                    <div className="absolute right-3 pointer-events-none flex items-center">
+                      {formData.email.length > 0 && (
+                        isEmailValid ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 animate-in fade-in" />
+                        ) : (
+                          isEmailTouched && <AlertCircle className="h-4 w-4 text-rose-500 animate-in fade-in" />
+                        )
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                    Password
+                  </label>
+                  <div className="relative flex items-center">
+                    <input
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      onBlur={() => handleBlur("password")}
+                      className={`w-full px-3.5 py-2.5 pr-10 border rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 transition-all ${
+                        activeTab === "register" && isPasswordTouched && !isPasswordStrong
+                          ? "border-rose-400 dark:border-rose-600 focus:ring-rose-500"
+                          : activeTab === "register" && isPasswordStrong
+                          ? "border-emerald-400 dark:border-emerald-600 focus:ring-emerald-500"
+                          : "border-zinc-300 dark:border-zinc-700 focus:ring-sky-500"
+                      }`}
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  isLoading={isLoading}
+                  className="w-full h-11 text-sm font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-500/20 rounded-2xl transition-all"
+                >
+                  {activeTab === "login" ? "Sign In to Dashboard" : "Create My Account"}
+                </Button>
+              </form>
+
+              {/* Divider & Google OAuth Section */}
+              <div className="relative pt-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+                </div>
+                <div className="relative flex justify-center text-[11px] font-semibold uppercase tracking-wider">
+                  <span className="bg-white dark:bg-zinc-950 px-3 text-zinc-400">
+                    Or Sign In With Google
                   </span>
                 </div>
               </div>
-            )}
-          </div>
 
-          <Button
-            type="submit"
-            isLoading={isLoading}
-            className="w-full h-11 text-sm font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-md shadow-sky-500/10 rounded-xl"
-          >
-            {activeTab === "login" ? "Sign In" : "Create Account"}
-          </Button>
-        </form>
+              {/* TRADITIONAL CIRCULAR GOOGLE OAUTH BUTTON */}
+              <div className="flex flex-col items-center justify-center gap-2 pt-1">
+                <div className="p-1 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:scale-105 transition-transform shadow-md">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    type="icon"
+                    shape="circle"
+                    size="large"
+                  />
+                </div>
+                <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-sky-500" /> Fast 1-Click Google Authentication
+                </span>
+              </div>
 
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-zinc-200 dark:border-zinc-800"></div>
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-white dark:bg-zinc-950 px-2 text-zinc-500 font-medium">
-              Or continue with
-            </span>
-          </div>
-        </div>
-
-        <div className="flex justify-center w-full min-h-[44px]">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleError}
-            theme="filled_blue"
-            size="large"
-            width="380"
-            shape="rectangular"
-            text="continue_with"
-          />
-        </div>
-      </Card>
+            </div>
+          </TiltCard>
+        </ScrollReveal>
+      </div>
     </div>
   );
 }
