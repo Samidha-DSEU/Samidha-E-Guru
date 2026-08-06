@@ -107,6 +107,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loginWithGoogle = async (role: UserRole, idToken: string) => {
     setIsLoading(true);
+    let googleName = "Google User";
+    let googleEmail = "google.user@samidha.org";
+    let googlePicture = "";
+
+    // Fetch real user info from Google's UserInfo endpoint
+    try {
+      const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${idToken}` }
+      });
+      if (userInfoRes.ok) {
+        const userInfo = await userInfoRes.json();
+        if (userInfo.name) googleName = userInfo.name;
+        if (userInfo.email) googleEmail = userInfo.email;
+        if (userInfo.picture) googlePicture = userInfo.picture;
+      }
+    } catch {
+      try {
+        const base64Payload = idToken.split('.')[1];
+        if (base64Payload) {
+          const decoded = JSON.parse(atob(base64Payload));
+          if (decoded.name) googleName = decoded.name;
+          if (decoded.email) googleEmail = decoded.email;
+          if (decoded.picture) googlePicture = decoded.picture;
+        }
+      } catch {}
+    }
+
     try {
       const res = await apiClient.post("/auth/google", {
         id_token: idToken,
@@ -116,13 +143,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("samidha_access_token", newToken);
       setToken(newToken);
 
-      const loggedUser = res.data?.data?.user || createFallbackUser(role, "google.user@samidha.org", "Google User");
+      let loggedUser = res.data?.data?.user;
+      if (!loggedUser) {
+        loggedUser = createFallbackUser(role, googleEmail, googleName);
+        if (googlePicture && loggedUser.profile) {
+          loggedUser.profile.avatar_url = googlePicture;
+        }
+      }
       setUser(loggedUser);
     } catch (err) {
       const mockToken = "google_token_" + Date.now();
       localStorage.setItem("samidha_access_token", mockToken);
       setToken(mockToken);
-      const fallbackUser = createFallbackUser(role, "google.user@samidha.org", "Google User");
+      const fallbackUser = createFallbackUser(role, googleEmail, googleName);
+      if (googlePicture && fallbackUser.profile) {
+        fallbackUser.profile.avatar_url = googlePicture;
+      }
       setUser(fallbackUser);
     } finally {
       setIsLoading(false);
