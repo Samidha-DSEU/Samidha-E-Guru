@@ -123,57 +123,15 @@ export function Navbar() {
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-6">
+          <Link href="/" className="text-sm font-medium text-zinc-600 hover:text-sky-600 dark:text-zinc-400 dark:hover:text-sky-400 transition-colors">
+            Home
+          </Link>
           <Link href="/resources" className="text-sm font-medium text-zinc-600 hover:text-sky-600 dark:text-zinc-400 dark:hover:text-sky-400 transition-colors">
             Resources
           </Link>
           <Link href="/community" className="text-sm font-medium text-zinc-600 hover:text-sky-600 dark:text-zinc-400 dark:hover:text-sky-400 transition-colors">
             Community
           </Link>
-
-          {/* Portals Dropdown Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setIsPortalOpen(!isPortalOpen)}
-              className="text-sm font-medium text-zinc-600 hover:text-sky-600 dark:text-zinc-400 dark:hover:text-sky-400 flex items-center gap-1 transition-colors"
-            >
-              Portals <ChevronDown className="h-4 w-4" />
-            </button>
-
-            {isPortalOpen && (
-              <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl py-2 z-50">
-                <Link
-                  href="/dashboard"
-                  onClick={() => setIsPortalOpen(false)}
-                  className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-sky-50 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <GraduationCap className="h-4 w-4 text-sky-500" /> Student Portal
-                </Link>
-                <Link
-                  href="/volunteer"
-                  onClick={() => setIsPortalOpen(false)}
-                  className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-sky-50 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <ShieldCheck className="h-4 w-4 text-emerald-500" /> Volunteer Portal
-                </Link>
-                <Link
-                  href="/alumni"
-                  onClick={() => setIsPortalOpen(false)}
-                  className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-sky-50 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <Award className="h-4 w-4 text-indigo-500" /> Alumni Portal
-                </Link>
-                {user && (user.role.name === "admin" || user.role.name === "super_admin") && (
-                  <Link
-                    href="/admin"
-                    onClick={() => setIsPortalOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-sky-50 dark:hover:bg-zinc-800 transition-colors border-t border-zinc-200 dark:border-zinc-800 mt-1 pt-2"
-                  >
-                    Admin Control
-                  </Link>
-                )}
-              </div>
-            )}
-          </div>
 
           <button
             onClick={() => setIsMentorModalOpen(true)}
@@ -238,6 +196,9 @@ export function Navbar() {
       {/* Mobile Drawer Menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-4 space-y-3">
+          <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Home
+          </Link>
           <Link href="/resources" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Resources
           </Link>
