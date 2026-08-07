@@ -10,9 +10,6 @@ from app.models.events import Event, EventRegistration
 from app.models.communication import Announcement, Notification, ContactMessage
 from app.models.administration import ScraperSource, ScraperJob, ActivityLog
 from app.models.mentorship import MentorshipRequest, MentorshipMessage
-from app.models.learn_ai import (
-    AIDocument, AIDocumentChunk, AIWorkspaceCache, QuestionBank, StudentProgress
-)
 
 __all__ = [
     "Base",
@@ -48,9 +45,4 @@ __all__ = [
     "ActivityLog",
     "MentorshipRequest",
     "MentorshipMessage",
-    "AIDocument",
-    "AIDocumentChunk",
-    "AIWorkspaceCache",
-    "QuestionBank",
-    "StudentProgress",
 ]

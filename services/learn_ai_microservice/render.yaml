@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: samidha-learn-ai-service
+    env: python
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MONGODB_URL
+        sync: false
+      - key: MONGODB_DB_NAME
+        value: samidha_ai_db
+      - key: GROQ_API_KEY
+        sync: false
