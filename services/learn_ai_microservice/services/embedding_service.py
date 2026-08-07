@@ -1,7 +1,7 @@
 import logging
 import math
+import hashlib
 from typing import List, Dict, Any
-from sentence_transformers import SentenceTransformer
 from pymongo.database import Database
 
 logger = logging.getLogger("learn_ai_embeddings")
@@ -10,18 +10,55 @@ class EmbeddingService:
     _model = None
 
     @classmethod
-    def get_model(cls) -> SentenceTransformer:
-        """Lazy loads SentenceTransformers 384-d model."""
+    def get_model(cls):
+        """Lazy loads SentenceTransformers 384-d model only when invoked."""
         if cls._model is None:
-            logger.info("Loading sentence-transformers/all-MiniLM-L6-v2 (384-d)...")
-            cls._model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+            try:
+                logger.info("Lazy loading sentence-transformers/all-MiniLM-L6-v2 (384-d)...")
+                from sentence_transformers import SentenceTransformer
+                cls._model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+            except Exception as e:
+                logger.warning(f"Could not load SentenceTransformers ({e}). Using lightweight hash vectorizer fallback.")
+                cls._model = False
         return cls._model
 
     @classmethod
     def generate_embedding(cls, text: str) -> List[float]:
-        """Generates 384-dimensional vector embedding for given text."""
+        """
+        Generates 384-dimensional vector embedding.
+        Uses SentenceTransformer if available, or lightweight hashed feature vector (384-d).
+        """
         model = cls.get_model()
-        return model.encode(text, convert_to_numpy=True).tolist()
+        if model:
+            try:
+                return model.encode(text, convert_to_numpy=True).tolist()
+            except Exception as e:
+                logger.warning(f"SentenceTransformer encoding error ({e}). Using fallback vectorizer.")
+
+        # Ultra-lightweight 384-d Hashed Feature Vector (RAM Usage: < 1MB)
+        return cls._generate_lightweight_vector(text, dims=384)
+
+    @staticmethod
+    def _generate_lightweight_vector(text: str, dims: int = 384) -> List[float]:
+        """Generates normalized 384-dimensional deterministic feature vector from text tokens."""
+        vector = [0.0] * dims
+        words = text.lower().split()
+        if not words:
+            return vector
+
+        for word in words:
+            # Hash word into dimension index
+            hash_val = int(hashlib.md5(word.encode("utf-8")).hexdigest(), 16)
+            idx = hash_val % dims
+            val = (hash_val % 100) / 100.0
+            vector[idx] += val
+
+        # Normalize vector to unit norm
+        norm = math.sqrt(sum(x * x for x in vector))
+        if norm > 0:
+            vector = [x / norm for x in vector]
+
+        return vector
 
     @classmethod
     def search_similar_chunks(cls, db: Database, resource_id: str, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
