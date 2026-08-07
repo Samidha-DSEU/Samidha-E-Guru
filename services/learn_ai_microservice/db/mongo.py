@@ -1,4 +1,5 @@
 import logging
+import certifi
 from pymongo import MongoClient
 from pymongo.database import Database
 from config import settings
@@ -12,11 +13,24 @@ class MongoManager:
 mongo_manager = MongoManager()
 
 def get_mongo_db() -> Database:
-    """Retrieves or initializes the MongoDB Atlas database connection."""
+    """Retrieves or initializes the MongoDB Atlas database connection with TLS CA bundle."""
     if mongo_manager.db is None:
         try:
             logger.info(f"Connecting to MongoDB Atlas database '{settings.MONGODB_DB_NAME}'...")
-            mongo_manager.client = MongoClient(settings.MONGODB_URL, serverSelectionTimeoutMS=5000)
+            
+            # Additional TLS options for Atlas cloud cluster compatibility
+            kwargs = {
+                "serverSelectionTimeoutMS": 10000,
+                "connectTimeoutMS": 10000,
+            }
+            
+            if "mongodb+srv" in settings.MONGODB_URL or "mongodb.net" in settings.MONGODB_URL:
+                try:
+                    kwargs["tlsCAFile"] = certifi.where()
+                except Exception:
+                    pass
+
+            mongo_manager.client = MongoClient(settings.MONGODB_URL, **kwargs)
             mongo_manager.db = mongo_manager.client[settings.MONGODB_DB_NAME]
             # Ensure indexes on collections
             _ensure_indexes(mongo_manager.db)
