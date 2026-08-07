@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Filter, BookOpen, ExternalLink, Bookmark, Eye, Star, Folder, ChevronRight, User, Calendar, X, Sparkles } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
@@ -40,12 +41,12 @@ const CATEGORIES = ["Notes", "Question Paper / PYQ", "Sample Paper", "Worksheet"
 
 export default function ResourcesPage() {
   const queryClient = useQueryClient();
-  const [activeSource, setActiveSource] = useState<string>("samidha"); // samidha, ncert, kvs, diksha
+  const [activeSource, setActiveSource] = useState<string>("all"); // all, ncert, samidha, kvs, diksha
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<string>("latest"); // latest, top_rated, most_viewed";
+  const [sortBy, setSortBy] = useState<string>("latest"); // latest, top_rated, most_viewed
 
   // RATING MODAL STATE
   const [ratingResourceId, setRatingResourceId] = useState<string | null>(null);
@@ -56,9 +57,10 @@ export default function ResourcesPage() {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["resources", activeSource, selectedClass, selectedSubject, selectedCategory, searchTerm, sortBy],
     queryFn: async () => {
+      const sourceTypeParam = activeSource === "all" ? undefined : activeSource;
       const res = await apiClient.get<StandardResponse<ResourceLibraryItem[]>>("/resources", {
         params: {
-          source_type: activeSource,
+          source_type: sourceTypeParam,
           target_class: selectedClass || undefined,
           subject_name: selectedSubject || undefined,
           resource_category: selectedCategory || undefined,
@@ -118,14 +120,14 @@ export default function ResourcesPage() {
       {/* SOURCE TABS */}
       <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3">
         <button
-          onClick={() => { setActiveSource("samidha"); handleResetFolders(); }}
+          onClick={() => { setActiveSource("all"); handleResetFolders(); }}
           className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${
-            activeSource === "samidha"
+            activeSource === "all"
               ? "bg-sky-600 text-white shadow-md shadow-sky-500/20"
               : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
           }`}
         >
-          <Sparkles className="h-4 w-4" /> ⭐ SAMIDHA SHIKSHA LIBRARY
+          <Sparkles className="h-4 w-4" /> 🌟 ALL RESOURCES
         </button>
 
         <button
@@ -137,6 +139,17 @@ export default function ResourcesPage() {
           }`}
         >
           🏛️ NCERT Official
+        </button>
+
+        <button
+          onClick={() => { setActiveSource("samidha"); handleResetFolders(); }}
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${
+            activeSource === "samidha"
+              ? "bg-sky-600 text-white shadow-md shadow-sky-500/20"
+              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
+          }`}
+        >
+          ⭐ SAMIDHA SHIKSHA LIBRARY
         </button>
 
         <button
@@ -169,7 +182,7 @@ export default function ResourcesPage() {
         </button>
         <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
         <span className="font-semibold text-zinc-700 dark:text-zinc-300 capitalize">
-          {activeSource === "samidha" ? "SAMIDHA Shiksha Library" : activeSource.toUpperCase()}
+          {activeSource === "all" ? "All Educational Materials" : activeSource === "samidha" ? "SAMIDHA Shiksha Library" : activeSource.toUpperCase()}
         </span>
 
         {selectedClass && (
@@ -198,8 +211,8 @@ export default function ResourcesPage() {
         )}
       </div>
 
-      {/* FOLDER SYSTEM EXPLORER (SAMIDHA SHIKSHA LIBRARY HIERARCHY) */}
-      {activeSource === "samidha" && !selectedCategory && (
+      {/* FOLDER SYSTEM EXPLORER (CLASS -> SUBJECT -> MATERIAL TYPE) */}
+      {!selectedCategory && (
         <div className="space-y-4">
           {!selectedClass ? (
             <div className="space-y-3">
@@ -320,10 +333,10 @@ export default function ResourcesPage() {
         <ErrorState onRetry={refetch} />
       ) : resources.length === 0 ? (
         <EmptyState
-          title="No educational resources found in this folder"
-          description="Try selecting a different folder level or clearing search terms."
+          title="No educational resources found in this category"
+          description="Try selecting a different tab or clearing search terms."
           actionText="View All Materials"
-          onAction={handleResetFolders}
+          onAction={() => { setActiveSource("all"); handleResetFolders(); }}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -331,27 +344,41 @@ export default function ResourcesPage() {
             <Card key={res.id} className="flex flex-col justify-between space-y-4 group">
               <div className="space-y-3">
                 {/* CLASSIFICATION BADGES */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {res.target_class && (
-                    <span className="px-2 py-0.5 bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 text-[10px] font-bold rounded border border-sky-200 dark:border-sky-800">
-                      {res.target_class}
+                <div className="flex flex-wrap items-center justify-between gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {res.target_class && (
+                      <span className="px-2 py-0.5 bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 text-[10px] font-bold rounded border border-sky-200 dark:border-sky-800">
+                        {res.target_class}
+                      </span>
+                    )}
+                    {res.subject_name && (
+                      <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded border border-emerald-200 dark:border-emerald-800">
+                        {res.subject_name}
+                      </span>
+                    )}
+                    {res.resource_category && (
+                      <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded border border-indigo-200 dark:border-indigo-800">
+                        {res.resource_category}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => setRatingResourceId(res.id)}
+                    className="flex items-center gap-1 text-amber-500 hover:scale-105 transition-transform text-[11px]"
+                  >
+                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    <span className="font-bold text-zinc-800 dark:text-zinc-200">
+                      {res.rating_avg > 0 ? res.rating_avg.toFixed(1) : "New"}
                     </span>
-                  )}
-                  {res.subject_name && (
-                    <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded border border-emerald-200 dark:border-emerald-800">
-                      {res.subject_name}
-                    </span>
-                  )}
-                  {res.resource_category && (
-                    <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded border border-indigo-200 dark:border-indigo-800">
-                      {res.resource_category}
-                    </span>
-                  )}
+                  </button>
                 </div>
 
-                <h3 className="font-semibold text-base text-zinc-900 dark:text-zinc-100 line-clamp-2 group-hover:text-sky-600 transition-colors">
-                  {res.title}
-                </h3>
+                <Link href={`/resources/${res.id}`}>
+                  <h3 className="font-semibold text-base text-zinc-900 dark:text-zinc-100 line-clamp-2 hover:text-sky-600 transition-colors cursor-pointer pt-1">
+                    {res.title}
+                  </h3>
+                </Link>
                 <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed">
                   {res.description || "Structured study material verified for student preparation."}
                 </p>
@@ -369,28 +396,32 @@ export default function ResourcesPage() {
                 </div>
               </div>
 
-              {/* RATING & ACTION FOOTER */}
-              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
-                <button
-                  onClick={() => setRatingResourceId(res.id)}
-                  className="flex items-center gap-1.5 text-amber-500 hover:scale-105 transition-transform"
-                >
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  <span className="font-bold text-xs text-zinc-800 dark:text-zinc-200">
-                    {res.rating_avg > 0 ? res.rating_avg.toFixed(1) : "New"}
-                  </span>
-                  <span className="text-[10px] text-zinc-400">({res.rating_count})</span>
-                </button>
+              {/* ACTION BUTTONS (LEARN WITH AI & PDF PREVIEW) */}
+              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2">
+                <Link href={`/resources/${res.id}/learn-ai`} className="block">
+                  <Button size="sm" className="w-full bg-gradient-to-r from-sky-600 via-indigo-600 to-purple-600 hover:from-sky-700 hover:to-purple-700 text-white shadow-sm text-xs font-semibold py-2">
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Learn with AI Workspace
+                  </Button>
+                </Link>
 
-                <a
-                  href={res.external_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition-colors"
-                >
-                  Open Resource
-                  <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
-                </a>
+                <div className="flex items-center gap-2">
+                  <Link href={`/resources/${res.id}`} className="flex-1">
+                    <Button variant="outline" size="sm" className="w-full text-xs">
+                      📄 PDF Preview
+                    </Button>
+                  </Link>
+
+                  <a
+                    href={res.external_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1"
+                  >
+                    <Button variant="ghost" size="sm" className="w-full text-xs text-zinc-500 hover:text-sky-600">
+                      Open External <ExternalLink className="h-3 w-3 ml-1" />
+                    </Button>
+                  </a>
+                </div>
               </div>
             </Card>
           ))}

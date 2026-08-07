@@ -6,22 +6,20 @@ import { Flashcard } from "../services/learnAiService";
 import { Button } from "@/components/ui/Button";
 
 export function FlashcardsTab({ flashcards }: { flashcards: Flashcard[] }) {
-  const [filter, setFilter] = useState<"All" | "Easy" | "Medium" | "Hard">("All");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [mastered, setMastered] = useState<Set<string>>(new Set());
 
-  const filtered = filter === "All" ? flashcards : flashcards.filter((f) => f.difficulty === filter);
-  const currentCard = filtered[currentIndex] || flashcards[0];
+  const currentCard = flashcards[currentIndex] || flashcards[0];
 
   const handleNext = () => {
     setFlipped(false);
-    setCurrentIndex((prev) => (prev + 1) % filtered.length);
+    setCurrentIndex((prev) => (prev + 1) % flashcards.length);
   };
 
   const handlePrev = () => {
     setFlipped(false);
-    setCurrentIndex((prev) => (prev - 1 + filtered.length) % filtered.length);
+    setCurrentIndex((prev) => (prev - 1 + flashcards.length) % flashcards.length);
   };
 
   const toggleMastered = (id: string) => {
@@ -33,39 +31,19 @@ export function FlashcardsTab({ flashcards }: { flashcards: Flashcard[] }) {
     });
   };
 
-  if (!filtered || filtered.length === 0) {
-    return <div className="text-sm text-zinc-400 py-8 text-center">No flashcards match this filter.</div>;
+  if (!flashcards || flashcards.length === 0) {
+    return <div className="text-sm text-zinc-400 py-8 text-center">No flashcards available.</div>;
   }
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      {/* Header & Filter Controls */}
+      {/* Header Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Layers className="h-5 w-5 text-sky-600 dark:text-sky-400" />
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            Adaptive Learning Flashcards ({currentIndex + 1} of {filtered.length})
+            Interactive Chapter Flashcards ({currentIndex + 1} of {flashcards.length})
           </h3>
-        </div>
-
-        <div className="flex gap-1.5 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-xs">
-          {(["All", "Easy", "Medium", "Hard"] as const).map((lvl) => (
-            <button
-              key={lvl}
-              onClick={() => {
-                setFilter(lvl);
-                setCurrentIndex(0);
-                setFlipped(false);
-              }}
-              className={`px-2.5 py-1 rounded-md font-medium transition-all ${
-                filter === lvl
-                  ? "bg-white dark:bg-zinc-900 text-sky-600 dark:text-sky-400 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-              }`}
-            >
-              {lvl}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -110,14 +88,10 @@ export function FlashcardsTab({ flashcards }: { flashcards: Flashcard[] }) {
                 <CheckCircle className="h-4 w-4" />
                 {mastered.has(currentCard.id) ? "Mastered" : "Mark as Mastered"}
               </button>
-
-              <span className="text-xs font-mono text-zinc-400">
-                Difficulty: {currentCard.difficulty}
-              </span>
             </div>
           </div>
 
-          {/* BACK FACE (ANSWER EXPLANATION) - Rotated 180deg so text renders perfectly right-side-up */}
+          {/* BACK FACE (ANSWER EXPLANATION) */}
           <div className="absolute inset-0 h-full w-full p-8 flex flex-col justify-between bg-gradient-to-br from-emerald-500/5 via-sky-500/5 to-indigo-500/5 dark:bg-zinc-900 border border-emerald-500/30 dark:border-emerald-500/40 rounded-2xl shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)]">
             <div className="flex items-center justify-between text-xs">
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-1">
@@ -147,10 +121,6 @@ export function FlashcardsTab({ flashcards }: { flashcards: Flashcard[] }) {
                 <CheckCircle className="h-4 w-4" />
                 {mastered.has(currentCard.id) ? "Mastered" : "Mark as Mastered"}
               </button>
-
-              <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-medium">
-                Difficulty: {currentCard.difficulty}
-              </span>
             </div>
           </div>
         </div>

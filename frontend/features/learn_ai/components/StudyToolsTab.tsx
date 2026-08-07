@@ -55,17 +55,6 @@ export function StudyToolsTab({ tools }: { tools: StudyTools }) {
         >
           <AlertTriangle className="h-3.5 w-3.5" /> Common Mistakes
         </button>
-
-        <button
-          onClick={() => setActiveSubTab("videos")}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-            activeSubTab === "videos"
-              ? "bg-sky-600 text-white"
-              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900"
-          }`}
-        >
-          <Video className="h-3.5 w-3.5" /> Video Scripts
-        </button>
       </div>
 
       {/* Definitions Display */}
@@ -124,21 +113,6 @@ export function StudyToolsTab({ tools }: { tools: StudyTools }) {
                 ✅ Correct Fix: {c.correction}
               </div>
               <p className="text-xs text-zinc-500 italic">Reason: {c.reason}</p>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Video Scripts Display */}
-      {activeSubTab === "videos" && (
-        <div className="space-y-3">
-          {tools.video_scripts.map((v, idx) => (
-            <Card key={idx} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase text-sky-600 dark:text-sky-400">{v.scene}</span>
-              </div>
-              <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">"{v.narration}"</p>
-              <p className="text-[11px] text-zinc-400">Visual Cue: {v.visual}</p>
             </Card>
           ))}
         </div>

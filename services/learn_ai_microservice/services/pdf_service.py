@@ -13,30 +13,71 @@ class PDFIngestionService:
 
     @staticmethod
     async def download_pdf(url: str) -> bytes:
-        """Downloads PDF with browser headers for NCERT compatibility."""
+        """Downloads PDF with desktop browser headers and NCERT referral headers."""
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "application/pdf,*/*"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "application/pdf,text/html,application/xhtml+xml,application/xml;q=0.9,*/*",
+            "Referer": "https://ncert.nic.in/textbook.php",
+            "Accept-Language": "en-US,en;q=0.9"
         }
-        async with httpx.AsyncClient(timeout=60.0, follow_redirects=True, headers=headers) as client:
-            resp = await client.get(url)
-            resp.raise_for_status()
-            return resp.content
+        try:
+            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, headers=headers) as client:
+                resp = await client.get(url)
+                if resp.status_code == 200 and len(resp.content) > 1000:
+                    return resp.content
+        except Exception as e:
+            logger.warning(f"Direct download from {url} failed: {e}. Trying Google Docs Proxy...")
+
+        # Fallback 1: Google Docs PDF stream proxy
+        proxy_url = f"https://docs.google.com/viewer?url={url}"
+        try:
+            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, headers=headers) as client:
+                resp = await client.get(url)
+                if resp.status_code == 200:
+                    return resp.content
+        except Exception:
+            pass
+
+        raise ValueError(f"Could not download PDF from {url}")
 
     @classmethod
     async def ingest_resource_pdf(cls, db: Database, resource_id: str, pdf_url: str, title: str) -> Dict[str, Any]:
         """
         Parses PDF, computes SHA-256 hash, extracts Markdown tables,
         generates SentenceTransformer vectors, and stores into MongoDB Atlas collections.
+        If download fails, records status='failed' so future scraper jobs retry & replace with real chunks.
         """
+        doc_coll = db["ai_documents"]
+        chunks_coll = db["ai_chunks"]
+
         # 1. Download PDF bytes
-        pdf_bytes = await cls.download_pdf(pdf_url)
+        pdf_bytes = None
+        try:
+            pdf_bytes = await cls.download_pdf(pdf_url)
+        except Exception as err:
+            logger.error(f"Failed to download PDF for '{title}': {err}")
+            # Mark document status as 'failed' so future runs WILL retry and replace
+            doc_coll.update_one(
+                {"resource_id": resource_id},
+                {
+                    "$set": {
+                        "resource_id": resource_id,
+                        "title": title,
+                        "status": "failed",
+                        "error_message": str(err),
+                        "file_hash": None
+                    }
+                },
+                upsert=True
+            )
+            return {"status": "failed", "reason": str(err), "chunks_created": 0}
+
+        # 2. Compute Real SHA-256 Hash
         file_hash = hashlib.sha256(pdf_bytes).hexdigest()
 
-        # 2. Check SHA-256 Deduplication in MongoDB
-        doc_coll = db["ai_documents"]
-        existing_doc = doc_coll.find_one({"file_hash": file_hash})
-        if existing_doc:
+        # 3. Check SHA-256 Deduplication (Only skip if document status is READY with matching real hash)
+        existing_doc = doc_coll.find_one({"resource_id": resource_id})
+        if existing_doc and existing_doc.get("status") == "ready" and existing_doc.get("file_hash") == file_hash:
             logger.info(f"PDF hash match for resource '{title}'. Reusing existing MongoDB chunks.")
             return {"status": "skipped", "reason": "hash_matched", "chunks_created": 0}
 

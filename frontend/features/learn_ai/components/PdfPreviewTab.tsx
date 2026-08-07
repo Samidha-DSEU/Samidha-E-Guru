@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { FileText, Download, ExternalLink, Maximize2, Minimize2, ShieldCheck, Sparkles, BookOpen } from "lucide-react";
+import { FileText, Download, ExternalLink, Maximize2, Minimize2, ShieldCheck, Zap, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 interface PdfPreviewTabProps {
@@ -11,11 +11,14 @@ interface PdfPreviewTabProps {
 
 export function PdfPreviewTab({ pdfUrl, title }: PdfPreviewTabProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [iframeError, setIframeError] = useState(false);
+  const [viewerMode, setViewerMode] = useState<"proxy" | "google" | "direct">("proxy");
 
-  // Google Docs viewer wrapper fallback for cross-origin NCERT PDFs
+  // API Base URL for SAMIDHA High-Speed Stream Proxy
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+  const proxyStreamUrl = `${apiBaseUrl}/resources/pdf-proxy/stream?url=${encodeURIComponent(pdfUrl)}`;
   const googleDocsViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`;
-  const embedSrc = iframeError ? googleDocsViewerUrl : pdfUrl;
+
+  const embedSrc = viewerMode === "proxy" ? proxyStreamUrl : viewerMode === "google" ? googleDocsViewerUrl : pdfUrl;
 
   return (
     <div className="space-y-4">
@@ -37,14 +40,43 @@ export function PdfPreviewTab({ pdfUrl, title }: PdfPreviewTabProps) {
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIframeError(!iframeError)}
-            className="text-xs px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-sky-500 transition-all"
-          >
-            {iframeError ? "Use Direct Viewer" : "Use Google Viewer Mode"}
-          </button>
+        {/* Action Controls & High-Speed Viewer Selector */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-xs">
+            <button
+              onClick={() => setViewerMode("proxy")}
+              className={`px-2.5 py-1 rounded-md font-semibold transition-all flex items-center gap-1 ${
+                viewerMode === "proxy"
+                  ? "bg-sky-600 text-white shadow-sm"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900"
+              }`}
+              title="Fast SAMIDHA Backend Stream Proxy bypassing slow NCERT servers"
+            >
+              <Zap className="h-3 w-3" /> Fast Proxy Engine
+            </button>
+
+            <button
+              onClick={() => setViewerMode("google")}
+              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                viewerMode === "google"
+                  ? "bg-sky-600 text-white shadow-sm"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900"
+              }`}
+            >
+              Google Cloud Mode
+            </button>
+
+            <button
+              onClick={() => setViewerMode("direct")}
+              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                viewerMode === "direct"
+                  ? "bg-sky-600 text-white shadow-sm"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900"
+              }`}
+            >
+              Direct Link
+            </button>
+          </div>
 
           <button
             onClick={() => setIsFullscreen(!isFullscreen)}
@@ -60,7 +92,7 @@ export function PdfPreviewTab({ pdfUrl, title }: PdfPreviewTabProps) {
             </Button>
           </a>
 
-          <a href={pdfUrl} download target="_blank" rel="noopener noreferrer">
+          <a href={proxyStreamUrl} download={`${title}.pdf`} target="_blank" rel="noopener noreferrer">
             <Button size="sm" className="bg-sky-600 hover:bg-sky-500 text-white">
               <Download className="h-3.5 w-3.5 mr-1.5" /> Download PDF
             </Button>
@@ -78,7 +110,6 @@ export function PdfPreviewTab({ pdfUrl, title }: PdfPreviewTabProps) {
           src={embedSrc}
           title={`PDF Preview - ${title}`}
           className="w-full h-full border-0 bg-white"
-          onError={() => setIframeError(true)}
         />
       </div>
     </div>

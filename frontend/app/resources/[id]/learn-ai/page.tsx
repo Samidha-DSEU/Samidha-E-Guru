@@ -31,10 +31,34 @@ export default function LearnAiWorkspacePage({ params }: { params: Promise<{ id:
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto space-y-6 py-6 px-4">
-        <Skeleton className="h-8 w-1/4" />
-        <Skeleton className="h-40 w-full rounded-2xl" />
-        <Skeleton className="h-64 w-full rounded-2xl" />
+      <div className="max-w-5xl mx-auto py-20 px-4 flex flex-col items-center justify-center space-y-6 text-center">
+        {/* Glowing Gradient AI Spinner Ring */}
+        <div className="relative flex items-center justify-center">
+          <div className="h-20 w-20 rounded-full border-4 border-sky-500/20 border-t-sky-600 border-r-indigo-600 border-b-purple-600 animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center text-sky-600 dark:text-sky-400">
+            <Sparkles className="h-8 w-8 animate-pulse" />
+          </div>
+        </div>
+
+        {/* Professional Theme Status Card */}
+        <div className="space-y-2 max-w-md">
+          <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center justify-center gap-2">
+            <Sparkles className="h-4 w-4 text-sky-500" /> Preparing AI Tutor Workspace
+          </h3>
+          <p className="text-xs text-zinc-500 leading-relaxed">
+            Parsing textbook PDF chunks, querying MongoDB Atlas vector store, and structuring your personalized academic workspace...
+          </p>
+        </div>
+
+        {/* Pulse Skeleton Layout */}
+        <div className="w-full max-w-2xl pt-4 space-y-4">
+          <Skeleton className="h-24 w-full rounded-2xl bg-gradient-to-r from-sky-500/10 via-indigo-500/10 to-purple-500/10" />
+          <div className="grid grid-cols-3 gap-3">
+            <Skeleton className="h-12 w-full rounded-xl" />
+            <Skeleton className="h-12 w-full rounded-xl" />
+            <Skeleton className="h-12 w-full rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }

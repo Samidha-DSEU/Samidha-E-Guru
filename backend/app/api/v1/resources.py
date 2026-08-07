@@ -284,3 +284,37 @@ def get_resource_by_id(id: UUID, db: Session = Depends(get_db)):
         "created_at": resource.created_at.isoformat()
     }
     return StandardResponse.success_response(data=data, message="Resource details retrieved.")
+
+
+@router.get("/pdf-proxy/stream")
+async def stream_pdf_proxy(url: str):
+    """
+    High-speed PDF proxy endpoint: Downloads NCERT PDFs using desktop browser User-Agent 
+    headers and streams bytes directly to frontend iframe, bypassing NCERT timeouts & CORS blocking.
+    """
+    if not url or not url.startswith("http"):
+        raise HTTPException(status_code=400, detail="Invalid PDF URL parameter.")
+
+    import httpx
+    from fastapi.responses import StreamingResponse
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/pdf,*/*"
+    }
+
+    try:
+        client = httpx.AsyncClient(timeout=30.0, follow_redirects=True, headers=headers)
+        req = client.build_request("GET", url)
+        resp = await client.send(req, stream=True)
+        
+        return StreamingResponse(
+            resp.aiter_bytes(),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": "inline",
+                "Cache-Control": "public, max-age=86400"
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Could not stream PDF from upstream server: {e}")
