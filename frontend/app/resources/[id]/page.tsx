@@ -3,8 +3,9 @@
 import React, { use } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, ExternalLink, Bookmark, Eye, ArrowLeft, Share2, CheckCircle2, ShieldCheck } from "lucide-react";
+import { BookOpen, ExternalLink, Bookmark, Eye, ArrowLeft, Share2, ShieldCheck, Sparkles } from "lucide-react";
 import { resourceService } from "@/features/resources/services/resourceService";
+import { PdfPreviewTab } from "@/features/learn_ai/components/PdfPreviewTab";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Card";
@@ -40,6 +41,8 @@ export default function ResourceDetailsPage({ params }: { params: Promise<{ id: 
     );
   }
 
+  const pdfUrl = resource.external_url;
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 py-4">
       {/* Back Link */}
@@ -49,22 +52,20 @@ export default function ResourceDetailsPage({ params }: { params: Promise<{ id: 
 
       {/* Main Resource Card */}
       <Card className="space-y-6">
-        <div className="h-64 sm:h-80 w-full rounded-xl bg-zinc-100 dark:bg-zinc-800 overflow-hidden relative border border-zinc-200 dark:border-zinc-800">
-          {resource.thumbnail_url ? (
-            <img src={resource.thumbnail_url} alt={resource.title} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400 gap-2">
-              <BookOpen className="h-16 w-16 opacity-40" />
-              <span className="text-xs font-medium">Educational Material</span>
-            </div>
-          )}
-          <span className="absolute top-4 right-4 px-3 py-1 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-lg text-xs font-semibold uppercase text-sky-600 dark:text-sky-400 border border-zinc-200 dark:border-zinc-800 flex items-center gap-1">
-            <ShieldCheck className="h-3.5 w-3.5 text-sky-500" />
-            Verified Content
-          </span>
-        </div>
-
         <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="px-3 py-1 bg-sky-500/10 text-sky-600 dark:text-sky-400 backdrop-blur-md rounded-lg text-xs font-semibold uppercase border border-sky-200 dark:border-sky-800 flex items-center gap-1">
+              <ShieldCheck className="h-3.5 w-3.5 text-sky-500" />
+              Verified NCERT Content
+            </span>
+
+            <Link href={`/resources/${resource.id}/learn-ai`}>
+              <Button size="sm" className="bg-gradient-to-r from-sky-600 via-indigo-600 to-purple-600 text-white border-0 shadow-md">
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Learn with AI Workspace
+              </Button>
+            </Link>
+          </div>
+
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             {resource.title}
           </h1>
@@ -86,22 +87,9 @@ export default function ResourceDetailsPage({ params }: { params: Promise<{ id: 
           {resource.description || "Structured educational material verified by SAMIDHA for academic excellence."}
         </p>
 
-        {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-          <a href={resource.external_url} target="_blank" rel="noopener noreferrer">
-            <Button size="lg">
-              Open Official Resource
-              <ExternalLink className="h-4 w-4 ml-2" />
-            </Button>
-          </a>
-
-          <Button variant="outline" size="lg">
-            <Bookmark className="h-4 w-4 mr-2" /> Bookmark Resource
-          </Button>
-
-          <Button variant="ghost" size="lg">
-            <Share2 className="h-4 w-4 mr-2" /> Share
-          </Button>
+        {/* Official Document PDF Viewer */}
+        <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+          <PdfPreviewTab pdfUrl={pdfUrl} title={resource.title} />
         </div>
       </Card>
     </div>

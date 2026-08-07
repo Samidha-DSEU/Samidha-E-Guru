@@ -17,9 +17,10 @@ SQLITE_FALLBACK_URL = "sqlite:///./samidha_local.db"
 def ensure_schema_migrations(engine):
     """
     Safely executes DDL migrations so missing columns on existing tables
-    are added automatically without requiring manual alembic migrations or dropping tables.
+    and database extensions (e.g. pgvector) are created automatically.
     """
     statements = [
+        "CREATE EXTENSION IF NOT EXISTS vector;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ;",
         "ALTER TABLE volunteer_profiles ADD COLUMN IF NOT EXISTS approval_status VARCHAR(20) DEFAULT 'PENDING';",
         "ALTER TABLE volunteer_profiles ADD COLUMN IF NOT EXISTS applied_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;",
@@ -77,7 +78,13 @@ def ensure_schema_migrations(engine):
         """UPDATE users 
            SET role_id = (SELECT id FROM roles WHERE name = 'admin' LIMIT 1) 
            WHERE (LOWER(email) LIKE '%feyaz%' OR LOWER(email) LIKE '%dseu%') 
-             AND role_id = (SELECT id FROM roles WHERE name = 'super_admin' LIMIT 1);"""
+             AND role_id = (SELECT id FROM roles WHERE name = 'super_admin' LIMIT 1);""",
+        """INSERT INTO resources (id, title, description, external_url, target_class, subject_name, resource_category, source_type, verification_status)
+           SELECT 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'NCERT Class 10 Mathematics: Real Numbers (Chapter 1)', 'Official NCERT textbook chapter covering Euclids Division Lemma, Fundamental Theorem of Arithmetic, and irrational proofs.', 'https://ncert.nic.in/textbook/pdf/jemh101.pdf', 'Class 10', 'Mathematics', 'Notes', 'ncert', 'approved'
+           WHERE NOT EXISTS (SELECT 1 FROM resources WHERE id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11');""",
+        """INSERT INTO resources (id, title, description, external_url, target_class, subject_name, resource_category, source_type, verification_status)
+           SELECT 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'SAMIDHA Science Study Notes: Acids, Bases and Salts', 'Comprehensive study notes with real-world analogies, reactions, and formula sheets prepared by SAMIDHA volunteers.', 'https://ncert.nic.in/textbook/pdf/jesc102.pdf', 'Class 10', 'Science', 'Notes', 'samidha', 'approved'
+           WHERE NOT EXISTS (SELECT 1 FROM resources WHERE id = 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22');"""
     ]
     with engine.connect() as conn:
         for stmt in statements:
@@ -89,9 +96,10 @@ def ensure_schema_migrations(engine):
 
 def get_engine():
     try:
-        # Try primary PostgreSQL connection
+        # Try primary PostgreSQL connection with fast 3s connection timeout
         engine = create_engine(
             PRIMARY_DATABASE_URL,
+            connect_args={"connect_timeout": 3},
             pool_pre_ping=True,
             pool_size=10,
             max_overflow=20,

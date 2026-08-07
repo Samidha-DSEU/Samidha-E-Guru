@@ -129,6 +129,7 @@ def get_all_scraper_jobs(
 @router.post("/webhook-callback", response_model=StandardResponse[dict])
 def external_scraper_webhook_callback(
     payload: WebhookCallbackPayload,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     try:
@@ -136,6 +137,9 @@ def external_scraper_webhook_callback(
         job = db.query(ScraperJob).filter(ScraperJob.id == job_uuid).first()
     except Exception:
         job = None
+
+    from app.api.v1.learn_ai import background_ingest_resource_pdf
+    from app.db.session import SessionLocal
 
     added_count = 0
     for item in payload.items:
@@ -153,7 +157,18 @@ def external_scraper_webhook_callback(
                 verification_status="approved"  # Scraped trusted items auto-approved
             )
             db.add(res)
+            db.flush()
             added_count += 1
+
+            # Auto-schedule non-blocking background RAG ingestion & workspace generation
+            if item.external_url.lower().endswith(".pdf") or "ncert.nic.in" in item.external_url:
+                background_tasks.add_task(
+                    background_ingest_resource_pdf,
+                    str(res.id),
+                    item.external_url,
+                    item.title,
+                    SessionLocal
+                )
 
     if job:
         job.status = payload.status
@@ -166,7 +181,7 @@ def external_scraper_webhook_callback(
 
     return StandardResponse.success_response(
         data={"job_id": payload.job_id, "resources_added": added_count},
-        message=f"Webhook received. Imported {added_count} scraped educational resources into SAMIDHA library."
+        message=f"Webhook received. Imported {added_count} scraped educational resources and queued background Learn AI workspace generation."
     )
 
 

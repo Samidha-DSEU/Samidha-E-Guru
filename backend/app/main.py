@@ -27,8 +27,8 @@ app = FastAPI(
 @app.on_event("startup")
 def startup_db_migrations():
     logger.info("Running database schema creation & auto-migrations...")
-    Base.metadata.create_all(bind=engine)
     ensure_schema_migrations(engine)
+    Base.metadata.create_all(bind=engine)
 
 # Configure CORS
 app.add_middleware(
