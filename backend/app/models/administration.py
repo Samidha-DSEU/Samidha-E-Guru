@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from typing import Optional, Any, Dict
-from sqlalchemy import String, Text, Integer, Boolean, ForeignKey, DateTime, JSON
+from sqlalchemy import String, Text, Integer, Boolean, ForeignKey, DateTime, JSON, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.db.session import Base
@@ -30,7 +30,7 @@ class ScraperJob(Base):
     total_chapters_found: Mapped[int] = mapped_column(Integer, default=0)
     scraped_success_count: Mapped[int] = mapped_column(Integer, default=0)
     scraped_failed_count: Mapped[int] = mapped_column(Integer, default=0)
-    duration_seconds: Mapped[float] = mapped_column(JSON, default=0.0)
+    duration_seconds: Mapped[float] = mapped_column(Float, default=0.0)
     telemetry_details: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
     scraped_sheet: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
     error_log: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
