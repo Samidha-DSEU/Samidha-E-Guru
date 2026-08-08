@@ -82,15 +82,13 @@ export default function LoginPage() {
     }
 
     try {
+      let loggedUser: any = null;
       if (activeTab === "register") {
-        await register({ ...formData, role_name: selectedRole });
+        loggedUser = await register({ ...formData, role_name: selectedRole });
       } else {
-        await login({ email: formData.email, password: formData.password, role_name: selectedRole });
+        loggedUser = await login({ email: formData.email, password: formData.password, role_name: selectedRole });
       }
-      
-      const savedUserStr = localStorage.getItem("samidha_user_data");
-      const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
-      redirectUserByRole(savedUser);
+      redirectUserByRole(loggedUser);
     } catch (err: any) {
       setError(err.response?.data?.detail || err.response?.data?.message || "An error occurred during authentication.");
     }
@@ -100,10 +98,8 @@ export default function LoginPage() {
     setError(null);
     try {
       if (credentialResponse.credential) {
-        await loginWithGoogle(selectedRole, credentialResponse.credential);
-        const savedUserStr = localStorage.getItem("samidha_user_data");
-        const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
-        redirectUserByRole(savedUser);
+        const loggedUser = await loginWithGoogle(selectedRole, credentialResponse.credential);
+        redirectUserByRole(loggedUser);
       }
     } catch (err: any) {
       setError(err.response?.data?.detail || err.response?.data?.message || "An error occurred during Google sign in.");
@@ -118,10 +114,8 @@ export default function LoginPage() {
   const customGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setError(null);
-      await loginWithGoogle(selectedRole, tokenResponse.access_token);
-      const savedUserStr = localStorage.getItem("samidha_user_data");
-      const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
-      redirectUserByRole(savedUser);
+      const loggedUser = await loginWithGoogle(selectedRole, tokenResponse.access_token);
+      redirectUserByRole(loggedUser);
     },
     onError: handleGoogleError
   });

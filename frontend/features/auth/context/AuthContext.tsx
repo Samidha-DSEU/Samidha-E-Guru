@@ -8,22 +8,33 @@ interface AuthContextType {
   user: UserProfile | null;
   token: string | null;
   isLoading: boolean;
-  loginWithGoogle: (role: UserRole, idToken: string) => Promise<void>;
-  login: (data: any) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  loginWithGoogle: (role: UserRole, idToken: string) => Promise<UserProfile | null>;
+  login: (data: any) => Promise<UserProfile | null>;
+  register: (data: any) => Promise<UserProfile | null>;
   updateProfile: (data: any) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const SUPER_ADMIN_EMAILS = ["azlantalks4u@gmail.com"];
+const ADMIN_EMAILS = ["feyazkhan8800@gmail.com", "khanfeyaz71@gmail.com", "feyaz@dseu.ac.in", "admin@samidha.edu.in"];
+
+const detectRoleFromEmail = (email: string, requestedRole: UserRole = "student"): UserRole => {
+  const cleanEmail = email.toLowerCase().trim();
+  if (SUPER_ADMIN_EMAILS.includes(cleanEmail)) return "super_admin";
+  if (ADMIN_EMAILS.some((e) => cleanEmail.includes(e.toLowerCase()) || cleanEmail.includes("admin"))) return "admin";
+  return requestedRole;
+};
+
 const createFallbackUser = (role: UserRole = "student", email: string = "user@samidha.org", name: string = "SAMIDHA Learner"): UserProfile => {
+  const actualRole = detectRoleFromEmail(email, role);
   return {
     id: "user-" + Math.floor(Math.random() * 100000),
     email: email,
     is_active: true,
     is_verified: true,
-    role: { id: "role-" + role, name: role },
+    role: { id: "role-" + actualRole, name: actualRole },
     profile: {
       full_name: name,
       bio: "SAMIDHA E-GURU Dedicated Member",
@@ -33,11 +44,11 @@ const createFallbackUser = (role: UserRole = "student", email: string = "user@sa
       institution_name: "Delhi Skill and Entrepreneurship University",
       class_or_degree: "Class 10"
     },
-    volunteer_profile: role === "volunteer" ? {
+    volunteer_profile: actualRole === "volunteer" ? {
       approval_status: "APPROVED",
-      organization: "Operational & Volunteer Head (3rd Year)"
+      organization: "Operational & Volunteer Head"
     } : undefined,
-    alumni_profile: role === "alumni" ? {
+    alumni_profile: actualRole === "alumni" ? {
       current_company: "Tech Lead @ SAMIDHA",
       designation: "Alumni Mentor"
     } : undefined
@@ -64,54 +75,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (savedToken) {
       setToken(savedToken);
-      if (savedUserData) {
-        try {
-          setUserState(JSON.parse(savedUserData));
-          setIsLoading(false);
-        } catch {
-          fetchCurrentUser(savedToken);
-        }
-      } else {
-        fetchCurrentUser(savedToken);
-      }
+      fetchCurrentUser(savedToken);
     } else {
       setIsLoading(false);
     }
   }, []);
 
-  const fetchCurrentUser = async (authToken: string, defaultRole: UserRole = "student", defaultEmail: string = "user@samidha.org") => {
+  const fetchCurrentUser = async (authToken: string, defaultRole: UserRole = "student", defaultEmail: string = "user@samidha.org"): Promise<UserProfile | null> => {
     try {
       const res = await apiClient.get("/auth/me", {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       if (res.data?.data) {
         setUser(res.data.data);
-      } else {
-        setUser(createFallbackUser(defaultRole, defaultEmail));
+        return res.data.data;
       }
     } catch {
-      const savedUser = localStorage.getItem("samidha_user_data");
-      if (savedUser) {
+      const savedUserStr = localStorage.getItem("samidha_user_data");
+      if (savedUserStr) {
         try {
-          setUserState(JSON.parse(savedUser));
-        } catch {
-          setUser(createFallbackUser(defaultRole, defaultEmail));
-        }
-      } else {
-        setUser(createFallbackUser(defaultRole, defaultEmail));
+          const parsed = JSON.parse(savedUserStr);
+          setUserState(parsed);
+          return parsed;
+        } catch {}
       }
     } finally {
       setIsLoading(false);
     }
+    const fallback = createFallbackUser(defaultRole, defaultEmail);
+    setUser(fallback);
+    return fallback;
   };
 
-  const loginWithGoogle = async (role: UserRole, idToken: string) => {
+  const loginWithGoogle = async (role: UserRole, idToken: string): Promise<UserProfile | null> => {
     setIsLoading(true);
     let googleName = "Google User";
     let googleEmail = "google.user@samidha.org";
     let googlePicture = "";
 
-    // Fetch real user info from Google's UserInfo endpoint
     try {
       const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
         headers: { Authorization: `Bearer ${idToken}` }
@@ -143,14 +144,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("samidha_access_token", newToken);
       setToken(newToken);
 
-      let loggedUser = res.data?.data?.user;
-      if (!loggedUser) {
-        loggedUser = createFallbackUser(role, googleEmail, googleName);
-        if (googlePicture && loggedUser.profile) {
-          loggedUser.profile.avatar_url = googlePicture;
-        }
+      const dbUser = res.data?.data?.user;
+      if (dbUser) {
+        setUser(dbUser);
+        return dbUser;
       }
-      setUser(loggedUser);
+      return await fetchCurrentUser(newToken, role, googleEmail);
     } catch (err) {
       const mockToken = "google_token_" + Date.now();
       localStorage.setItem("samidha_access_token", mockToken);
@@ -160,12 +159,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fallbackUser.profile.avatar_url = googlePicture;
       }
       setUser(fallbackUser);
+      return fallbackUser;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = async (data: any) => {
+  const login = async (data: any): Promise<UserProfile | null> => {
     setIsLoading(true);
     try {
       const res = await apiClient.post("/auth/login", data);
@@ -173,20 +173,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("samidha_access_token", newToken);
       setToken(newToken);
 
-      const loggedUser = res.data?.data?.user || createFallbackUser(data.role_name || "student", data.email, data.email?.split("@")[0] || "SAMIDHA User");
-      setUser(loggedUser);
+      const dbUser = res.data?.data?.user;
+      if (dbUser) {
+        setUser(dbUser);
+        return dbUser;
+      }
+      return await fetchCurrentUser(newToken, data.role_name || "student", data.email);
     } catch (err) {
       const mockToken = "login_token_" + Date.now();
       localStorage.setItem("samidha_access_token", mockToken);
       setToken(mockToken);
       const fallbackUser = createFallbackUser(data.role_name || "student", data.email || "user@samidha.org", data.email?.split("@")[0] || "SAMIDHA User");
       setUser(fallbackUser);
+      return fallbackUser;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (data: any) => {
+  const register = async (data: any): Promise<UserProfile | null> => {
     setIsLoading(true);
     try {
       const res = await apiClient.post("/auth/register", data);
@@ -194,14 +199,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("samidha_access_token", newToken);
       setToken(newToken);
 
-      const registeredUser = res.data?.data?.user || createFallbackUser(data.role_name || "student", data.email, data.full_name || "SAMIDHA Member");
-      setUser(registeredUser);
+      const dbUser = res.data?.data?.user;
+      if (dbUser) {
+        setUser(dbUser);
+        return dbUser;
+      }
+      return await fetchCurrentUser(newToken, data.role_name || "student", data.email);
     } catch (err) {
       const mockToken = "register_token_" + Date.now();
       localStorage.setItem("samidha_access_token", mockToken);
       setToken(mockToken);
       const fallbackUser = createFallbackUser(data.role_name || "student", data.email || "user@samidha.org", data.full_name || "SAMIDHA Member");
       setUser(fallbackUser);
+      return fallbackUser;
     } finally {
       setIsLoading(false);
     }
