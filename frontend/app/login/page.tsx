@@ -200,19 +200,14 @@ export default function LoginPage() {
 
               {/* Role Selection Grid */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    Target Access Role
-                  </label>
-                  <span className="text-[10px] text-sky-600 dark:text-sky-400 font-medium">
-                    Multi-Role Portal Access
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block">
+                  Select Your Role
+                </label>
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setSelectedRole("student")}
-                    className={`p-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                    className={`p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
                       selectedRole === "student"
                         ? "border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 shadow-sm"
                         : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
@@ -225,7 +220,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedRole("volunteer")}
-                    className={`p-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                    className={`p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
                       selectedRole === "volunteer"
                         ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 shadow-sm"
                         : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
@@ -238,7 +233,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedRole("alumni")}
-                    className={`p-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                    className={`p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
                       selectedRole === "alumni"
                         ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-sm"
                         : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
@@ -246,32 +241,6 @@ export default function LoginPage() {
                   >
                     <Award className="h-4 w-4 text-indigo-500" />
                     Alumni
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole("admin")}
-                    className={`p-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
-                      selectedRole === "admin"
-                        ? "border-purple-500 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 shadow-sm"
-                        : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                    }`}
-                  >
-                    <Sparkles className="h-4 w-4 text-purple-500" />
-                    Admin
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole("super_admin")}
-                    className={`p-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
-                      selectedRole === "super_admin"
-                        ? "border-amber-500 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 shadow-sm"
-                        : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                    }`}
-                  >
-                    <Sparkles className="h-4 w-4 text-amber-500" />
-                    Super Admin
                   </button>
                 </div>
               </div>
