@@ -51,8 +51,7 @@ class NCERTIngestionService:
             class_title = f"Class {class_num}"
             class_code_slug = f"class-{class_num}"
 
-            logger.info(f"[NCERT Scraper] Launching Metadata Crawl for {class_title}...")
-            print(f"\n[NCERT Scraper Engine] Launching Metadata Crawl for {class_title}...", flush=True)
+            logger.info(f"🔍 [NCERT Scraper] Launching Metadata Crawl for {class_title}...")
 
             # Ensure ClassModel exists in DB
             db_class = db.query(ClassModel).filter(ClassModel.code == class_code_slug).first()
@@ -68,14 +67,12 @@ class NCERTIngestionService:
             try:
                 records = scraper.scrape_class(code)
             except Exception as err:
-                logger.error(f"[Error] Failed scraping {class_title}: {err}")
-                print(f"[Error] Failed scraping {class_title}: {err}", flush=True)
+                logger.error(f"❌ Failed scraping {class_title}: {err}")
                 unscraped_classes.append(class_title)
                 continue
 
             if not records:
-                logger.warning(f"[Warning] No records found for {class_title}")
-                print(f"[Warning] No records found for {class_title}", flush=True)
+                logger.warning(f"⚠️ No records found for {class_title}")
                 unscraped_classes.append(class_title)
                 continue
 
@@ -86,8 +83,7 @@ class NCERTIngestionService:
                 subj_code_slug = f"{subj_name.lower().replace(' ', '-')}-{class_num}"
                 chapters_list = rec.get("chapters", [])
                 
-                logger.info(f"  [Book Scraped] {class_title} {subj_name}: '{rec['book_name']}' ({len(chapters_list)} Chapters)")
-                print(f"  [Book Scraped] {class_title} {subj_name}: '{rec['book_name']}' ({len(chapters_list)} Chapters)", flush=True)
+                logger.info(f"  📚 [Book Scraped] {class_title} {subj_name}: '{rec['book_name']}' ({len(chapters_list)} Chapters)")
 
                 if subj_name not in subjects_seen:
                     subjects_seen.add(subj_name)
@@ -150,8 +146,7 @@ class NCERTIngestionService:
                         existing_res.source_type = "ncert"
                         existing_res.verification_status = "approved"
                         resources_updated += 1
-                        logger.info(f"    [Updated] {res_title}")
-                        print(f"    [Updated] {res_title}", flush=True)
+                        logger.info(f"    🔄 [Updated] {res_title}")
                     else:
                         new_res = Resource(
                             title=res_title,
@@ -167,8 +162,7 @@ class NCERTIngestionService:
                         )
                         db.add(new_res)
                         resources_added += 1
-                        logger.info(f"    [Ingested PDF] {res_title}")
-                        print(f"    [Ingested PDF] {res_title}", flush=True)
+                        logger.info(f"    ✨ [Ingested PDF] {res_title}")
 
                     scraped_success_count += 1
                     scraped_sheet.append({
