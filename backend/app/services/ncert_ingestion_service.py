@@ -128,6 +128,7 @@ class NCERTIngestionService:
                         existing_res.target_class = class_title
                         existing_res.subject_name = subj_name
                         existing_res.source_type = "ncert"
+                        existing_res.verification_status = "approved"
                         resources_updated += 1
                     else:
                         new_res = Resource(
@@ -138,6 +139,7 @@ class NCERTIngestionService:
                             subject_name=subj_name,
                             resource_category="Notes",
                             source_type="ncert",
+                            verification_status="approved",
                             rating_sum=5,
                             rating_count=1
                         )
@@ -165,6 +167,7 @@ class NCERTIngestionService:
                         existing_book_res.target_class = class_title
                         existing_book_res.subject_name = subj_name
                         existing_book_res.source_type = "ncert"
+                        existing_book_res.verification_status = "approved"
                         resources_updated += 1
                     else:
                         new_book_res = Resource(
@@ -175,6 +178,7 @@ class NCERTIngestionService:
                             subject_name=subj_name,
                             resource_category="Notes",
                             source_type="ncert",
+                            verification_status="approved",
                             rating_sum=5,
                             rating_count=1
                         )
