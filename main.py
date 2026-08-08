@@ -22,4 +22,12 @@ if __name__ == "__main__":
     print("API Docs  : http://localhost:8000/docs")
     print("=" * 65 + "\n")
     
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    backend_app_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "backend", "app")
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        reload_dirs=[backend_app_dir],
+        reload_excludes=["*.db", "*.db-journal", "*.log", "venv/*", ".git/*"]
+    )
