@@ -1,3 +1,4 @@
+import time
 import logging
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
@@ -14,25 +15,33 @@ class NCERTIngestionService:
     def sync_ncert_metadata(db: Session, target_class_filter: Optional[str] = None, max_resources_limit: Optional[int] = None) -> Dict[str, Any]:
         """
         Runs NCERT Scraper, creates relational database structures (Class -> Subject -> Chapter),
-        and populates NCERT textbook PDF resources in the SAMIDHA Resources Hub.
+        and populates NCERT textbook PDF resources in the SAMIDHA Resources Hub with telemetry tracking.
         """
+        start_time = time.time()
         scraper = NCERTMetadataScraper()
         
-        class_codes = [target_class_filter.zfill(2)] if target_class_filter and target_class_filter.isdigit() else [str(i).zfill(2) for i in range(1, 13)]
+        target_codes = [target_class_filter.zfill(2)] if target_class_filter and target_class_filter.isdigit() else [str(i).zfill(2) for i in range(1, 13)]
         
         total_scraped_books = 0
-        total_chapters_scraped = 0
+        total_subjects_found = 0
+        total_chapters_found = 0
+        scraped_success_count = 0
+        scraped_failed_count = 0
         resources_added = 0
         resources_updated = 0
         
-        for code in class_codes:
+        scraped_sheet: List[Dict[str, Any]] = []
+        unscraped_classes: List[str] = []
+        subjects_seen = set()
+
+        for code in target_codes:
             if max_resources_limit and resources_added >= max_resources_limit:
                 break
             class_num = str(int(code))
             class_title = f"Class {class_num}"
             class_code_slug = f"class-{class_num}"
 
-            # 1. Ensure ClassModel exists in DB
+            # Ensure ClassModel exists in DB
             db_class = db.query(ClassModel).filter(ClassModel.code == class_code_slug).first()
             if not db_class:
                 db_class = ClassModel(
@@ -43,14 +52,28 @@ class NCERTIngestionService:
                 db.add(db_class)
                 db.flush()
 
-            records = scraper.scrape_class(code)
+            try:
+                records = scraper.scrape_class(code)
+            except Exception as err:
+                logger.error(f"Failed scraping {class_title}: {err}")
+                unscraped_classes.append(class_title)
+                continue
+
+            if not records:
+                unscraped_classes.append(class_title)
+                continue
+
             total_scraped_books += len(records)
 
             for rec in records:
                 subj_name = rec["subject"].strip()
                 subj_code_slug = f"{subj_name.lower().replace(' ', '-')}-{class_num}"
+                
+                if subj_name not in subjects_seen:
+                    subjects_seen.add(subj_name)
+                    total_subjects_found += 1
 
-                # 2. Ensure Subject exists in DB
+                # Ensure Subject exists in DB
                 db_subject = db.query(Subject).filter(Subject.class_id == db_class.id, Subject.name == subj_name).first()
                 if not db_subject:
                     db_subject = Subject(
@@ -65,16 +88,26 @@ class NCERTIngestionService:
                 for ch in rec.get("chapters", []):
                     if max_resources_limit and resources_added >= max_resources_limit:
                         break
-                    total_chapters_scraped += 1
+                    total_chapters_found += 1
                     ch_no_str = str(ch.get("chapter_no", "1"))
                     ch_no_int = int(ch_no_str) if ch_no_str.isdigit() else 1
                     ch_name = ch.get("chapter_name", "Untitled Chapter")
                     pdf_url = ch.get("pdf_url")
 
                     if not pdf_url:
+                        scraped_failed_count += 1
+                        scraped_sheet.append({
+                            "class": class_title,
+                            "subject": subj_name,
+                            "chapter_no": ch_no_str,
+                            "chapter_name": ch_name,
+                            "pdf_url": "N/A",
+                            "status": "FAILED",
+                            "message": "Missing PDF URL"
+                        })
                         continue
 
-                    # 3. Ensure Chapter exists in DB
+                    # Ensure Chapter exists in DB
                     db_chapter = db.query(Chapter).filter(Chapter.subject_id == db_subject.id, Chapter.chapter_number == ch_no_int).first()
                     if not db_chapter:
                         db_chapter = Chapter(
@@ -86,7 +119,7 @@ class NCERTIngestionService:
                         db.add(db_chapter)
                         db.flush()
 
-                    # 4. Create or Update Resource in DB
+                    # Create or Update Resource in DB
                     res_title = f"{class_title} {subj_name} Chapter {ch_no_str}: {ch_name}"
                     existing_res = db.query(Resource).filter(Resource.external_url == pdf_url).first()
 
@@ -110,6 +143,17 @@ class NCERTIngestionService:
                         )
                         db.add(new_res)
                         resources_added += 1
+
+                    scraped_success_count += 1
+                    scraped_sheet.append({
+                        "class": class_title,
+                        "subject": subj_name,
+                        "chapter_no": ch_no_str,
+                        "chapter_name": ch_name,
+                        "pdf_url": pdf_url,
+                        "status": "SUCCESS",
+                        "message": "Imported"
+                    })
 
                 # Ingest Entire Book PDF if available
                 if rec.get("pdf_url") and (not max_resources_limit or resources_added < max_resources_limit):
@@ -142,11 +186,25 @@ class NCERTIngestionService:
 
             db.commit()
 
-        logger.info(f"NCERT Sync Completed: {resources_added} resources added, {resources_updated} updated.")
-        return {
+        end_time = time.time()
+        duration_seconds = round(end_time - start_time, 2)
+
+        telemetry = {
             "status": "COMPLETED",
+            "duration_seconds": duration_seconds,
+            "target_class": target_class_filter or "ALL",
             "total_scraped_books": total_scraped_books,
-            "total_chapters_scraped": total_chapters_scraped,
+            "total_subjects_found": total_subjects_found,
+            "total_chapters_found": total_chapters_found,
+            "scraped_success_count": scraped_success_count,
+            "scraped_failed_count": scraped_failed_count,
             "resources_added": resources_added,
-            "resources_updated": resources_updated
+            "resources_updated": resources_updated,
+            "unscraped_classes": unscraped_classes
+        }
+
+        logger.info(f"NCERT Sync Completed in {duration_seconds}s: {resources_added} added, {resources_updated} updated.")
+        return {
+            "telemetry": telemetry,
+            "scraped_sheet": scraped_sheet
         }

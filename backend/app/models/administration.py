@@ -23,8 +23,16 @@ class ScraperJob(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     source_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scraper_sources.id"), nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="pending")  # pending, running, completed, failed
+    class_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     resources_found: Mapped[int] = mapped_column(Integer, default=0)
     resources_added: Mapped[int] = mapped_column(Integer, default=0)
+    total_subjects_found: Mapped[int] = mapped_column(Integer, default=0)
+    total_chapters_found: Mapped[int] = mapped_column(Integer, default=0)
+    scraped_success_count: Mapped[int] = mapped_column(Integer, default=0)
+    scraped_failed_count: Mapped[int] = mapped_column(Integer, default=0)
+    duration_seconds: Mapped[float] = mapped_column(JSON, default=0.0)
+    telemetry_details: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    scraped_sheet: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
     error_log: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

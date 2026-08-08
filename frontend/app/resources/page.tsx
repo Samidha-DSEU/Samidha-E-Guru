@@ -218,19 +218,31 @@ export default function ResourcesPage() {
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Step 1: Select Class Folder</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {CLASSES.map((cls) => (
-                  <button
-                    key={cls}
-                    onClick={() => setSelectedClass(cls)}
-                    className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-sky-500 dark:hover:border-sky-500 hover:shadow-md flex items-center gap-2.5 sm:gap-3 transition-all text-left group"
-                  >
-                    <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-sky-500 group-hover:scale-110 transition-transform shrink-0" />
-                    <div>
-                      <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{cls}</h4>
-                      <span className="text-[10px] text-zinc-500 hidden sm:inline">Browse Study Folder</span>
-                    </div>
-                  </button>
-                ))}
+                {CLASSES.map((cls) => {
+                  const count = resources.filter(r => r.target_class?.toLowerCase() === cls.toLowerCase()).length;
+                  return (
+                    <button
+                      key={cls}
+                      onClick={() => setSelectedClass(cls)}
+                      className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-sky-500 dark:hover:border-sky-500 hover:shadow-md flex items-center justify-between transition-all text-left group"
+                    >
+                      <div className="flex items-center gap-2.5 sm:gap-3">
+                        <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-sky-500 group-hover:scale-110 transition-transform shrink-0" />
+                        <div>
+                          <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{cls}</h4>
+                          <span className="text-[10px] text-zinc-500 block">
+                            {count > 0 ? `${count} Chapter PDFs` : "Empty Folder"}
+                          </span>
+                        </div>
+                      </div>
+                      {count > 0 && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800">
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ) : !selectedSubject ? (
@@ -242,19 +254,34 @@ export default function ResourcesPage() {
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {SUBJECTS.map((sub) => (
-                  <button
-                    key={sub}
-                    onClick={() => setSelectedSubject(sub)}
-                    className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-md flex items-center gap-2.5 sm:gap-3 transition-all text-left group"
-                  >
-                    <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-500 group-hover:scale-110 transition-transform shrink-0" />
-                    <div>
-                      <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{sub}</h4>
-                      <span className="text-[10px] text-zinc-500 hidden sm:inline">View Category Folders</span>
-                    </div>
-                  </button>
-                ))}
+                {SUBJECTS.map((sub) => {
+                  const count = resources.filter(r => 
+                    r.target_class?.toLowerCase() === selectedClass.toLowerCase() &&
+                    r.subject_name?.toLowerCase() === sub.toLowerCase()
+                  ).length;
+                  return (
+                    <button
+                      key={sub}
+                      onClick={() => setSelectedSubject(sub)}
+                      className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-md flex items-center justify-between transition-all text-left group"
+                    >
+                      <div className="flex items-center gap-2.5 sm:gap-3">
+                        <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-500 group-hover:scale-110 transition-transform shrink-0" />
+                        <div>
+                          <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{sub}</h4>
+                          <span className="text-[10px] text-zinc-500 block">
+                            {count > 0 ? `${count} Resources` : "Empty Folder"}
+                          </span>
+                        </div>
+                      </div>
+                      {count > 0 && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ) : (

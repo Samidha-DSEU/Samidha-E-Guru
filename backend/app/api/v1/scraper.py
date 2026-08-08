@@ -46,12 +46,23 @@ def run_ncert_scraper_job(job_id: UUID, target_class: str):
     from app.services.ncert_ingestion_service import NCERTIngestionService
     db = SessionLocal()
     try:
-        res = NCERTIngestionService.sync_ncert_metadata(db, target_class_filter=target_class)
+        result = NCERTIngestionService.sync_ncert_metadata(db, target_class_filter=target_class)
+        telemetry = result.get("telemetry", {})
+        scraped_sheet = result.get("scraped_sheet", [])
+        
         job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
         if job:
             job.status = "completed"
-            job.resources_found = res.get("total_chapters_scraped", 0)
-            job.resources_added = res.get("resources_added", 0)
+            job.class_code = target_class or "ALL"
+            job.total_subjects_found = telemetry.get("total_subjects_found", 0)
+            job.total_chapters_found = telemetry.get("total_chapters_found", 0)
+            job.scraped_success_count = telemetry.get("scraped_success_count", 0)
+            job.scraped_failed_count = telemetry.get("scraped_failed_count", 0)
+            job.resources_found = telemetry.get("total_chapters_found", 0)
+            job.resources_added = telemetry.get("resources_added", 0)
+            job.duration_seconds = telemetry.get("duration_seconds", 0.0)
+            job.telemetry_details = telemetry
+            job.scraped_sheet = scraped_sheet
             db.commit()
     except Exception as err:
         job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
@@ -67,7 +78,7 @@ def run_ncert_scraper_job(job_id: UUID, target_class: str):
 def trigger_external_scraper(
     req: TriggerScraperRequest,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(require_roles(["super_admin"])),
+    current_user: User = Depends(require_roles(["super_admin", "admin"])),
     db: Session = Depends(get_db)
 ):
     # Find or create ScraperSource
@@ -86,6 +97,7 @@ def trigger_external_scraper(
     job = ScraperJob(
         source_id=source.id,
         status="running",
+        class_code=req.target_class,
         resources_found=0,
         resources_added=0
     )
@@ -108,7 +120,6 @@ def trigger_external_scraper(
     if "ncert" in req.source_name.lower():
         background_tasks.add_task(run_ncert_scraper_job, job.id, req.target_class)
 
-    # Payload contract sent to external scraper server
     request_payload = {
         "job_id": str(job.id),
         "source_name": req.source_name,
@@ -125,31 +136,57 @@ def trigger_external_scraper(
             "source_name": req.source_name,
             "target_class": req.target_class,
             "subject_name": req.subject_name,
-            "request_payload": request_payload,
-            "callback_url": "https://samidha-e-guru.onrender.com/api/v1/scraper/webhook-callback"
+            "request_payload": request_payload
         },
-        message=f"Scraper Job #{str(job.id)[:8]} triggered for NCERT Ingestion Pipeline!"
+        message=f"Scraper Job #{str(job.id)[:8]} launched for Class {req.target_class}!"
+    )
+
+
+@router.delete("/purge-ncert", response_model=StandardResponse[dict])
+def purge_ncert_database_records(
+    current_user: User = Depends(require_roles(["super_admin"])),
+    db: Session = Depends(get_db)
+):
+    from app.models.education import Subject
+    deleted_resources = db.query(Resource).filter(
+        (Resource.source_type == "ncert") | (Resource.title.ilike("%NCERT%"))
+    ).delete(synchronize_session=False)
+
+    deleted_subjects = db.query(Subject).filter(Subject.name.ilike("%select%")).delete(synchronize_session=False)
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={"deleted_resources": deleted_resources, "deleted_subjects": deleted_subjects},
+        message=f"Successfully purged {deleted_resources} NCERT resource entries and cleaned database."
     )
 
 
 @router.get("/jobs", response_model=StandardResponse[List[dict]])
 def get_all_scraper_jobs(
-    current_user: User = Depends(require_roles(["super_admin"])),
+    current_user: User = Depends(require_roles(["super_admin", "admin"])),
     db: Session = Depends(get_db)
 ):
     jobs = db.query(ScraperJob).order_by(ScraperJob.created_at.desc()).all()
     data = [
         {
             "id": str(j.id),
-            "source_name": j.source.source_name if j.source else "Educational Portal Scraper",
+            "source_name": j.source.source_name if j.source else "NCERT Portal Scraper",
             "status": j.status,
-            "resources_found": j.resources_found,
-            "resources_added": j.resources_added,
+            "class_code": j.class_code or "ALL",
+            "total_subjects_found": j.total_subjects_found or 0,
+            "total_chapters_found": j.total_chapters_found or 0,
+            "scraped_success_count": j.scraped_success_count or 0,
+            "scraped_failed_count": j.scraped_failed_count or 0,
+            "resources_found": j.resources_found or 0,
+            "resources_added": j.resources_added or 0,
+            "duration_seconds": j.duration_seconds or 0.0,
+            "telemetry_details": j.telemetry_details or {},
+            "scraped_sheet": j.scraped_sheet or [],
             "error_log": j.error_log,
             "created_at": j.created_at.isoformat()
         } for j in jobs
     ]
-    return StandardResponse.success_response(data=data, message="Scraper jobs history retrieved.")
+    return StandardResponse.success_response(data=data, message="Scraper jobs telemetry retrieved.")
 
 
 @router.post("/webhook-callback", response_model=StandardResponse[dict])
