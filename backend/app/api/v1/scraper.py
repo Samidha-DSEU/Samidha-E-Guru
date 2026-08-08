@@ -41,9 +41,32 @@ class WebhookCallbackPayload(BaseModel):
     error_message: Optional[str] = None
 
 
+def run_ncert_scraper_job(job_id: UUID, target_class: str):
+    from app.db.session import SessionLocal
+    from app.services.ncert_ingestion_service import NCERTIngestionService
+    db = SessionLocal()
+    try:
+        res = NCERTIngestionService.sync_ncert_metadata(db, target_class_filter=target_class)
+        job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
+        if job:
+            job.status = "completed"
+            job.resources_found = res.get("total_chapters_scraped", 0)
+            job.resources_added = res.get("resources_added", 0)
+            db.commit()
+    except Exception as err:
+        job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
+        if job:
+            job.status = "failed"
+            job.error_log = str(err)
+            db.commit()
+    finally:
+        db.close()
+
+
 @router.post("/trigger", response_model=StandardResponse[dict])
 def trigger_external_scraper(
     req: TriggerScraperRequest,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(require_roles(["super_admin"])),
     db: Session = Depends(get_db)
 ):
@@ -52,7 +75,7 @@ def trigger_external_scraper(
     if not source:
         source = ScraperSource(
             source_name=req.source_name,
-            base_url=req.external_scraper_url or "https://external-scraper.samidha.edu"
+            base_url=req.external_scraper_url or "https://ncert.nic.in"
         )
         db.add(source)
         db.flush()
@@ -82,6 +105,9 @@ def trigger_external_scraper(
     db.add(log)
     db.commit()
 
+    if "ncert" in req.source_name.lower():
+        background_tasks.add_task(run_ncert_scraper_job, job.id, req.target_class)
+
     # Payload contract sent to external scraper server
     request_payload = {
         "job_id": str(job.id),
@@ -102,7 +128,7 @@ def trigger_external_scraper(
             "request_payload": request_payload,
             "callback_url": "https://samidha-e-guru.onrender.com/api/v1/scraper/webhook-callback"
         },
-        message=f"External Scraper Job #{str(job.id)[:8]} triggered successfully!"
+        message=f"Scraper Job #{str(job.id)[:8]} triggered for NCERT Ingestion Pipeline!"
     )
 
 
