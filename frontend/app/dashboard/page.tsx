@@ -20,9 +20,26 @@ export default function DashboardPage() {
   const [requested, setRequested] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user && (!params || !params.username)) {
-      const slug = getUserSlug(user);
-      router.replace(`/dashboard/${slug}`);
+    if (user) {
+      const roleName = user.role?.name?.toLowerCase();
+      if (roleName === "admin" || roleName === "super_admin") {
+        router.replace("/admin");
+        return;
+      }
+      if (roleName === "volunteer") {
+        const slug = getUserSlug(user);
+        router.replace(`/volunteer/${slug}`);
+        return;
+      }
+      if (roleName === "alumni") {
+        const slug = getUserSlug(user);
+        router.replace(`/alumni/${slug}`);
+        return;
+      }
+      if (!params || !params.username) {
+        const slug = getUserSlug(user);
+        router.replace(`/dashboard/${slug}`);
+      }
     }
   }, [user, params, router]);
 

@@ -17,13 +17,41 @@ class AuthService:
     @staticmethod
     def authenticate_google_user(db: Session, req: GoogleAuthRequest) -> TokenResponse:
         try:
-            # Verify the token against Google's public keys
-            idinfo = id_token.verify_oauth2_token(
-                req.id_token, requests.Request(), settings.GOOGLE_CLIENT_ID, clock_skew_in_seconds=10
-            )
+            idinfo = None
+            token_str = req.id_token.strip()
+
+            # 1. Try google-auth library ID token verification
+            try:
+                idinfo = id_token.verify_oauth2_token(
+                    token_str, requests.Request(), settings.GOOGLE_CLIENT_ID, clock_skew_in_seconds=10
+                )
+            except Exception:
+                pass
+
+            # 2. Try fetching from Google TokenInfo endpoint if token has JWT structure
+            import requests as req_lib
+            if not idinfo and "." in token_str:
+                try:
+                    r = req_lib.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={token_str}", timeout=10)
+                    if r.status_code == 200:
+                        idinfo = r.json()
+                except Exception:
+                    pass
+
+            # 3. Try fetching from Google UserInfo endpoint for OAuth2 Access Tokens
+            if not idinfo:
+                try:
+                    r = req_lib.get("https://www.googleapis.com/oauth2/v3/userinfo", headers={"Authorization": f"Bearer {token_str}"}, timeout=10)
+                    if r.status_code == 200:
+                        idinfo = r.json()
+                except Exception:
+                    pass
+
+            if not idinfo or "email" not in idinfo:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Google authentication token.")
 
             email = idinfo['email']
-            name = idinfo.get('name', 'Google User')
+            name = idinfo.get('name') or idinfo.get('given_name') or email.split('@')[0]
             picture = idinfo.get('picture', None)
 
             user = db.query(User).filter(User.email == email).first()

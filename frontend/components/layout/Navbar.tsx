@@ -9,7 +9,7 @@ import { useAuth } from "@/features/auth/context/AuthContext";
 import { ProfileSidebar } from "./ProfileSidebar";
 import { Button } from "@/components/ui/Button";
 import { apiClient } from "@/services/apiClient";
-import { getUserHomeLink } from "@/lib/userUtils";
+import { getUserHomeLink, getRoleFromUserOrToken } from "@/lib/userUtils";
 
 interface VolunteerHeadItem {
   id: string;
@@ -71,7 +71,8 @@ export function Navbar() {
 
   const getPortalLabel = () => {
     if (!user) return "";
-    switch (user.role.name) {
+    const roleName = getRoleFromUserOrToken(user) || (user.role?.name ? user.role.name.toLowerCase() : "student");
+    switch (roleName) {
       case "admin":
       case "super_admin":
         return "Admin Portal";

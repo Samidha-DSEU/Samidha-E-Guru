@@ -71,27 +71,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchCurrentUser = async (authToken: string, defaultRole: UserRole = "student", defaultEmail: string = "user@samidha.org"): Promise<UserProfile | null> => {
+    let tokenRole: UserRole | null = null;
+    if (authToken) {
+      try {
+        const parts = authToken.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          if (payload.role) {
+            tokenRole = payload.role.toLowerCase() as UserRole;
+          }
+        }
+      } catch {}
+    }
+
     try {
       const res = await apiClient.get("/auth/me", {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       if (res.data?.data) {
-        setUser(res.data.data);
-        return res.data.data;
+        const dbUser = res.data.data;
+        if (tokenRole && dbUser.role && dbUser.role.name !== tokenRole) {
+          dbUser.role.name = tokenRole;
+        }
+        setUser(dbUser);
+        return dbUser;
       }
-    } catch {
+    } catch (err: any) {
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem("samidha_access_token");
+        localStorage.removeItem("samidha_user_data");
+        setToken(null);
+        setUserState(null);
+        setIsLoading(false);
+        return null;
+      }
+
       const savedUserStr = localStorage.getItem("samidha_user_data");
       if (savedUserStr) {
         try {
           const parsed = JSON.parse(savedUserStr);
-          setUserState(parsed);
+          if (tokenRole && parsed.role) {
+            parsed.role.name = tokenRole;
+          }
+          setUser(parsed);
           return parsed;
         } catch {}
       }
     } finally {
       setIsLoading(false);
     }
-    const fallback = createFallbackUser(defaultRole, defaultEmail);
+
+    const fallbackRole = tokenRole || defaultRole;
+    const fallback = createFallbackUser(fallbackRole, defaultEmail);
     setUser(fallback);
     return fallback;
   };
@@ -129,9 +160,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id_token: idToken,
         role_name: role
       });
-      const newToken = res.data?.data?.access_token || "google_token_" + Date.now();
-      localStorage.setItem("samidha_access_token", newToken);
-      setToken(newToken);
+      const newToken = res.data?.data?.access_token;
+      if (newToken) {
+        localStorage.setItem("samidha_access_token", newToken);
+        setToken(newToken);
+      }
 
       const dbUser = res.data?.data?.user;
       if (dbUser) {
@@ -140,15 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return await fetchCurrentUser(newToken, role, googleEmail);
     } catch (err) {
-      const mockToken = "google_token_" + Date.now();
-      localStorage.setItem("samidha_access_token", mockToken);
-      setToken(mockToken);
-      const fallbackUser = createFallbackUser(role, googleEmail, googleName);
-      if (googlePicture && fallbackUser.profile) {
-        fallbackUser.profile.avatar_url = googlePicture;
-      }
-      setUser(fallbackUser);
-      return fallbackUser;
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -158,9 +183,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const res = await apiClient.post("/auth/login", data);
-      const newToken = res.data?.data?.access_token || "login_token_" + Date.now();
-      localStorage.setItem("samidha_access_token", newToken);
-      setToken(newToken);
+      const newToken = res.data?.data?.access_token;
+      if (newToken) {
+        localStorage.setItem("samidha_access_token", newToken);
+        setToken(newToken);
+      }
 
       const dbUser = res.data?.data?.user;
       if (dbUser) {
@@ -169,12 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return await fetchCurrentUser(newToken, data.role_name || "student", data.email);
     } catch (err) {
-      const mockToken = "login_token_" + Date.now();
-      localStorage.setItem("samidha_access_token", mockToken);
-      setToken(mockToken);
-      const fallbackUser = createFallbackUser(data.role_name || "student", data.email || "user@samidha.org", data.email?.split("@")[0] || "SAMIDHA User");
-      setUser(fallbackUser);
-      return fallbackUser;
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -184,9 +206,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const res = await apiClient.post("/auth/register", data);
-      const newToken = res.data?.data?.access_token || "register_token_" + Date.now();
-      localStorage.setItem("samidha_access_token", newToken);
-      setToken(newToken);
+      const newToken = res.data?.data?.access_token;
+      if (newToken) {
+        localStorage.setItem("samidha_access_token", newToken);
+        setToken(newToken);
+      }
 
       const dbUser = res.data?.data?.user;
       if (dbUser) {
@@ -195,12 +219,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return await fetchCurrentUser(newToken, data.role_name || "student", data.email);
     } catch (err) {
-      const mockToken = "register_token_" + Date.now();
-      localStorage.setItem("samidha_access_token", mockToken);
-      setToken(mockToken);
-      const fallbackUser = createFallbackUser(data.role_name || "student", data.email || "user@samidha.org", data.full_name || "SAMIDHA Member");
-      setUser(fallbackUser);
-      return fallbackUser;
+      throw err;
     } finally {
       setIsLoading(false);
     }
