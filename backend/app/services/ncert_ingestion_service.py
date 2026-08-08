@@ -11,7 +11,7 @@ logger = logging.getLogger("samidha.services.ncert_ingestion")
 class NCERTIngestionService:
 
     @staticmethod
-    def sync_ncert_metadata(db: Session, target_class_filter: Optional[str] = None) -> Dict[str, Any]:
+    def sync_ncert_metadata(db: Session, target_class_filter: Optional[str] = None, max_resources_limit: Optional[int] = None) -> Dict[str, Any]:
         """
         Runs NCERT Scraper, creates relational database structures (Class -> Subject -> Chapter),
         and populates NCERT textbook PDF resources in the SAMIDHA Resources Hub.
@@ -26,6 +26,8 @@ class NCERTIngestionService:
         resources_updated = 0
         
         for code in class_codes:
+            if max_resources_limit and resources_added >= max_resources_limit:
+                break
             class_num = str(int(code))
             class_title = f"Class {class_num}"
             class_code_slug = f"class-{class_num}"
@@ -61,6 +63,8 @@ class NCERTIngestionService:
 
                 # Ingest Chapter-level PDFs
                 for ch in rec.get("chapters", []):
+                    if max_resources_limit and resources_added >= max_resources_limit:
+                        break
                     total_chapters_scraped += 1
                     ch_no_str = str(ch.get("chapter_no", "1"))
                     ch_no_int = int(ch_no_str) if ch_no_str.isdigit() else 1
@@ -108,7 +112,7 @@ class NCERTIngestionService:
                         resources_added += 1
 
                 # Ingest Entire Book PDF if available
-                if rec.get("pdf_url"):
+                if rec.get("pdf_url") and (not max_resources_limit or resources_added < max_resources_limit):
                     book_pdf_url = rec["pdf_url"]
                     book_title = f"{class_title} {subj_name}: {rec['book_name']} (Full Book PDF)"
                     existing_book_res = db.query(Resource).filter(Resource.external_url == book_pdf_url).first()
@@ -132,6 +136,9 @@ class NCERTIngestionService:
                         )
                         db.add(new_book_res)
                         resources_added += 1
+
+                if max_resources_limit and resources_added >= max_resources_limit:
+                    break
 
             db.commit()
 
