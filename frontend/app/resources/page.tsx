@@ -117,11 +117,11 @@ export default function ResourcesPage() {
         </div>
       </ScrollReveal>
 
-      {/* SOURCE TABS */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3">
+      {/* SOURCE TABS (HORIZONTAL SWIPE BAR ON MOBILE, FLEX WRAP ON DESKTOP) */}
+      <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3 overflow-x-auto scrollbar-none snap-x sm:flex-wrap">
         <button
           onClick={() => { setActiveSource("all"); handleResetFolders(); }}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${
+          className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap snap-start ${
             activeSource === "all"
               ? "bg-sky-600 text-white shadow-md shadow-sky-500/20"
               : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
@@ -132,7 +132,7 @@ export default function ResourcesPage() {
 
         <button
           onClick={() => { setActiveSource("ncert"); handleResetFolders(); }}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+          className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all shrink-0 whitespace-nowrap snap-start ${
             activeSource === "ncert"
               ? "bg-sky-600 text-white shadow-md shadow-sky-500/20"
               : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
@@ -143,7 +143,7 @@ export default function ResourcesPage() {
 
         <button
           onClick={() => { setActiveSource("samidha"); handleResetFolders(); }}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${
+          className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap snap-start ${
             activeSource === "samidha"
               ? "bg-sky-600 text-white shadow-md shadow-sky-500/20"
               : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
@@ -154,7 +154,7 @@ export default function ResourcesPage() {
 
         <button
           onClick={() => { setActiveSource("kvs"); handleResetFolders(); }}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+          className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all shrink-0 whitespace-nowrap snap-start ${
             activeSource === "kvs"
               ? "bg-sky-600 text-white shadow-md shadow-sky-500/20"
               : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
@@ -165,7 +165,7 @@ export default function ResourcesPage() {
 
         <button
           onClick={() => { setActiveSource("diksha"); handleResetFolders(); }}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+          className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all shrink-0 whitespace-nowrap snap-start ${
             activeSource === "diksha"
               ? "bg-sky-600 text-white shadow-md shadow-sky-500/20"
               : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
@@ -217,17 +217,17 @@ export default function ResourcesPage() {
           {!selectedClass ? (
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Step 1: Select Class Folder</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 {CLASSES.map((cls) => (
                   <button
                     key={cls}
                     onClick={() => setSelectedClass(cls)}
-                    className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-sky-500 dark:hover:border-sky-500 hover:shadow-md flex items-center gap-3 transition-all text-left group"
+                    className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-sky-500 dark:hover:border-sky-500 hover:shadow-md flex items-center gap-2.5 sm:gap-3 transition-all text-left group"
                   >
-                    <Folder className="h-8 w-8 text-sky-500 group-hover:scale-110 transition-transform" />
+                    <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-sky-500 group-hover:scale-110 transition-transform shrink-0" />
                     <div>
-                      <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{cls}</h4>
-                      <span className="text-[10px] text-zinc-500">Browse Study Folder</span>
+                      <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{cls}</h4>
+                      <span className="text-[10px] text-zinc-500 hidden sm:inline">Browse Study Folder</span>
                     </div>
                   </button>
                 ))}
@@ -241,17 +241,17 @@ export default function ResourcesPage() {
                   ← Back to Classes
                 </button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 {SUBJECTS.map((sub) => (
                   <button
                     key={sub}
                     onClick={() => setSelectedSubject(sub)}
-                    className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-md flex items-center gap-3 transition-all text-left group"
+                    className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-md flex items-center gap-2.5 sm:gap-3 transition-all text-left group"
                   >
-                    <Folder className="h-8 w-8 text-emerald-500 group-hover:scale-110 transition-transform" />
+                    <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-500 group-hover:scale-110 transition-transform shrink-0" />
                     <div>
-                      <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{sub}</h4>
-                      <span className="text-[10px] text-zinc-500">View Category Folders</span>
+                      <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{sub}</h4>
+                      <span className="text-[10px] text-zinc-500 hidden sm:inline">View Category Folders</span>
                     </div>
                   </button>
                 ))}
@@ -265,17 +265,17 @@ export default function ResourcesPage() {
                   ← Back to Subjects
                 </button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md flex items-center gap-3 transition-all text-left group"
+                    className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md flex items-center gap-2.5 sm:gap-3 transition-all text-left group"
                   >
-                    <Folder className="h-8 w-8 text-indigo-500 group-hover:scale-110 transition-transform" />
+                    <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-indigo-500 group-hover:scale-110 transition-transform shrink-0" />
                     <div>
-                      <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{cat}</h4>
-                      <span className="text-[10px] text-zinc-500">View Documents</span>
+                      <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{cat}</h4>
+                      <span className="text-[10px] text-zinc-500 hidden sm:inline">View Documents</span>
                     </div>
                   </button>
                 ))}

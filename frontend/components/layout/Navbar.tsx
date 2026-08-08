@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Sparkles, User, ShieldCheck, GraduationCap, Award, X, Mail, Menu, MessageSquare, Send, CheckCircle2 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -22,11 +23,16 @@ interface VolunteerHeadItem {
 }
 
 export function Navbar() {
+  const [mounted, setMounted] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const { user } = useAuth();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // DYNAMIC VOLUNTEER HEADS STATE
   const [volunteerHeads, setVolunteerHeads] = useState<VolunteerHeadItem[]>([]);
@@ -216,20 +222,24 @@ export function Navbar() {
       {/* Profile Sidebar */}
       <ProfileSidebar isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
 
-      {/* GET MENTOR MODAL (EXCLUSIVELY FOR OPERATIONAL & VOLUNTEER HEADS - DYNAMIC OR EMPTY STATE) */}
-      {isMentorModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-xl w-full p-6 space-y-6 shadow-2xl relative">
+      {/* GET MENTOR MODAL (PORTAL TO BODY TO PREVENT HEADER CLIPPING) */}
+      {mounted && isMentorModalOpen && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 min-h-screen overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-xl w-full p-6 space-y-5 shadow-2xl relative my-auto">
             <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
               <div>
-                <h2 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-sky-500" /> Connect with Operational & Volunteer Heads
                 </h2>
                 <p className="text-xs text-zinc-500 mt-0.5">
                   Direct inquiry line to verified 3rd & 4th year SAMIDHA Volunteer Heads via Email & Instant WhatsApp.
                 </p>
               </div>
-              <button onClick={resetMentorModal} className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
+              <button 
+                onClick={resetMentorModal} 
+                className="p-1 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                title="Close Modal"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -238,15 +248,20 @@ export function Navbar() {
               /* VOLUNTEER HEADS DIRECTORY LIST */
               <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
                 {volunteerHeads.length === 0 ? (
-                  <div className="p-8 text-center space-y-3 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
+                  <div className="p-8 text-center space-y-4 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
                     <div className="h-12 w-12 rounded-full bg-amber-500/10 text-amber-500 mx-auto flex items-center justify-center border border-amber-500/20">
                       <Award className="h-6 w-6" />
                     </div>
                     <div className="space-y-1">
                       <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">No Operational & Volunteer Heads Designated Yet</h4>
-                      <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+                      <p className="text-xs text-zinc-500 max-w-sm mx-auto leading-relaxed">
                         SAMIDHA Administrators assign Operational & Volunteer Head designations to verified 3rd & 4th year volunteer educators in the Admin Control Panel.
                       </p>
+                    </div>
+                    <div className="pt-2">
+                      <Button variant="outline" size="sm" onClick={resetMentorModal} className="text-xs">
+                        Close
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -410,7 +425,8 @@ export function Navbar() {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );
