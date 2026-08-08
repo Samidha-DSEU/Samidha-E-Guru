@@ -13,6 +13,7 @@ import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { AnimatedText } from "@/components/ui/AnimatedText";
 import { TypewriterText } from "@/components/ui/TypewriterText";
 import { TiltCard } from "@/components/ui/TiltCard";
+import { getRoleFromUserOrToken } from "@/lib/userUtils";
 
 export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
@@ -53,8 +54,15 @@ export default function LoginPage() {
     setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
-  const redirectUserByRole = (userObj: any) => {
-    const roleName = (userObj?.role?.name || selectedRole).toLowerCase();
+  const redirectUserByRole = (userObj: any, isRegisterMode: boolean = false) => {
+    let roleName = getRoleFromUserOrToken(userObj);
+    if (!roleName && isRegisterMode) {
+      roleName = selectedRole;
+    }
+    if (!roleName) {
+      roleName = "student";
+    }
+
     if (roleName === "super_admin" || roleName === "admin") {
       router.replace("/admin");
     } else if (roleName === "volunteer") {
@@ -85,10 +93,11 @@ export default function LoginPage() {
       let loggedUser: any = null;
       if (activeTab === "register") {
         loggedUser = await register({ ...formData, role_name: selectedRole });
+        redirectUserByRole(loggedUser, true);
       } else {
-        loggedUser = await login({ email: formData.email, password: formData.password, role_name: selectedRole });
+        loggedUser = await login({ email: formData.email, password: formData.password });
+        redirectUserByRole(loggedUser, false);
       }
-      redirectUserByRole(loggedUser);
     } catch (err: any) {
       setError(err.response?.data?.detail || err.response?.data?.message || "An error occurred during authentication.");
     }
@@ -99,7 +108,7 @@ export default function LoginPage() {
     try {
       if (credentialResponse.credential) {
         const loggedUser = await loginWithGoogle(selectedRole, credentialResponse.credential);
-        redirectUserByRole(loggedUser);
+        redirectUserByRole(loggedUser, activeTab === "register");
       }
     } catch (err: any) {
       setError(err.response?.data?.detail || err.response?.data?.message || "An error occurred during Google sign in.");
@@ -115,7 +124,7 @@ export default function LoginPage() {
     onSuccess: async (tokenResponse) => {
       setError(null);
       const loggedUser = await loginWithGoogle(selectedRole, tokenResponse.access_token);
-      redirectUserByRole(loggedUser);
+      redirectUserByRole(loggedUser, activeTab === "register");
     },
     onError: handleGoogleError
   });
