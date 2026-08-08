@@ -35,8 +35,15 @@ interface ResourceLibraryItem {
   created_at: string;
 }
 
-const CLASSES = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "Undergraduate"];
-const SUBJECTS = ["Mathematics", "Science", "Physics", "Chemistry", "Biology", "English", "Social Science", "Computer Science"];
+const CLASSES = [
+  "Class 1", "Class 2", "Class 3", "Class 4", "Class 5",
+  "Class 6", "Class 7", "Class 8", "Class 9", "Class 10",
+  "Class 11", "Class 12", "Undergraduate"
+];
+const SUBJECTS = [
+  "Mathematics", "Science", "Environmental Studies", "Physics", "Chemistry",
+  "Biology", "English", "Hindi", "Social Science", "Computer Science"
+];
 const CATEGORIES = ["Notes", "Question Paper / PYQ", "Sample Paper", "Worksheet"];
 
 export default function ResourcesPage() {
@@ -211,8 +218,10 @@ export default function ResourcesPage() {
         )}
       </div>
 
-      {/* FOLDER SYSTEM EXPLORER (CLASS -> SUBJECT -> MATERIAL TYPE) */}
-      {!selectedCategory && (
+      {/* FOLDER SYSTEM EXPLORER */}
+      {/* For NCERT Official: Class -> Subject -> Chapters */}
+      {/* For SAMIDHA & Others: Class -> Subject -> Category -> Files */}
+      {((activeSource === "ncert" && !selectedSubject) || (activeSource !== "ncert" && !selectedCategory)) && (
         <div className="space-y-4">
           {!selectedClass ? (
             <div className="space-y-3">
@@ -284,7 +293,7 @@ export default function ResourcesPage() {
                 })}
               </div>
             </div>
-          ) : (
+          ) : activeSource !== "ncert" ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Step 3: Select Material Type Folder in {selectedClass} ({selectedSubject})</h3>
@@ -308,7 +317,7 @@ export default function ResourcesPage() {
                 ))}
               </div>
             </div>
-          )}
+          ) : null}
         </div>
       )}
 
