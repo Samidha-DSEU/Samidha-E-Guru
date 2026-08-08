@@ -17,24 +17,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const SUPER_ADMIN_EMAILS = ["azlantalks4u@gmail.com"];
-const ADMIN_EMAILS = ["feyazkhan8800@gmail.com", "khanfeyaz71@gmail.com", "feyaz@dseu.ac.in", "admin@samidha.edu.in"];
-
-const detectRoleFromEmail = (email: string, requestedRole: UserRole = "student"): UserRole => {
-  const cleanEmail = email.toLowerCase().trim();
-  if (SUPER_ADMIN_EMAILS.includes(cleanEmail)) return "super_admin";
-  if (ADMIN_EMAILS.some((e) => cleanEmail.includes(e.toLowerCase()) || cleanEmail.includes("admin"))) return "admin";
-  return requestedRole;
-};
-
 const createFallbackUser = (role: UserRole = "student", email: string = "user@samidha.org", name: string = "SAMIDHA Learner"): UserProfile => {
-  const actualRole = detectRoleFromEmail(email, role);
   return {
     id: "user-" + Math.floor(Math.random() * 100000),
     email: email,
     is_active: true,
     is_verified: true,
-    role: { id: "role-" + actualRole, name: actualRole },
+    role: { id: "role-" + role, name: role },
     profile: {
       full_name: name,
       bio: "SAMIDHA E-GURU Dedicated Member",
@@ -44,11 +33,11 @@ const createFallbackUser = (role: UserRole = "student", email: string = "user@sa
       institution_name: "Delhi Skill and Entrepreneurship University",
       class_or_degree: "Class 10"
     },
-    volunteer_profile: actualRole === "volunteer" ? {
+    volunteer_profile: role === "volunteer" ? {
       approval_status: "APPROVED",
       organization: "Operational & Volunteer Head"
     } : undefined,
-    alumni_profile: actualRole === "alumni" ? {
+    alumni_profile: role === "alumni" ? {
       current_company: "Tech Lead @ SAMIDHA",
       designation: "Alumni Mentor"
     } : undefined
