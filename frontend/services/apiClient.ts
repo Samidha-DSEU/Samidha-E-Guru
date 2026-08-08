@@ -4,10 +4,10 @@ const getBaseUrl = (): string => {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
-  // Automatic Production vs Localhost fallback
-  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
-    return "https://samidha-e-guru.onrender.com/api/v1";
-  }
+  // Render Production Backend URL (Commented out - connecting to local server)
+  // return "https://samidha-e-guru.onrender.com/api/v1";
+
+  // Connected to local backend server
   return "http://localhost:8000/api/v1";
 };
 
