@@ -1,3 +1,4 @@
+import uuid
 import os
 import logging
 from typing import Dict, Any, Optional
@@ -15,6 +16,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/learn-ai", tags=["Learn AI Tutor & RAG"])
 
 LEARN_AI_SERVICE_URL = os.getenv("LEARN_AI_SERVICE_URL", "http://localhost:8001").rstrip("/")
+
+def parse_uuid(val: str) -> Optional[uuid.UUID]:
+    try:
+        return uuid.UUID(val)
+    except Exception:
+        return None
 
 async def background_ingest_resource_pdf(resource_id: str, pdf_url: str, title: str, db_session_factory):
     """Proxy task to trigger background ingestion on dedicated Learn AI MongoDB microservice."""
@@ -38,7 +45,8 @@ async def get_ai_workspace(
     Proxy endpoint: Retrieves cached AI Tutor Workspace payload from 
     the dedicated MongoDB Learn AI microservice.
     """
-    resource = db.query(Resource).filter(Resource.id == resource_id).first()
+    res_uuid = parse_uuid(resource_id)
+    resource = db.query(Resource).filter(Resource.id == res_uuid).first() if res_uuid else None
     title = resource.title if resource else f"Resource {resource_id}"
     pdf_url = resource.external_url if (resource and resource.external_url) else "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
 
@@ -119,7 +127,8 @@ async def solve_chapter_doubt(
     # 2. Direct Groq LLM Fallback (if microservice port 8001 is offline)
     import os
     groq_key = os.getenv("GROQ_API_KEY")
-    resource = db.query(Resource).filter(Resource.id == request.resource_id).first()
+    res_uuid = parse_uuid(request.resource_id)
+    resource = db.query(Resource).filter(Resource.id == res_uuid).first() if res_uuid else None
     resource_title = resource.title if resource else "NCERT Study Chapter"
 
     if groq_key:
@@ -150,7 +159,7 @@ Include page citation tag '[Page 1]' at relevant key points."""
 
     # 3. Static fallback if no Groq key is set
     fallback_answer = {
-        "answer": f"For **{resource_title}**, regarding '{request.question}':\n\n1. **Euclid's Division Lemma**: $a = bq + r$ where $0 \\le r < b$ [Page 1].\n2. **Fundamental Theorem of Arithmetic**: Every composite number can be uniquely factored into primes [Page 3].\n3. **HCF and LCM Relation**: $\\text{HCF}(a, b) \\times \\text{LCM}(a, b) = a \\times b$ [Page 5].",
+        "answer": f"For **{resource_title}**, regarding '{request.question}':\n\n1. **Euclid's Division Lemma**: $a = bq + r$ where $0 \\le r < b$ [Page 1].\n2. **Fundamental Theorem of Arithmetic**: Every composite number can be uniquely factored into primes [Page 3].\n3. **HCF and LCM Relation**: $\\text{{HCF}}(a, b) \\times \\text{{LCM}}(a, b) = a \\times b$ [Page 5].",
         "sources": [{"page_number": 1, "content_snippet": f"Textbook content for {resource_title}"}]
     }
     return StandardResponse.success_response(data=fallback_answer, message="Doubt query answered.")
@@ -190,7 +199,8 @@ def trigger_pdf_ingestion(
     db: Session = Depends(get_db)
 ):
     """Triggers background PDF ingestion on MongoDB microservice."""
-    resource = db.query(Resource).filter(Resource.id == resource_id).first()
+    res_uuid = parse_uuid(resource_id)
+    resource = db.query(Resource).filter(Resource.id == res_uuid).first() if res_uuid else None
     pdf_url = resource.external_url if (resource and resource.external_url) else "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
     title = resource.title if resource else f"Resource {resource_id}"
 
