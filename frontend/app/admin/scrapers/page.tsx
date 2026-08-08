@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { apiClient } from "@/services/apiClient";
+import { StandardResponse } from "@/types/api";
 
 interface ScraperJob {
   id: string;
@@ -59,17 +61,11 @@ export default function ScraperManagerPage() {
 
   const fetchJobs = async () => {
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      const res = await fetch("http://localhost:8000/api/v1/scraper/jobs", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const json = await res.json();
-      if (json.success && Array.isArray(json.data)) {
-        setJobs(json.data);
-        if (json.data.length > 0 && !selectedJob) {
-          setSelectedJob(json.data[0]);
+      const res = await apiClient.get<StandardResponse<ScraperJob[]>>("/scraper/jobs");
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        setJobs(res.data.data);
+        if (res.data.data.length > 0 && !selectedJob) {
+          setSelectedJob(res.data.data[0]);
         }
       }
     } catch (err) {
@@ -89,32 +85,23 @@ export default function ScraperManagerPage() {
     setScrapingClass(classCode);
     setMessage(null);
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      const res = await fetch("http://localhost:8000/api/v1/scraper/trigger", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          source_name: "NCERT Metadata Scraper",
-          target_class: classCode,
-          subject_name: "All Subjects",
-          max_items: 100
-        })
+      const res = await apiClient.post<StandardResponse<any>>("/scraper/trigger", {
+        source_name: "NCERT Metadata Scraper",
+        target_class: classCode,
+        subject_name: "All Subjects",
+        max_items: 100
       });
-      const json = await res.json();
-      if (json.success) {
+      if (res.data?.success) {
         setMessage({
           text: `Scraping process launched for Class ${classCode}! Telemetry will update in real time.`,
           type: "success"
         });
         fetchJobs();
       } else {
-        setMessage({ text: json.message || "Scraping trigger failed.", type: "error" });
+        setMessage({ text: res.data?.message || "Scraping trigger failed.", type: "error" });
       }
     } catch (err: any) {
-      setMessage({ text: "API Error launching scraper job.", type: "error" });
+      setMessage({ text: err.response?.data?.detail || "API Error launching scraper job.", type: "error" });
     } finally {
       setScrapingClass(null);
     }
@@ -127,25 +114,18 @@ export default function ScraperManagerPage() {
     setPurging(true);
     setMessage(null);
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      const res = await fetch("http://localhost:8000/api/v1/scraper/purge-ncert", {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const json = await res.json();
-      if (json.success) {
+      const res = await apiClient.delete<StandardResponse<any>>("/scraper/purge-ncert");
+      if (res.data?.success) {
         setMessage({
-          text: `Database Purged Successfully! Removed ${json.data?.deleted_resources || 0} NCERT entries.`,
+          text: `Database Purged Successfully! Removed ${res.data.data?.deleted_resources || 0} NCERT entries.`,
           type: "success"
         });
         fetchJobs();
       } else {
-        setMessage({ text: json.message || "Failed purging database.", type: "error" });
+        setMessage({ text: res.data?.message || "Failed purging database.", type: "error" });
       }
-    } catch (err) {
-      setMessage({ text: "Error connecting to backend for database purge.", type: "error" });
+    } catch (err: any) {
+      setMessage({ text: err.response?.data?.detail || "Error connecting to backend for database purge.", type: "error" });
     } finally {
       setPurging(false);
     }

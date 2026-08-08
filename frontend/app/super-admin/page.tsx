@@ -16,8 +16,12 @@ interface ScraperJobItem {
   id: string;
   source_name: string;
   status: string;
+  class_code?: string;
+  total_subjects_found?: number;
+  total_chapters_found?: number;
   resources_found: number;
   resources_added: number;
+  duration_seconds?: number;
   error_log?: string;
   created_at: string;
 }
@@ -193,54 +197,110 @@ export default function SuperAdminDashboardPage() {
         {/* TAB 1: EXTERNAL SCRAPER ENGINE & TRIGGER */}
         {activeTab === "scrapers" && (
           <div className="space-y-6">
-            <Card className="space-y-4">
+            {/* Class-wise Quick Scraper Launcher Grid (Class 1 to Class 12) */}
+            <Card className="p-5 space-y-4 border-zinc-200 dark:border-zinc-800 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                     <Cpu className="h-5 w-5 text-emerald-500" /> Educational Web Scraper Control Center
                   </h2>
                   <p className="text-xs text-zinc-500">
-                    Trigger content crawlers on external servers (NCERT, DIKSHA, CBSE PYQs). Scraped materials auto-import via Webhook callback.
+                    Click any Class button below to launch parallel Playwright/Async crawling for Class 1 to 12 (NCERT & CBSE).
                   </p>
                 </div>
 
-                <Button
-                  onClick={() => setIsTriggerModalOpen(true)}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white shrink-0"
-                >
-                  <Play className="h-4 w-4 mr-1.5" /> Trigger New Scraper Job
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    onClick={() => {
+                      triggerScraperMutation.mutate({
+                        source_name: "NCERT Official Metadata Scraper",
+                        target_class: "ALL",
+                        subject_name: "All Subjects",
+                        max_items: 200,
+                        external_scraper_url: "https://ncert.nic.in"
+                      });
+                    }}
+                    isLoading={triggerScraperMutation.isPending}
+                    className="bg-sky-600 hover:bg-sky-500 text-white text-xs"
+                  >
+                    <Play className="h-3.5 w-3.5 mr-1" /> Scrape All Classes (1-12)
+                  </Button>
+
+                  <Button
+                    onClick={() => setIsTriggerModalOpen(true)}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs"
+                  >
+                    <Play className="h-3.5 w-3.5 mr-1" /> Custom Trigger
+                  </Button>
+                </div>
+              </div>
+
+              {/* Class 1 to 12 Grid Buttons */}
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2 pt-2">
+                {Array.from({ length: 12 }, (_, i) => (i + 1).toString()).map((cNum) => (
+                  <button
+                    key={cNum}
+                    onClick={() => {
+                      triggerScraperMutation.mutate({
+                        source_name: "NCERT Official Metadata Scraper",
+                        target_class: cNum,
+                        subject_name: "All Subjects",
+                        max_items: 100,
+                        external_scraper_url: "https://ncert.nic.in"
+                      });
+                    }}
+                    disabled={triggerScraperMutation.isPending}
+                    className="py-3 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-1 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30"
+                  >
+                    <Code className="h-4 w-4 text-emerald-500" />
+                    <span>Class {cNum}</span>
+                  </button>
+                ))}
+              </div>
+            </Card>
+
+            {/* SCRAPER JOBS TABLE */}
+            <Card className="space-y-4 border-zinc-200 dark:border-zinc-800">
+              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+                <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-emerald-500" /> Scraper Execution & Telemetry History
+                </h3>
+                <Button size="sm" variant="outline" onClick={() => refetchJobs()} className="text-xs">
+                  <RefreshCw className="h-3 w-3 mr-1" /> Refresh Telemetry
                 </Button>
               </div>
 
-              {/* SCRAPER JOBS TABLE */}
               <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
                     <tr>
                       <th className="px-4 py-3">Job ID</th>
-                      <th className="px-4 py-3">Target Source Name</th>
+                      <th className="px-4 py-3">Target Class</th>
+                      <th className="px-4 py-3">Source</th>
                       <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Items Scraped & Imported</th>
+                      <th className="px-4 py-3">Subjects / Chapters Scraped</th>
+                      <th className="px-4 py-3">Duration</th>
                       <th className="px-4 py-3">Triggered At</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
                     {jobsLoading ? (
                       <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                        <td colSpan={7} className="px-4 py-8 text-center text-zinc-500 text-xs">
                           Loading scraper execution history...
                         </td>
                       </tr>
                     ) : jobs.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
-                          No scraper jobs triggered yet. Click "Trigger New Scraper Job" above!
+                        <td colSpan={7} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                          No scraper jobs triggered yet. Click any Class button above to start scraping!
                         </td>
                       </tr>
                     ) : (
                       jobs.map((job) => (
                         <tr key={job.id}>
                           <td className="px-4 py-3 font-mono text-xs text-sky-600 font-bold">#{job.id.substring(0, 8)}</td>
+                          <td className="px-4 py-3 font-bold text-purple-600 dark:text-purple-400">Class {job.class_code || "ALL"}</td>
                           <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{job.source_name}</td>
                           <td className="px-4 py-3 text-xs">
                             <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase ${
@@ -254,9 +314,10 @@ export default function SuperAdminDashboardPage() {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">
-                            <div>Found: {job.resources_found}</div>
-                            <div className="text-emerald-600 font-bold">Imported: {job.resources_added}</div>
+                            <div>Subjects: {job.total_subjects_found || 0} | Chapters: {job.total_chapters_found || 0}</div>
+                            <div className="text-emerald-600 font-bold">Imported: {job.resources_added || 0}</div>
                           </td>
+                          <td className="px-4 py-3 text-xs font-mono text-amber-600 font-bold">{job.duration_seconds || 0}s</td>
                           <td className="px-4 py-3 text-xs text-zinc-400">{new Date(job.created_at).toLocaleString()}</td>
                         </tr>
                       ))
@@ -353,11 +414,19 @@ export default function SuperAdminDashboardPage() {
                       onChange={(e) => setScraperForm({ ...scraperForm, target_class: e.target.value })}
                       className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     >
-                      <option value="Class 9">Class 9</option>
-                      <option value="Class 10">Class 10</option>
-                      <option value="Class 11">Class 11</option>
-                      <option value="Class 12">Class 12</option>
-                      <option value="Undergraduate">Undergraduate</option>
+                      <option value="ALL">ALL (Full Curriculum 1-12)</option>
+                      <option value="1">Class 1</option>
+                      <option value="2">Class 2</option>
+                      <option value="3">Class 3</option>
+                      <option value="4">Class 4</option>
+                      <option value="5">Class 5</option>
+                      <option value="6">Class 6</option>
+                      <option value="7">Class 7</option>
+                      <option value="8">Class 8</option>
+                      <option value="9">Class 9</option>
+                      <option value="10">Class 10</option>
+                      <option value="11">Class 11</option>
+                      <option value="12">Class 12</option>
                     </select>
                   </div>
 
