@@ -29,6 +29,20 @@ def startup_db_migrations():
     logger.info("Running database schema creation & auto-migrations...")
     ensure_schema_migrations(engine)
     Base.metadata.create_all(bind=engine)
+    try:
+        from app.db.session import SessionLocal
+        from app.models.administration import ScraperJob
+        db = SessionLocal()
+        stuck_jobs = db.query(ScraperJob).filter(ScraperJob.status == "running").all()
+        for j in stuck_jobs:
+            j.status = "failed"
+            j.error_log = "Server restarted during job execution"
+        if stuck_jobs:
+            db.commit()
+            logger.info(f"Cleaned up {len(stuck_jobs)} orphan running scraper job(s).")
+        db.close()
+    except Exception as err:
+        logger.debug(f"Orphan scraper job cleanup skipped: {err}")
 
 # Configure CORS
 app.add_middleware(

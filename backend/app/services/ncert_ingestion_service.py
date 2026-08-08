@@ -20,7 +20,17 @@ class NCERTIngestionService:
         start_time = time.time()
         scraper = NCERTMetadataScraper()
         
-        target_codes = [target_class_filter.zfill(2)] if target_class_filter and target_class_filter.isdigit() else [str(i).zfill(2) for i in range(1, 13)]
+        # Extract numeric class ID from input e.g. "Class 1" -> "1", "class-1" -> "1", "1" -> "1"
+        target_num = None
+        if target_class_filter and target_class_filter.upper() != "ALL":
+            digits = "".join([c for c in str(target_class_filter) if c.isdigit()])
+            if digits:
+                target_num = digits
+
+        if target_num:
+            target_codes = [target_num.zfill(2)]
+        else:
+            target_codes = [str(i).zfill(2) for i in range(1, 13)]
         
         total_scraped_books = 0
         total_subjects_found = 0
