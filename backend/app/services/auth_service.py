@@ -29,13 +29,18 @@ class AuthService:
             user = db.query(User).filter(User.email == email).first()
             now = datetime.now(timezone.utc)
 
-            admin_emails = ["azlantalks4u@gmail.com", "feyazkhan8800@gmail.com"]
-            target_role = "admin" if email in admin_emails else req.role_name
+            super_admin_emails = ["azlantalks4u@gmail.com"]
+            admin_emails = ["feyazkhan8800@gmail.com", "khanfeyaz71@gmail.com"]
+
+            if email.lower() in super_admin_emails:
+                target_role = "super_admin"
+            elif email.lower() in admin_emails:
+                target_role = "admin"
+            else:
+                target_role = req.role_name or "student"
 
             if not user:
                 role = db.query(Role).filter(Role.name == target_role).first()
-                if not role:
-                    role = db.query(Role).filter(Role.name == "student").first()
                 if not role:
                     role = Role(name=target_role, description=f"{target_role} role")
                     db.add(role)
@@ -59,9 +64,9 @@ class AuthService:
                 )
                 db.add(profile)
 
-                if req.role_name == "student":
+                if target_role == "student":
                     db.add(LearnerProfile(user_id=user.id))
-                elif req.role_name == "volunteer":
+                elif target_role == "volunteer":
                     expires = now + timedelta(days=3)
                     db.add(VolunteerProfile(
                         user_id=user.id,
@@ -70,21 +75,27 @@ class AuthService:
                         applied_at=now,
                         expires_at=expires
                     ))
-                elif req.role_name == "alumni":
+                elif target_role == "alumni":
                     db.add(AlumniProfile(user_id=user.id))
                 
                 db.commit()
                 db.refresh(user)
 
-                if req.role_name == "volunteer":
+                if target_role == "volunteer":
                     NotificationService.notify_admins_new_volunteer(db, user)
 
             else:
-                # Auto-upgrade to admin if email is in admin list
-                if email in admin_emails and user.role.name not in ["admin", "super_admin"]:
-                    admin_role = db.query(Role).filter(Role.name == "admin").first()
-                    if admin_role:
-                        user.role_id = admin_role.id
+                # Auto-upgrade role if email is in admin/super_admin lists
+                if email.lower() in super_admin_emails and user.role.name != "super_admin":
+                    sa_role = db.query(Role).filter(Role.name == "super_admin").first()
+                    if sa_role:
+                        user.role_id = sa_role.id
+                        db.commit()
+                        db.refresh(user)
+                elif email.lower() in admin_emails and user.role.name not in ["admin", "super_admin"]:
+                    a_role = db.query(Role).filter(Role.name == "admin").first()
+                    if a_role:
+                        user.role_id = a_role.id
                         db.commit()
                         db.refresh(user)
 
@@ -96,11 +107,14 @@ class AuthService:
             access_token = create_access_token(subject=str(user.id), role=user.role.name)
             refresh_token = create_refresh_token(subject=str(user.id))
 
+            user_me = AuthService.get_me(user)
+
             return TokenResponse(
                 access_token=access_token,
                 refresh_token=refresh_token,
                 token_type="bearer",
-                expires_in=1800
+                expires_in=1800,
+                user=user_me
             )
 
         except ValueError as e:
@@ -162,11 +176,14 @@ class AuthService:
         access_token = create_access_token(subject=str(user.id), role=user.role.name)
         refresh_token = create_refresh_token(subject=str(user.id))
 
+        user_me = AuthService.get_me(user)
+
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
             token_type="bearer",
-            expires_in=1800
+            expires_in=1800,
+            user=user_me
         )
 
     @staticmethod
@@ -194,11 +211,14 @@ class AuthService:
         access_token = create_access_token(subject=str(user.id), role=user.role.name)
         refresh_token = create_refresh_token(subject=str(user.id))
 
+        user_me = AuthService.get_me(user)
+
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
             token_type="bearer",
-            expires_in=1800
+            expires_in=1800,
+            user=user_me
         )
 
     @staticmethod

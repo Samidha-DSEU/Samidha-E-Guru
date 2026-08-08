@@ -26,6 +26,7 @@ class TokenResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int
+    user: Optional["UserMeResponse"] = None
 
 
 class RoleSchema(BaseModel):

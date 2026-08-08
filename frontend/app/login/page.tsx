@@ -53,6 +53,19 @@ export default function LoginPage() {
     setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
+  const redirectUserByRole = (userObj: any) => {
+    const roleName = (userObj?.role?.name || selectedRole).toLowerCase();
+    if (roleName === "super_admin" || roleName === "admin") {
+      router.replace("/admin");
+    } else if (roleName === "volunteer") {
+      router.replace("/volunteer");
+    } else if (roleName === "alumni") {
+      router.replace("/alumni");
+    } else {
+      router.replace("/dashboard");
+    }
+  };
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -75,15 +88,9 @@ export default function LoginPage() {
         await login({ email: formData.email, password: formData.password, role_name: selectedRole });
       }
       
-      if (selectedRole === "admin" || selectedRole === "super_admin") {
-        router.push("/admin");
-      } else if (selectedRole === "volunteer") {
-        router.push("/volunteer");
-      } else if (selectedRole === "alumni") {
-        router.push("/alumni");
-      } else {
-        router.push("/dashboard");
-      }
+      const savedUserStr = localStorage.getItem("samidha_user_data");
+      const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+      redirectUserByRole(savedUser);
     } catch (err: any) {
       setError(err.response?.data?.detail || err.response?.data?.message || "An error occurred during authentication.");
     }
@@ -94,16 +101,9 @@ export default function LoginPage() {
     try {
       if (credentialResponse.credential) {
         await loginWithGoogle(selectedRole, credentialResponse.credential);
-        
-        if (selectedRole === "admin" || selectedRole === "super_admin") {
-          router.push("/admin");
-        } else if (selectedRole === "volunteer") {
-          router.push("/volunteer");
-        } else if (selectedRole === "alumni") {
-          router.push("/alumni");
-        } else {
-          router.push("/dashboard");
-        }
+        const savedUserStr = localStorage.getItem("samidha_user_data");
+        const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+        redirectUserByRole(savedUser);
       }
     } catch (err: any) {
       setError(err.response?.data?.detail || err.response?.data?.message || "An error occurred during Google sign in.");
@@ -119,15 +119,9 @@ export default function LoginPage() {
     onSuccess: async (tokenResponse) => {
       setError(null);
       await loginWithGoogle(selectedRole, tokenResponse.access_token);
-      const targetPath =
-        selectedRole === "admin" || selectedRole === "super_admin"
-          ? "/admin"
-          : selectedRole === "volunteer"
-          ? "/volunteer"
-          : selectedRole === "alumni"
-          ? "/alumni"
-          : "/dashboard";
-      router.replace(targetPath);
+      const savedUserStr = localStorage.getItem("samidha_user_data");
+      const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+      redirectUserByRole(savedUser);
     },
     onError: handleGoogleError
   });
@@ -214,44 +208,70 @@ export default function LoginPage() {
                     Multi-Role Portal Access
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                   <button
                     type="button"
                     onClick={() => setSelectedRole("student")}
-                    className={`p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                    className={`p-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
                       selectedRole === "student"
-                        ? "border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 shadow-md shadow-sky-500/10"
+                        ? "border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 shadow-sm"
                         : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                     }`}
                   >
-                    <GraduationCap className="h-4 w-4" />
+                    <GraduationCap className="h-4 w-4 text-sky-500" />
                     Student
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSelectedRole("volunteer")}
-                    className={`p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                    className={`p-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
                       selectedRole === "volunteer"
-                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 shadow-md shadow-emerald-500/10"
+                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 shadow-sm"
                         : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                     }`}
                   >
-                    <ShieldCheck className="h-4 w-4" />
+                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
                     Volunteer
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSelectedRole("alumni")}
-                    className={`p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                    className={`p-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
                       selectedRole === "alumni"
-                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-md shadow-indigo-500/10"
+                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-sm"
                         : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                     }`}
                   >
-                    <Award className="h-4 w-4" />
+                    <Award className="h-4 w-4 text-indigo-500" />
                     Alumni
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole("admin")}
+                    className={`p-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                      selectedRole === "admin"
+                        ? "border-purple-500 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 shadow-sm"
+                        : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    }`}
+                  >
+                    <Sparkles className="h-4 w-4 text-purple-500" />
+                    Admin
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole("super_admin")}
+                    className={`p-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                      selectedRole === "super_admin"
+                        ? "border-amber-500 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 shadow-sm"
+                        : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    }`}
+                  >
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    Super Admin
                   </button>
                 </div>
               </div>
