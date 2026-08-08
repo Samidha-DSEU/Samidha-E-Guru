@@ -85,8 +85,7 @@ def ensure_schema_migrations(engine):
            WHERE LOWER(email) = 'azlantalks4u@gmail.com' OR LOWER(email) LIKE '%azlan%';""",
         """UPDATE users 
            SET role_id = (SELECT id FROM roles WHERE name = 'admin' LIMIT 1) 
-           WHERE (LOWER(email) LIKE '%feyaz%' OR LOWER(email) LIKE '%dseu%') 
-             AND role_id = (SELECT id FROM roles WHERE name = 'super_admin' LIMIT 1);""",
+           WHERE LOWER(email) LIKE '%feyaz%' OR LOWER(email) LIKE '%dseu%';""",
         """INSERT INTO resources (id, title, description, external_url, target_class, subject_name, resource_category, source_type, verification_status)
            SELECT 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'NCERT Class 10 Mathematics: Real Numbers (Chapter 1)', 'Official NCERT textbook chapter covering Euclids Division Lemma, Fundamental Theorem of Arithmetic, and irrational proofs.', 'https://ncert.nic.in/textbook/pdf/jemh101.pdf', 'Class 10', 'Mathematics', 'Notes', 'ncert', 'approved'
            WHERE NOT EXISTS (SELECT 1 FROM resources WHERE id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11');""",
