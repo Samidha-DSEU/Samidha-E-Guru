@@ -21,3 +21,4 @@ sentence-transformers>=2.5.0
 pgvector>=0.2.5
 groq>=0.4.2
 langchain-text-splitters>=0.0.1
+beautifulsoup4>=4.12.0

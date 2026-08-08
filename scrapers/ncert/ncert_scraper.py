@@ -7,7 +7,6 @@ from typing import List, Dict, Any, Optional
 from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
-from app.scrapers.base.base_scraper import BaseMetadataScraper
 
 logger = logging.getLogger("samidha.scrapers.ncert")
 
@@ -26,7 +25,7 @@ MAX_RETRIES = 4
 RETRY_BACKOFF_SEC = 2.0
 TIMEOUT_SEC = 30.0
 
-class NCERTMetadataScraper(BaseMetadataScraper):
+class NCERTMetadataScraper:
     def __init__(self, session: Optional[requests.Session] = None):
         self.session = session or requests.Session()
         self.session.headers.update(HEADERS)
