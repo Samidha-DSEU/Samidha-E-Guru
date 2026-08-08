@@ -15,8 +15,8 @@ LIVE_URL = f"{BASE_URL}/textbook.php"
 CLASS_CODES = [str(i).zfill(2) for i in range(1, 13)]
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; NCERTScraper/1.0)",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9,hi;q=0.8",
     "Referer": LIVE_URL,
 }
@@ -50,14 +50,25 @@ class NCERTMetadataScraper:
 
     def _parse_options(self, html: str, select_name: str) -> List[Dict[str, str]]:
         soup = BeautifulSoup(html, "html.parser")
-        select = soup.find("select", attrs={"name": select_name}) or soup.find("select", id=select_name)
+        name_variants = [select_name, f"t{select_name}"]
+        select = None
+        for name in name_variants:
+            select = soup.find("select", attrs={"name": name}) or soup.find("select", id=name)
+            if select:
+                break
+        if not select:
+            for s in soup.find_all("select"):
+                s_name = (s.get("name") or s.get("id") or "").lower()
+                if select_name in s_name:
+                    select = s
+                    break
         if not select:
             return []
         options = []
         for option in select.find_all("option"):
             value = (option.get("value") or "").strip()
             text = option.get_text().strip()
-            if value and value.lower() not in ["0", "select", ""]:
+            if value and value.lower() not in ["0", "select", "", "..select class..", "..select subject..", "..select book title..."]:
                 options.append({"value": value, "text": text})
         return options
 
@@ -151,13 +162,13 @@ class NCERTMetadataScraper:
 
         records = []
         for subj in subjects:
-            subj_html = self._fetch_with_retry(LIVE_URL, method="POST", data={"tclass": class_code, "subject": subj["value"]})
+            subj_html = self._fetch_with_retry(LIVE_URL, method="POST", data={"tclass": class_code, "tsubject": subj["value"]})
             if not subj_html:
                 continue
 
             books = self._parse_options(subj_html, "book")
             for book in books:
-                book_html = self._fetch_with_retry(LIVE_URL, method="POST", data={"tclass": class_code, "subject": subj["value"], "book": book["value"]})
+                book_html = self._fetch_with_retry(LIVE_URL, method="POST", data={"tclass": class_code, "tsubject": subj["value"], "tbook": book["value"]})
                 if not book_html:
                     continue
 
@@ -174,7 +185,7 @@ class NCERTMetadataScraper:
                     "language": language,
                     "book_name": book_name,
                     "book_code": book["value"],
-                    "external_url": book_pdf or f"{LIVE_URL}?tclass={class_code}&subject={subj['value']}&book={book['value']}",
+                    "external_url": book_pdf or f"{LIVE_URL}?tclass={class_code}&tsubject={subj['value']}&tbook={book['value']}",
                     "source_name": "NCERT",
                     "resource_type_slug": "book",
                     "chapters": chapters,
