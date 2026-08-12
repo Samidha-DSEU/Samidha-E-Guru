@@ -2,8 +2,8 @@
 
 import React, { use } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { BookOpen, ExternalLink, Bookmark, Eye, ArrowLeft, Share2, ShieldCheck, Sparkles } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { BookOpen, ExternalLink, Bookmark, Eye, ArrowLeft, Share2, ShieldCheck, Sparkles, Check } from "lucide-react";
 import { resourceService } from "@/features/resources/services/resourceService";
 import { PdfPreviewTab } from "@/features/learn_ai/components/PdfPreviewTab";
 import { Button } from "@/components/ui/Button";
@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Card";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { formatDate } from "@/lib/utils";
+import { toast } from "react-hot-toast";
 
 export default function ResourceDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -18,6 +19,21 @@ export default function ResourceDetailsPage({ params }: { params: Promise<{ id: 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["resource", id],
     queryFn: () => resourceService.getResourceById(id)
+  });
+
+  const bookmarkMutation = useMutation({
+    mutationFn: () => resourceService.bookmarkResource(id),
+    onSuccess: (res) => {
+      refetch();
+      if (res.data?.bookmarked) {
+        toast.success("Added to bookmarks!");
+      } else {
+        toast.success("Removed from bookmarks.");
+      }
+    },
+    onError: () => {
+      toast.error("Failed to update bookmark. Please try again or login.");
+    }
   });
 
   const resource = data?.data;
@@ -58,12 +74,6 @@ export default function ResourceDetailsPage({ params }: { params: Promise<{ id: 
               <ShieldCheck className="h-3.5 w-3.5 text-sky-500" />
               Verified NCERT Content
             </span>
-
-            <Link href={`/resources/${resource.id}/learn-ai`}>
-              <Button size="sm" className="bg-gradient-to-r from-sky-600 via-indigo-600 to-purple-600 text-white border-0 shadow-md">
-                <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Learn with AI Workspace
-              </Button>
-            </Link>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
@@ -75,10 +85,15 @@ export default function ResourceDetailsPage({ params }: { params: Promise<{ id: 
               <Eye className="h-3.5 w-3.5" />
               {resource.views_count} Views
             </span>
-            <span className="flex items-center gap-1">
-              <Bookmark className="h-3.5 w-3.5" />
-              {resource.bookmarks_count} Bookmarks
-            </span>
+            <button 
+              onClick={() => bookmarkMutation.mutate()}
+              disabled={bookmarkMutation.isPending}
+              className={`flex items-center gap-1 px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors ${bookmarkMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title="Bookmark this resource"
+            >
+              <Bookmark className={`h-3.5 w-3.5 ${resource.is_bookmarked ? 'fill-sky-500 text-sky-500' : ''}`} />
+              <span>{resource.bookmarks_count} Bookmarks</span>
+            </button>
             <span>Added on {formatDate(resource.created_at)}</span>
           </div>
         </div>

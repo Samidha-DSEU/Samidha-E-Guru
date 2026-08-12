@@ -295,8 +295,8 @@ async def stream_pdf_proxy(url: str):
     if not url or not url.startswith("http"):
         raise HTTPException(status_code=400, detail="Invalid PDF URL parameter.")
 
+    from fastapi.responses import StreamingResponse, HTMLResponse
     import httpx
-    from fastapi.responses import StreamingResponse
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -311,7 +311,15 @@ async def stream_pdf_proxy(url: str):
         resp = await client.send(req, stream=True)
         
         if resp.status_code != 200:
-            raise HTTPException(status_code=502, detail=f"NCERT servers returned an error ({resp.status_code}) for this document.")
+            html_content = f"""
+            <html><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f8fafc;color:#334155;">
+            <div style="text-align:center;padding:2rem;background:white;border-radius:1rem;box-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1);">
+            <h2 style="margin-top:0;color:#ef4444;">Document Unavailable</h2>
+            <p>The upstream server (NCERT) returned an error ({resp.status_code}) for this document.</p>
+            </div>
+            </body></html>
+            """
+            return HTMLResponse(content=html_content, status_code=502)
 
         return StreamingResponse(
             resp.aiter_bytes(),
@@ -321,8 +329,15 @@ async def stream_pdf_proxy(url: str):
                 "Cache-Control": "public, max-age=86400"
             }
         )
-    except HTTPException:
-        raise
     except Exception as e:
         err_msg = str(e) or "Connection timeout or refused by NCERT"
-        raise HTTPException(status_code=502, detail=f"Could not stream PDF from upstream server: {err_msg}")
+        html_content = f"""
+        <html><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f8fafc;color:#334155;">
+        <div style="text-align:center;padding:2rem;background:white;border-radius:1rem;box-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1);">
+        <h2 style="margin-top:0;color:#ef4444;">Document Unavailable</h2>
+        <p>Could not stream PDF from upstream server:</p>
+        <p style="font-family:monospace;background:#f1f5f9;padding:0.5rem;border-radius:0.25rem;">{err_msg}</p>
+        </div>
+        </body></html>
+        """
+        return HTMLResponse(content=html_content, status_code=502)

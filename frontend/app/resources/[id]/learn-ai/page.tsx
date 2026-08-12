@@ -82,7 +82,7 @@ export default function LearnAiWorkspacePage({ params }: { params: Promise<{ id:
           href={`/resources/${resourceId}`}
           className="inline-flex items-center text-xs text-zinc-500 hover:text-sky-600 font-medium transition-colors"
         >
-          <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back to Resource Details & PDF Preview
+          <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back to Resource Details & E-Guru
         </Link>
 
         <span className="px-3 py-1 bg-gradient-to-r from-sky-500/10 to-indigo-500/10 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800/60 rounded-full text-xs font-semibold flex items-center gap-1.5">
