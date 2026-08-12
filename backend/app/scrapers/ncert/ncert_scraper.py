@@ -212,7 +212,7 @@ class NCERTMetadataScraper(BaseMetadataScraper):
                     lower_name = b_name.lower()
                     
                     # 1. Block regional languages explicitly
-                    regional_langs = ['(urdu)', '(marathi)', '(gujarati)', '(punjabi)', '(telugu)', '(tamil)', '(kannada)', '(bengali)', '(odia)', '(sindhi)', '(assamese)', '(malayalam)', '(konkani)', '(maithili)', '(bodo)', '(oriya)', '(santhali)', '(manipuri)', '(nepali)', '(dogri)', '(kashmiri)']
+                    regional_langs = ['(urdu)', '(marathi)', '(gujarati)', '(punjabi)', '(telugu)', '(tamil)', '(kannada)', '(bengali)', '(odia)', '(sindhi)', '(assamese)', '(malayalam)', '(konkani)', '(maithili)', '(bodo)', '(oriya)', '(santhali)', '(manipuri)', '(nepali)', '(dogri)', '(kashmiri)', '(sanskrit)']
                     if any(lang in lower_name for lang in regional_langs):
                         continue
                         
