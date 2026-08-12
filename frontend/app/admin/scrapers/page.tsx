@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { TerminalLogStream } from "./Terminal";
 import {
   ArrowLeft,
   Play,
@@ -251,6 +252,9 @@ export default function ScraperManagerPage() {
           })}
         </div>
       </Card>
+
+      {/* LIVE TERMINAL */}
+      <TerminalLogStream />
 
       {/* STEP 2: TELEMETRY DASHBOARD METRICS */}
       {latestJob && (
