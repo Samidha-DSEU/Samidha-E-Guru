@@ -228,12 +228,18 @@ export default function ResourcesPage() {
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Step 1: Select Class Folder</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {CLASSES.map((cls) => {
-                  const count = resources.filter(r => r.target_class?.toLowerCase() === cls.toLowerCase()).length;
+                {Array.from(new Set(resources.map(r => r.target_class).filter(Boolean)))
+                  .sort((a, b) => {
+                    const numA = parseInt(a!.match(/\d+/)?.[0] || "999");
+                    const numB = parseInt(b!.match(/\d+/)?.[0] || "999");
+                    return numA - numB;
+                  })
+                  .map((cls) => {
+                  const count = resources.filter(r => r.target_class === cls).length;
                   return (
                     <button
                       key={cls}
-                      onClick={() => setSelectedClass(cls)}
+                      onClick={() => setSelectedClass(cls!)}
                       className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-sky-500 dark:hover:border-sky-500 hover:shadow-md flex items-center justify-between transition-all text-left group"
                     >
                       <div className="flex items-center gap-2.5 sm:gap-3">
@@ -241,7 +247,7 @@ export default function ResourcesPage() {
                         <div>
                           <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{cls}</h4>
                           <span className="text-[10px] text-zinc-500 block">
-                            {count > 0 ? `${count} Chapter PDFs` : "Empty Folder"}
+                            {count > 0 ? `${count} Resources` : "Empty Folder"}
                           </span>
                         </div>
                       </div>
@@ -264,15 +270,14 @@ export default function ResourcesPage() {
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {SUBJECTS.map((sub) => {
-                  const count = resources.filter(r => 
-                    r.target_class?.toLowerCase() === selectedClass.toLowerCase() &&
-                    r.subject_name?.toLowerCase() === sub.toLowerCase()
-                  ).length;
+                {Array.from(new Set(
+                  resources.filter(r => r.target_class === selectedClass && r.subject_name).map(r => r.subject_name)
+                )).sort().map((sub) => {
+                  const count = resources.filter(r => r.target_class === selectedClass && r.subject_name === sub).length;
                   return (
                     <button
                       key={sub}
-                      onClick={() => setSelectedSubject(sub)}
+                      onClick={() => setSelectedSubject(sub!)}
                       className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-md flex items-center justify-between transition-all text-left group"
                     >
                       <div className="flex items-center gap-2.5 sm:gap-3">
@@ -303,10 +308,12 @@ export default function ResourcesPage() {
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {CATEGORIES.map((cat) => (
+                {Array.from(new Set(
+                  resources.filter(r => r.target_class === selectedClass && r.subject_name === selectedSubject && r.resource_category).map(r => r.resource_category)
+                )).sort().map((cat) => (
                   <button
                     key={cat}
-                    onClick={() => setSelectedCategory(cat)}
+                    onClick={() => setSelectedCategory(cat!)}
                     className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md flex items-center gap-2.5 sm:gap-3 transition-all text-left group"
                   >
                     <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-indigo-500 group-hover:scale-110 transition-transform shrink-0" />
