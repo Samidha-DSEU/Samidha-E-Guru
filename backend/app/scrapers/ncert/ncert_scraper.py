@@ -162,10 +162,25 @@ class NCERTMetadataScraper(BaseMetadataScraper):
 
         try:
             # Fetch Live Syllabus Structure
-            import urllib.request
-            req = urllib.request.Request(LIVE_URL, headers={'User-Agent': 'Mozilla/5.0'})
-            resp = urllib.request.urlopen(req)
-            html = resp.read().decode('utf-8')
+            import requests
+            from requests.adapters import HTTPAdapter
+            from urllib3.util.retry import Retry
+            
+            session = requests.Session()
+            retry = Retry(connect=3, backoff_factor=0.5)
+            adapter = HTTPAdapter(max_retries=retry)
+            session.mount('http://', adapter)
+            session.mount('https://', adapter)
+            
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Connection': 'keep-alive',
+            }
+            response = session.get(LIVE_URL, headers=headers, timeout=15)
+            response.raise_for_status()
+            html = response.text
             
             # Remove comments to prevent matching commented-out books (like Marigold vs Mridang)
             html = re.sub(r'^\s*//.*', '', html, flags=re.MULTILINE)
