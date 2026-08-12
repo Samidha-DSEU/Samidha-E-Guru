@@ -74,8 +74,16 @@ export default function SuperAdminDashboardPage() {
     queryFn: async () => {
       const res = await apiClient.get<StandardResponse<ScraperJobItem[]>>("/scraper/jobs");
       return res.data;
+    },
+    refetchInterval: (query) => {
+      const currentJobs = query.state.data?.data || [];
+      return currentJobs.some((j: any) => j.status === "running") ? 2000 : false;
     }
   });
+
+  const jobs = jobsData?.data || [];
+  const isAnyJobRunning = jobs.some(job => job.status === "running");
+  const isGlobalLoading = triggerScraperMutation.isPending || isAnyJobRunning;
 
   const { data: contractData, isLoading: contractLoading } = useQuery({
     queryKey: ["scraperPayloadContract"],
@@ -220,7 +228,7 @@ export default function SuperAdminDashboardPage() {
                         external_scraper_url: "https://ncert.nic.in"
                       });
                     }}
-                    isLoading={triggerScraperMutation.isPending}
+                    isLoading={isGlobalLoading}
                     className="bg-sky-600 hover:bg-sky-500 text-white text-xs"
                   >
                     <Play className="h-3.5 w-3.5 mr-1" /> Scrape All Classes (1-12)
@@ -249,10 +257,14 @@ export default function SuperAdminDashboardPage() {
                         external_scraper_url: "https://ncert.nic.in"
                       });
                     }}
-                    disabled={triggerScraperMutation.isPending}
-                    className="py-3 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-1 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30"
+                    disabled={isGlobalLoading}
+                    className={`py-3 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-1 ${
+                      isGlobalLoading
+                        ? "opacity-50 cursor-not-allowed bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-zinc-400"
+                        : "bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30"
+                    }`}
                   >
-                    <Code className="h-4 w-4 text-emerald-500" />
+                    {isGlobalLoading ? <RefreshCw className="h-4 w-4 text-emerald-500 animate-spin" /> : <Code className="h-4 w-4 text-emerald-500" />}
                     <span>Class {cNum}</span>
                   </button>
                 ))}
