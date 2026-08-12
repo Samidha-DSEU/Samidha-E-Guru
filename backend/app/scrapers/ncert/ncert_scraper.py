@@ -163,12 +163,12 @@ class NCERTMetadataScraper(BaseMetadataScraper):
         try:
             # Fetch Live Syllabus Structure
             import urllib.request
-            req = urllib.request.Request(BASE_URL, headers={'User-Agent': 'Mozilla/5.0'})
+            req = urllib.request.Request(LIVE_URL, headers={'User-Agent': 'Mozilla/5.0'})
             resp = urllib.request.urlopen(req)
             html = resp.read().decode('utf-8')
             
             # Remove comments to prevent matching commented-out books (like Marigold vs Mridang)
-            html = re.sub(r'//.*', '', html)
+            html = re.sub(r'^\s*//.*', '', html, flags=re.MULTILINE)
             html = re.sub(r'/\*.*?\*/', '', html, flags=re.DOTALL)
 
             m_change1 = re.search(r'function change1\(sind\)(.*?)function', html, re.DOTALL)
