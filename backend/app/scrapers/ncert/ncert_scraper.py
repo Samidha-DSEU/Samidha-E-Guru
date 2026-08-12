@@ -210,24 +210,21 @@ class NCERTMetadataScraper(BaseMetadataScraper):
                     # Some prefixes point to full books or have ps (prelims), we only care about standard chapter ranges for metadata
                     # Detect language medium and filter regional
                     lower_name = b_name.lower()
+                    # NCERT book prefixes universally follow this pattern:
+                    # 1st char: Class (a=1, b=2, ..., j=10, k=11, l=12)
+                    # 2nd char: Language Medium (e=English, h=Hindi, u=Urdu, s=Sanskrit)
+                    # Remaining chars: Subject/Book code
                     
-                    # 1. Block regional languages explicitly
-                    regional_langs = ['(urdu)', '(marathi)', '(gujarati)', '(punjabi)', '(telugu)', '(tamil)', '(kannada)', '(bengali)', '(odia)', '(sindhi)', '(assamese)', '(malayalam)', '(konkani)', '(maithili)', '(bodo)', '(oriya)', '(santhali)', '(manipuri)', '(nepali)', '(dogri)', '(kashmiri)', '(sanskrit)']
-                    if any(lang in lower_name for lang in regional_langs):
-                        continue
-                        
-                    # 2. Determine Medium (English vs Hindi)
-                    detected_medium = None
-                    if '(english)' in lower_name:
-                        detected_medium = 'English'
-                    elif '(hindi)' in lower_name:
-                        detected_medium = 'Hindi'
+                    if len(b_prefix) >= 2:
+                        lang_code = b_prefix[1].lower()
+                        if lang_code == 'u' or lang_code == 's':
+                            # Block Urdu and Sanskrit mediums completely
+                            continue
+                            
+                        detected_medium = 'Hindi' if lang_code == 'h' else 'English'
                     else:
-                        hindi_keywords = ['ganit', 'vigyan', 'samajik', 'bharat', 'jadu', 'aas pass', 'rimjhim', 'kshitij', 'sparsh', 'kritika', 'sanchayan', 'vasant', 'durva', 'ruchira', 'itihas', 'bhugol', 'rajniti', 'arthashastra', 'lekha', 'vyavsay']
-                        if any(kw in lower_name for kw in hindi_keywords):
-                            detected_medium = 'Hindi'
-                        else:
-                            detected_medium = 'English'
+                        # Fallback just in case NCERT changes format
+                        detected_medium = 'Hindi' if '(hindi)' in lower_name else 'English'
 
                     # 3. Create explicit subject folders for dual-medium subjects
                     dual_medium_subjects = ['Mathematics', 'Science', 'Environmental Studies', 'Social Science', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Economics', 'Political Science', 'Sociology', 'Psychology', 'Accountancy', 'Business Studies', 'Computer Science', 'Information Practices']

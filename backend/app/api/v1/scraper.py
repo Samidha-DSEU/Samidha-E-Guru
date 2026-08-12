@@ -3,7 +3,12 @@ from datetime import datetime, timezone
 from uuid import UUID
 import uuid
 import httpx
+import logging
+import queue
+import asyncio
+import json
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from sse_starlette.sse import EventSourceResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -15,6 +20,40 @@ from app.models.administration import ScraperSource, ScraperJob, ActivityLog
 from app.models.resources import Resource
 
 router = APIRouter()
+
+scraper_log_queue = queue.Queue()
+
+class QueueLogHandler(logging.Handler):
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            # Only keep the last 500 logs to prevent memory leak if no client connects
+            if scraper_log_queue.qsize() > 500:
+                try: scraper_log_queue.get_nowait()
+                except queue.Empty: pass
+            scraper_log_queue.put({"msg": msg, "level": record.levelname})
+        except Exception:
+            self.handleError(record)
+
+scraper_logger = logging.getLogger("samidha.scrapers")
+q_handler = QueueLogHandler()
+q_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s', datefmt='%H:%M:%S'))
+scraper_logger.addHandler(q_handler)
+scraper_logger.setLevel(logging.INFO)
+
+@router.get("/logs/stream")
+async def stream_scraper_logs():
+    # Stream the logs using SSE. No auth dependency applied here since EventSource in browser doesn't send auth headers easily without extra work, but in production we'd use a token query param.
+    async def event_generator():
+        # Keep connection alive
+        yield {"data": json.dumps({"msg": "Terminal connection established...", "level": "INFO"})}
+        while True:
+            try:
+                log = scraper_log_queue.get_nowait()
+                yield {"data": json.dumps(log)}
+            except queue.Empty:
+                await asyncio.sleep(0.5)
+    return EventSourceResponse(event_generator())
 
 
 class TriggerScraperRequest(BaseModel):
