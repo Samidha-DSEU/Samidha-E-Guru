@@ -31,6 +31,7 @@ export function getUserHomeLink(user: any): string {
   const roleName = getRoleFromUserOrToken(user) || (user.role?.name ? user.role.name.toLowerCase() : "student");
   if (roleName === "volunteer") return `/volunteer/${slug}`;
   if (roleName === "alumni") return `/alumni/${slug}`;
-  if (roleName === "super_admin" || roleName === "admin") return `/admin`;
+  if (roleName === "super_admin") return `/super-admin`;
+  if (roleName === "admin") return `/admin`;
   return `/dashboard/${slug}`;
 }

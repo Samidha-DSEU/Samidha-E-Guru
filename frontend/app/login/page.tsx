@@ -63,7 +63,9 @@ export default function LoginPage() {
       roleName = "student";
     }
 
-    if (roleName === "super_admin" || roleName === "admin") {
+    if (roleName === "super_admin") {
+      router.replace("/super-admin");
+    } else if (roleName === "admin") {
       router.replace("/admin");
     } else if (roleName === "volunteer") {
       router.replace("/volunteer");
