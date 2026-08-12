@@ -126,8 +126,7 @@ def trigger_external_scraper(
         "target_class": req.target_class,
         "subject_name": req.subject_name,
         "max_items": req.max_items,
-        # "callback_url": "https://samidha-e-guru.onrender.com/api/v1/scraper/webhook-callback"
-        "callback_url": "http://localhost:8000/api/v1/scraper/webhook-callback"
+        "callback_url": "https://samidha-e-guru.onrender.com/api/v1/scraper/webhook-callback"
     }
 
     return StandardResponse.success_response(
