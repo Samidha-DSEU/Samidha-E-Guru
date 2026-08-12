@@ -211,6 +211,13 @@ class NCERTMetadataScraper(BaseMetadataScraper):
                     if 'ps' in b_range: 
                         continue
                         
+                    # Skip regional/other languages unless it's English, Hindi, or Sanskrit. The user explicitly asked for English/Hindi only.
+                    lower_name = b_name.lower()
+                    if any(lang in lower_name for lang in ['(urdu)', '(marathi)', '(gujarati)', '(punjabi)', '(telugu)', '(tamil)', '(kannada)', '(bengali)', '(odia)', '(sindhi)', '(assamese)', '(malayalam)']):
+                        continue
+                    if subj_str.lower() == 'urdu':
+                        continue # user requested only english and hindi
+                        
                     # Extract chapter range (e.g. 0-9)
                     r_parts = b_range.split('-')
                     if len(r_parts) != 2:
@@ -223,15 +230,13 @@ class NCERTMetadataScraper(BaseMetadataScraper):
                         
                     ch_list = []
                     # In NCERT, Chapters are 1-indexed for content usually, but the range might say 0-9.
-                    # Usually 0 or 1 to N. Let's just generate what is required based on the range.
-                    # wait, if range is 0-9, chapters are typically 1 to 9 (0 is often prelims). 
                     actual_start = 1 if start_ch == 0 else start_ch
                     for ch_no in range(actual_start, end_ch + 1):
                         ch_code = str(ch_no).zfill(2)
                         ch_pdf_url = f"https://ncert.nic.in/textbook/pdf/{b_prefix}{ch_code}.pdf"
                         ch_list.append({
                             "chapter_no": ch_no,
-                            "chapter_name": f"Chapter {ch_no}",
+                            "chapter_name": f"{b_name} - Chapter {ch_no}",
                             "pdf_url": ch_pdf_url
                         })
                     

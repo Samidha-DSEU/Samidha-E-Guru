@@ -136,7 +136,7 @@ class NCERTIngestionService:
                         db.flush()
 
                     # Create or Update Resource in DB
-                    res_title = f"{class_title} {subj_name} Chapter {ch_no_str}: {ch_name}"
+                    res_title = f"{class_title} {subj_name}: {ch_name}"
                     existing_res = db.query(Resource).filter(Resource.external_url == pdf_url).first()
 
                     if existing_res:
