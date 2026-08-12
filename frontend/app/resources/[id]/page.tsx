@@ -2,6 +2,7 @@
 
 import React, { use } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { BookOpen, ExternalLink, Bookmark, Eye, ArrowLeft, Share2, ShieldCheck, Sparkles, Check } from "lucide-react";
 import { resourceService } from "@/features/resources/services/resourceService";
@@ -38,6 +39,8 @@ export default function ResourceDetailsPage({ params }: { params: Promise<{ id: 
 
   const resource = data?.data;
 
+  const router = useRouter();
+
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto space-y-6 py-6">
@@ -62,9 +65,12 @@ export default function ResourceDetailsPage({ params }: { params: Promise<{ id: 
   return (
     <div className="max-w-4xl mx-auto space-y-8 py-4">
       {/* Back Link */}
-      <Link href="/resources" className="inline-flex items-center text-sm text-zinc-500 hover:text-sky-600 font-medium transition-colors">
+      <button 
+        onClick={() => router.back()} 
+        className="inline-flex items-center text-sm text-zinc-500 hover:text-sky-600 font-medium transition-colors cursor-pointer bg-transparent border-0 p-0"
+      >
         <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Resources
-      </Link>
+      </button>
 
       {/* Main Resource Card */}
       <Card className="space-y-6">

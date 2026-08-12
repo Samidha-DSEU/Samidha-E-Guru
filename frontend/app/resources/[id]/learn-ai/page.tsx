@@ -1,6 +1,7 @@
 "use client";
 
 import React, { use, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -22,6 +23,7 @@ type TabType = "doubts" | "summaries" | "mindmap" | "flashcards" | "tools" | "qu
 
 export default function LearnAiWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: resourceId } = use(params);
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>("doubts");
 
   const { data: workspace, isLoading, isError, refetch } = useQuery<AIWorkspacePayload>({
@@ -76,14 +78,14 @@ export default function LearnAiWorkspacePage({ params }: { params: Promise<{ id:
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 py-4 px-4">
-      {/* Navigation Top Bar */}
-      <div className="flex items-center justify-between">
-        <Link
-          href={`/resources/${resourceId}`}
-          className="inline-flex items-center text-xs text-zinc-500 hover:text-sky-600 font-medium transition-colors"
+      {/* TOP HEADER */}
+      <div className="flex items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800/60 mb-6 sticky top-0 bg-zinc-50/80 dark:bg-zinc-950/80 backdrop-blur-md z-10 p-2">
+        <button 
+          onClick={() => router.back()}
+          className="inline-flex items-center text-xs text-zinc-500 hover:text-sky-600 font-medium transition-colors bg-transparent border-0 p-0 cursor-pointer"
         >
           <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back to Resource Details & E-Guru
-        </Link>
+        </button>
 
         <span className="px-3 py-1 bg-gradient-to-r from-sky-500/10 to-indigo-500/10 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800/60 rounded-full text-xs font-semibold flex items-center gap-1.5">
           <Sparkles className="h-3.5 w-3.5" /> SAMIDHA AI Tutor Workspace

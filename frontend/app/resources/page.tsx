@@ -189,9 +189,9 @@ export default function ResourcesPage() {
           Home
         </button>
         <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
-        <span className="font-semibold text-zinc-700 dark:text-zinc-300 capitalize">
+        <button onClick={handleResetFolders} className={`font-semibold capitalize hover:underline ${selectedClass ? 'text-sky-600' : 'text-zinc-700 dark:text-zinc-300'}`}>
           {activeSource === "all" ? "All Educational Materials" : activeSource === "samidha" ? "SAMIDHA Shiksha Library" : activeSource.toUpperCase()}
-        </span>
+        </button>
 
         {selectedClass && (
           <>
