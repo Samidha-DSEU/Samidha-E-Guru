@@ -11,14 +11,13 @@ interface PdfPreviewTabProps {
 
 export function PdfPreviewTab({ pdfUrl, title }: PdfPreviewTabProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [viewerMode, setViewerMode] = useState<"proxy" | "google" | "direct">("proxy");
+  const [isLoading, setIsLoading] = useState(true);
 
   // API Base URL for SAMIDHA High-Speed Stream Proxy
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://samidha-e-guru.onrender.com/api/v1";
   const proxyStreamUrl = `${apiBaseUrl}/resources/pdf-proxy/stream?url=${encodeURIComponent(pdfUrl)}`;
-  const googleDocsViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`;
 
-  const embedSrc = viewerMode === "proxy" ? proxyStreamUrl : viewerMode === "google" ? googleDocsViewerUrl : pdfUrl;
+  const embedSrc = proxyStreamUrl;
 
   return (
     <div className="space-y-4">
@@ -40,42 +39,12 @@ export function PdfPreviewTab({ pdfUrl, title }: PdfPreviewTabProps) {
           </div>
         </div>
 
-        {/* Action Controls & High-Speed Viewer Selector */}
+        {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-xs">
-            <button
-              onClick={() => setViewerMode("proxy")}
-              className={`px-2.5 py-1 rounded-md font-semibold transition-all flex items-center gap-1 ${
-                viewerMode === "proxy"
-                  ? "bg-sky-600 text-white shadow-sm"
-                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900"
-              }`}
-              title="Fast SAMIDHA Backend Stream Proxy bypassing slow NCERT servers"
-            >
-              <Zap className="h-3 w-3" /> Fast Proxy Engine
-            </button>
-
-            <button
-              onClick={() => setViewerMode("google")}
-              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
-                viewerMode === "google"
-                  ? "bg-sky-600 text-white shadow-sm"
-                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900"
-              }`}
-            >
-              Google Cloud Mode
-            </button>
-
-            <button
-              onClick={() => setViewerMode("direct")}
-              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
-                viewerMode === "direct"
-                  ? "bg-sky-600 text-white shadow-sm"
-                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900"
-              }`}
-            >
-              Direct Link
-            </button>
+            <span className="px-3 py-1.5 rounded-md font-semibold bg-sky-600 text-white shadow-sm flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5" /> Document Preview
+            </span>
           </div>
 
           <button
@@ -85,12 +54,6 @@ export function PdfPreviewTab({ pdfUrl, title }: PdfPreviewTabProps) {
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
-
-          <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" size="sm">
-              <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> Open Direct
-            </Button>
-          </a>
 
           <a href={proxyStreamUrl} download={`${title}.pdf`} target="_blank" rel="noopener noreferrer">
             <Button size="sm" className="bg-sky-600 hover:bg-sky-500 text-white">
@@ -102,14 +65,22 @@ export function PdfPreviewTab({ pdfUrl, title }: PdfPreviewTabProps) {
 
       {/* Professional Theme PDF Preview Container */}
       <div
-        className={`w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-950 overflow-hidden relative transition-all duration-300 ${
+        className={`w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 overflow-hidden relative transition-all duration-300 ${
           isFullscreen ? "fixed inset-4 z-50 h-[calc(100vh-32px)] shadow-2xl" : "h-[680px]"
         }`}
       >
+        {isLoading && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-zinc-50/80 dark:bg-zinc-950/80 backdrop-blur-sm">
+            <RefreshCw className="h-8 w-8 text-sky-500 animate-spin mb-4" />
+            <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Loading Document...</p>
+            <p className="text-xs text-zinc-500">Bypassing restrictions to securely fetch PDF</p>
+          </div>
+        )}
         <iframe
           src={embedSrc}
+          onLoad={() => setIsLoading(false)}
           title={`PDF Preview - ${title}`}
-          className="w-full h-full border-0 bg-white"
+          className={`w-full h-full border-0 bg-white transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
         />
       </div>
     </div>

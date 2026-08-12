@@ -310,6 +310,9 @@ async def stream_pdf_proxy(url: str):
         req = client.build_request("GET", url)
         resp = await client.send(req, stream=True)
         
+        if resp.status_code != 200:
+            raise HTTPException(status_code=502, detail=f"NCERT servers returned an error ({resp.status_code}) for this document.")
+
         return StreamingResponse(
             resp.aiter_bytes(),
             media_type="application/pdf",
@@ -318,5 +321,8 @@ async def stream_pdf_proxy(url: str):
                 "Cache-Control": "public, max-age=86400"
             }
         )
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Could not stream PDF from upstream server: {e}")
+        err_msg = str(e) or "Connection timeout or refused by NCERT"
+        raise HTTPException(status_code=502, detail=f"Could not stream PDF from upstream server: {err_msg}")
