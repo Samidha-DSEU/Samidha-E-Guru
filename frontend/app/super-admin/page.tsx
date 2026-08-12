@@ -81,9 +81,6 @@ export default function SuperAdminDashboardPage() {
     }
   });
 
-  const jobs = jobsData?.data || [];
-  const isAnyJobRunning = jobs.some(job => job.status === "running");
-  const isGlobalLoading = triggerScraperMutation.isPending || isAnyJobRunning;
 
   const { data: contractData, isLoading: contractLoading } = useQuery({
     queryKey: ["scraperPayloadContract"],
@@ -106,6 +103,8 @@ export default function SuperAdminDashboardPage() {
   });
 
   const jobs = jobsData?.data || [];
+  const isAnyJobRunning = jobs.some(job => job.status === "running");
+  const isGlobalLoading = triggerScraperMutation.isPending || isAnyJobRunning;
   const contract = contractData?.data;
 
   const handleTriggerSubmit = (e: React.FormEvent) => {
