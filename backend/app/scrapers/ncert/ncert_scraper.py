@@ -215,8 +215,6 @@ class NCERTMetadataScraper(BaseMetadataScraper):
                     lower_name = b_name.lower()
                     if any(lang in lower_name for lang in ['(urdu)', '(marathi)', '(gujarati)', '(punjabi)', '(telugu)', '(tamil)', '(kannada)', '(bengali)', '(odia)', '(sindhi)', '(assamese)', '(malayalam)']):
                         continue
-                    if subj_str.lower() == 'urdu':
-                        continue # user requested only english and hindi
                         
                     # Extract chapter range (e.g. 0-9)
                     r_parts = b_range.split('-')
