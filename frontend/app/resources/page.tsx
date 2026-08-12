@@ -363,113 +363,117 @@ export default function ResourcesPage() {
       </div>
 
       {/* RESOURCE CARDS GRID */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="space-y-4">
-              <Skeleton className="h-36 w-full rounded-lg" />
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-            </Card>
-          ))}
-        </div>
-      ) : isError ? (
-        <ErrorState onRetry={refetch} />
-      ) : resources.length === 0 ? (
-        <EmptyState
-          title="No educational resources found in this category"
-          description="Try selecting a different tab or clearing search terms."
-          actionText="View All Materials"
-          onAction={() => { setActiveSource("all"); handleResetFolders(); }}
-        />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {resources.map((res) => (
-            <Card key={res.id} className="flex flex-col justify-between space-y-4 group">
-              <div className="space-y-3">
-                {/* CLASSIFICATION BADGES */}
-                <div className="flex flex-wrap items-center justify-between gap-1.5">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {res.target_class && (
-                      <span className="px-2 py-0.5 bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 text-[10px] font-bold rounded border border-sky-200 dark:border-sky-800">
-                        {res.target_class}
-                      </span>
-                    )}
-                    {res.subject_name && (
-                      <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded border border-emerald-200 dark:border-emerald-800">
-                        {res.subject_name}
-                      </span>
-                    )}
-                    {res.resource_category && (
-                      <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded border border-indigo-200 dark:border-indigo-800">
-                        {res.resource_category}
-                      </span>
-                    )}
+      {(searchTerm.length > 0 || activeSource === "all" || (activeSource === "ncert" && selectedClass && selectedSubject) || (activeSource !== "all" && activeSource !== "ncert" && selectedClass && selectedSubject && selectedCategory)) && (
+        <>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="space-y-4">
+                  <Skeleton className="h-36 w-full rounded-lg" />
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </Card>
+              ))}
+            </div>
+          ) : isError ? (
+            <ErrorState onRetry={refetch} />
+          ) : resources.length === 0 ? (
+            <EmptyState
+              title="No educational resources found in this category"
+              description="Try selecting a different tab or clearing search terms."
+              actionText="View All Materials"
+              onAction={() => { setActiveSource("all"); handleResetFolders(); }}
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {resources.map((res) => (
+                <Card key={res.id} className="flex flex-col justify-between space-y-4 group">
+                  <div className="space-y-3">
+                    {/* CLASSIFICATION BADGES */}
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {res.target_class && (
+                          <span className="px-2 py-0.5 bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 text-[10px] font-bold rounded border border-sky-200 dark:border-sky-800">
+                            {res.target_class}
+                          </span>
+                        )}
+                        {res.subject_name && (
+                          <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded border border-emerald-200 dark:border-emerald-800">
+                            {res.subject_name}
+                          </span>
+                        )}
+                        {res.resource_category && (
+                          <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded border border-indigo-200 dark:border-indigo-800">
+                            {res.resource_category}
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => setRatingResourceId(res.id)}
+                        className="flex items-center gap-1 text-amber-500 hover:scale-105 transition-transform text-[11px]"
+                      >
+                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        <span className="font-bold text-zinc-800 dark:text-zinc-200">
+                          {res.rating_avg > 0 ? res.rating_avg.toFixed(1) : "New"}
+                        </span>
+                      </button>
+                    </div>
+
+                    <Link href={`/resources/${res.id}`}>
+                      <h3 className="font-semibold text-base text-zinc-900 dark:text-zinc-100 line-clamp-2 hover:text-sky-600 transition-colors cursor-pointer pt-1">
+                        {res.title}
+                      </h3>
+                    </Link>
+                    <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed">
+                      {res.description || "Structured study material verified for student preparation."}
+                    </p>
+
+                    {/* CREDIT & DATE FOOTER */}
+                    <div className="space-y-1 pt-1 text-[11px] text-zinc-500">
+                      <div className="flex items-center gap-1.5 font-medium text-zinc-700 dark:text-zinc-300">
+                        <User className="h-3.5 w-3.5 text-sky-500" />
+                        <span>Uploaded by {res.uploader_name}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-zinc-400" />
+                        <span>Date: {new Date(res.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <button
-                    onClick={() => setRatingResourceId(res.id)}
-                    className="flex items-center gap-1 text-amber-500 hover:scale-105 transition-transform text-[11px]"
-                  >
-                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                    <span className="font-bold text-zinc-800 dark:text-zinc-200">
-                      {res.rating_avg > 0 ? res.rating_avg.toFixed(1) : "New"}
-                    </span>
-                  </button>
-                </div>
+                  {/* ACTION BUTTONS (LEARN WITH AI & PDF PREVIEW) */}
+                  <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2">
+                    <Link href={`/resources/${res.id}/learn-ai`} className="block">
+                      <Button size="sm" className="w-full bg-gradient-to-r from-sky-600 via-indigo-600 to-purple-600 hover:from-sky-700 hover:to-purple-700 text-white shadow-sm text-xs font-semibold py-2">
+                        <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Learn with AI Workspace
+                      </Button>
+                    </Link>
 
-                <Link href={`/resources/${res.id}`}>
-                  <h3 className="font-semibold text-base text-zinc-900 dark:text-zinc-100 line-clamp-2 hover:text-sky-600 transition-colors cursor-pointer pt-1">
-                    {res.title}
-                  </h3>
-                </Link>
-                <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed">
-                  {res.description || "Structured study material verified for student preparation."}
-                </p>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/resources/${res.id}`} className="flex-1">
+                        <Button variant="outline" size="sm" className="w-full text-xs">
+                          📄 PDF Preview
+                        </Button>
+                      </Link>
 
-                {/* CREDIT & DATE FOOTER */}
-                <div className="space-y-1 pt-1 text-[11px] text-zinc-500">
-                  <div className="flex items-center gap-1.5 font-medium text-zinc-700 dark:text-zinc-300">
-                    <User className="h-3.5 w-3.5 text-sky-500" />
-                    <span>Uploaded by {res.uploader_name}</span>
+                      <a
+                        href={res.external_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1"
+                      >
+                        <Button variant="ghost" size="sm" className="w-full text-xs text-zinc-500 hover:text-sky-600">
+                          Open External <ExternalLink className="h-3 w-3 ml-1" />
+                        </Button>
+                      </a>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-zinc-400" />
-                    <span>Date: {new Date(res.created_at).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* ACTION BUTTONS (LEARN WITH AI & PDF PREVIEW) */}
-              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2">
-                <Link href={`/resources/${res.id}/learn-ai`} className="block">
-                  <Button size="sm" className="w-full bg-gradient-to-r from-sky-600 via-indigo-600 to-purple-600 hover:from-sky-700 hover:to-purple-700 text-white shadow-sm text-xs font-semibold py-2">
-                    <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Learn with AI Workspace
-                  </Button>
-                </Link>
-
-                <div className="flex items-center gap-2">
-                  <Link href={`/resources/${res.id}`} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full text-xs">
-                      📄 PDF Preview
-                    </Button>
-                  </Link>
-
-                  <a
-                    href={res.external_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1"
-                  >
-                    <Button variant="ghost" size="sm" className="w-full text-xs text-zinc-500 hover:text-sky-600">
-                      Open External <ExternalLink className="h-3 w-3 ml-1" />
-                    </Button>
-                  </a>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* 5-STAR RATING & REVIEWS MODAL */}
