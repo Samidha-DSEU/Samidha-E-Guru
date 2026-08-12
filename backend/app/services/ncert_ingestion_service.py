@@ -175,33 +175,7 @@ class NCERTIngestionService:
                         "message": "Imported"
                     })
 
-                # Ingest Entire Book PDF if available
-                if rec.get("pdf_url") and (not max_resources_limit or resources_added < max_resources_limit):
-                    book_pdf_url = rec["pdf_url"]
-                    book_title = f"{rec['book_name']} (Full Book)"
-                    existing_book_res = db.query(Resource).filter(Resource.external_url == book_pdf_url).first()
-                    if existing_book_res:
-                        existing_book_res.title = book_title
-                        existing_book_res.target_class = class_title
-                        existing_book_res.subject_name = subj_name
-                        existing_book_res.source_type = "ncert"
-                        existing_book_res.verification_status = "approved"
-                        resources_updated += 1
-                    else:
-                        new_book_res = Resource(
-                            title=book_title,
-                            description=f"Complete NCERT Textbook for {class_title} {subj_name} ({rec['language']} Medium).",
-                            external_url=book_pdf_url,
-                            target_class=class_title,
-                            subject_name=subj_name,
-                            resource_category="Textbook",
-                            source_type="ncert",
-                            verification_status="approved",
-                            rating_sum=5,
-                            rating_count=1
-                        )
-                        db.add(new_book_res)
-                        resources_added += 1
+
 
                 if max_resources_limit and resources_added >= max_resources_limit:
                     break
