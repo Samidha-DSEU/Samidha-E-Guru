@@ -136,7 +136,7 @@ class NCERTIngestionService:
                         db.flush()
 
                     # Create or Update Resource in DB
-                    res_title = f"{class_title} {subj_name}: {ch_name}"
+                    res_title = ch_name
                     existing_res = db.query(Resource).filter(Resource.external_url == pdf_url).first()
 
                     if existing_res:
@@ -150,7 +150,7 @@ class NCERTIngestionService:
                     else:
                         new_res = Resource(
                             title=res_title,
-                            description=f"Official NCERT textbook chapter covering {ch_name} for {class_title} {subj_name} ({rec['language']} Medium).",
+                            description=f"Chapter {ch_no_str} from the official {class_title} {subj_name} NCERT textbook.",
                             external_url=pdf_url,
                             target_class=class_title,
                             subject_name=subj_name,
@@ -178,7 +178,7 @@ class NCERTIngestionService:
                 # Ingest Entire Book PDF if available
                 if rec.get("pdf_url") and (not max_resources_limit or resources_added < max_resources_limit):
                     book_pdf_url = rec["pdf_url"]
-                    book_title = f"{class_title} {subj_name}: {rec['book_name']} (Full Book PDF)"
+                    book_title = f"{rec['book_name']} (Full Book)"
                     existing_book_res = db.query(Resource).filter(Resource.external_url == book_pdf_url).first()
                     if existing_book_res:
                         existing_book_res.title = book_title
