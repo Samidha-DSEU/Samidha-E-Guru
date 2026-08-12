@@ -208,13 +208,33 @@ class NCERTMetadataScraper(BaseMetadataScraper):
                 book_matches = book_pattern.findall(block)
                 for b_idx, b_name, b_prefix, b_range in book_matches:
                     # Some prefixes point to full books or have ps (prelims), we only care about standard chapter ranges for metadata
-                    if 'ps' in b_range: 
+                    # Detect language medium and filter regional
+                    lower_name = b_name.lower()
+                    
+                    # 1. Block regional languages explicitly
+                    regional_langs = ['(urdu)', '(marathi)', '(gujarati)', '(punjabi)', '(telugu)', '(tamil)', '(kannada)', '(bengali)', '(odia)', '(sindhi)', '(assamese)', '(malayalam)', '(konkani)', '(maithili)', '(bodo)', '(oriya)', '(santhali)', '(manipuri)', '(nepali)', '(dogri)', '(kashmiri)']
+                    if any(lang in lower_name for lang in regional_langs):
                         continue
                         
-                    # Skip regional/other languages unless it's English, Hindi, or Sanskrit. The user explicitly asked for English/Hindi only.
-                    lower_name = b_name.lower()
-                    if any(lang in lower_name for lang in ['(urdu)', '(marathi)', '(gujarati)', '(punjabi)', '(telugu)', '(tamil)', '(kannada)', '(bengali)', '(odia)', '(sindhi)', '(assamese)', '(malayalam)']):
-                        continue
+                    # 2. Determine Medium (English vs Hindi)
+                    detected_medium = None
+                    if '(english)' in lower_name:
+                        detected_medium = 'English'
+                    elif '(hindi)' in lower_name:
+                        detected_medium = 'Hindi'
+                    else:
+                        hindi_keywords = ['ganit', 'vigyan', 'samajik', 'bharat', 'jadu', 'aas pass', 'rimjhim', 'kshitij', 'sparsh', 'kritika', 'sanchayan', 'vasant', 'durva', 'ruchira', 'itihas', 'bhugol', 'rajniti', 'arthashastra', 'lekha', 'vyavsay']
+                        if any(kw in lower_name for kw in hindi_keywords):
+                            detected_medium = 'Hindi'
+                        else:
+                            detected_medium = 'English'
+
+                    # 3. Create explicit subject folders for dual-medium subjects
+                    dual_medium_subjects = ['Mathematics', 'Science', 'Environmental Studies', 'Social Science', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Economics', 'Political Science', 'Sociology', 'Psychology', 'Accountancy', 'Business Studies', 'Computer Science', 'Information Practices']
+                    
+                    final_subj_str = subj_str
+                    if subj_str in dual_medium_subjects:
+                        final_subj_str = f"{subj_str} ({detected_medium})"
                         
                     # Extract chapter range (e.g. 0-9)
                     r_parts = b_range.split('-')
@@ -227,7 +247,6 @@ class NCERTMetadataScraper(BaseMetadataScraper):
                         continue
                         
                     ch_list = []
-                    # In NCERT, Chapters are 1-indexed for content usually, but the range might say 0-9.
                     actual_start = 1 if start_ch == 0 else start_ch
                     for ch_no in range(actual_start, end_ch + 1):
                         ch_code = str(ch_no).zfill(2)
@@ -240,11 +259,11 @@ class NCERTMetadataScraper(BaseMetadataScraper):
                     
                     full_book_url = f"https://ncert.nic.in/textbook/pdf/{b_prefix}ps.pdf"
                     records.append({
-                        "title": f"Class {class_str} {subj_str}: {b_name}",
-                        "description": f"Official NCERT textbook for Class {class_str} {subj_str}.",
+                        "title": f"Class {class_str} {final_subj_str}: {b_name}",
+                        "description": f"Official NCERT textbook for Class {class_str} {final_subj_str}.",
                         "class": f"Class {class_str}",
-                        "subject": subj_str,
-                        "language": "English" if "English" in b_name else "Hindi" if "Hindi" in b_name else "Sanskrit" if "Sanskrit" in b_name else "English/Hindi",
+                        "subject": final_subj_str,
+                        "language": detected_medium,
                         "book_name": b_name,
                         "chapters": ch_list,
                         "pdf_url": full_book_url,
