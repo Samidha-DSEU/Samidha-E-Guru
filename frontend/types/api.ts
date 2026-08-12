@@ -68,6 +68,7 @@ export interface ResourceItem {
   external_url: string;
   views_count: number;
   bookmarks_count: number;
+  is_bookmarked?: boolean;
   created_at: string;
 }
 
