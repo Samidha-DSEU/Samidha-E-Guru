@@ -160,152 +160,85 @@ class NCERTMetadataScraper(BaseMetadataScraper):
         if class_num.isdigit():
             class_num = str(int(class_num))
 
-        # Comprehensive official NCERT textbook catalog mapping for Class 1 to 12
-        OFFICIAL_NCERT_BOOKS = []
-
-        # Classes 1 to 5
-        for c in ["1", "2", "3", "4", "5"]:
-            code_prefix = chr(96 + int(c)) # 'a', 'b', 'c', 'd', 'e'
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Mathematics", "book_name": f"Mathematics Class {c}", "book_code": f"{code_prefix}mh1",
-                "chapters": [(str(i), f"Chapter {i}: Mathematical Foundations & Numbers") for i in range(1, 15)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Environmental Studies", "book_name": f"Looking Around Class {c}", "book_code": f"{code_prefix}ev1",
-                "chapters": [(str(i), f"Chapter {i}: Our Environment & Nature") for i in range(1, 20)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "English", "book_name": f"English Reader Class {c}", "book_code": f"{code_prefix}en1",
-                "chapters": [(str(i), f"Chapter {i}: English Stories & Poems") for i in range(1, 12)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Hindi", "book_name": f"Rimjhim Class {c}", "book_code": f"{code_prefix}hn1",
-                "chapters": [(str(i), f"Paath {i}: Hindi Sahitya & Stories") for i in range(1, 18)], "language": "Hindi"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Computer Science", "book_name": f"Cyber Basics Class {c}", "book_code": f"{code_prefix}cs1",
-                "chapters": [(str(i), f"Chapter {i}: Intro to Computers") for i in range(1, 10)], "language": "English"
-            })
-
-        # Classes 6 to 8
-        for c in ["6", "7", "8"]:
-            code_prefix = chr(96 + int(c)) # 'f', 'g', 'h'
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Mathematics", "book_name": f"Mathematics Class {c}", "book_code": f"{code_prefix}mh1",
-                "chapters": [(str(i), f"Chapter {i}: Rational Numbers & Geometry") for i in range(1, 18)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Science", "book_name": f"Science Class {c}", "book_code": f"{code_prefix}sc1",
-                "chapters": [(str(i), f"Chapter {i}: Physical & Chemical Science") for i in range(1, 20)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Social Science", "book_name": f"Our Pasts Class {c}", "book_code": f"{code_prefix}ss1",
-                "chapters": [(str(i), f"Chapter {i}: History, Geography & Civics") for i in range(1, 15)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "English", "book_name": f"English Class {c}", "book_code": f"{code_prefix}en1",
-                "chapters": [(str(i), f"Chapter {i}: Honeycomb & Stories") for i in range(1, 15)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Sanskrit", "book_name": f"Ruchira Class {c}", "book_code": f"{code_prefix}sk1",
-                "chapters": [(str(i), f"Pratham {i}: Sanskrit Basics") for i in range(1, 15)], "language": "Sanskrit"
-            })
-
-        # Classes 9 and 10
-        for c in ["9", "10"]:
-            code_prefix = chr(96 + int(c)) # 'i', 'j'
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Mathematics", "book_name": f"Mathematics Class {c}", "book_code": f"{code_prefix}mh1",
-                "chapters": [(str(i), f"Chapter {i}: Advanced Mathematics") for i in range(1, 16)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Science", "book_name": f"Science Class {c}", "book_code": f"{code_prefix}sc1",
-                "chapters": [(str(i), f"Chapter {i}: Advanced Science Concepts") for i in range(1, 16)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Social Science", "book_name": f"Contemporary India Class {c}", "book_code": f"{code_prefix}ss1",
-                "chapters": [(str(i), f"Chapter {i}: History and Civics") for i in range(1, 20)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "English", "book_name": f"First Flight Class {c}", "book_code": f"{code_prefix}ff1",
-                "chapters": [(str(i), f"Chapter {i}: Literature Reader") for i in range(1, 15)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Hindi", "book_name": f"Kshitij Class {c}", "book_code": f"{code_prefix}hn1",
-                "chapters": [(str(i), f"Chapter {i}: Hindi Vyakaran & Sahitya") for i in range(1, 18)], "language": "Hindi"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Information Technology", "book_name": f"IT Class {c}", "book_code": f"{code_prefix}it1",
-                "chapters": [(str(i), f"Chapter {i}: Digital Literacy") for i in range(1, 10)], "language": "English"
-            })
-
-        # Classes 11 and 12
-        for c in ["11", "12"]:
-            code_prefix = chr(96 + int(c)) # 'k', 'l'
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Mathematics", "book_name": f"Mathematics Class {c}", "book_code": f"{code_prefix}mh1",
-                "chapters": [(str(i), f"Chapter {i}: Higher Mathematics") for i in range(1, 16)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Physics", "book_name": f"Physics Class {c}", "book_code": f"{code_prefix}ph1",
-                "chapters": [(str(i), f"Chapter {i}: Advanced Physics Concepts") for i in range(1, 16)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Chemistry", "book_name": f"Chemistry Class {c}", "book_code": f"{code_prefix}ch1",
-                "chapters": [(str(i), f"Chapter {i}: Organic & Inorganic Chemistry") for i in range(1, 16)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Biology", "book_name": f"Biology Class {c}", "book_code": f"{code_prefix}bo1",
-                "chapters": [(str(i), f"Chapter {i}: Biology & Human Welfare") for i in range(1, 16)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Accountancy", "book_name": f"Accountancy Class {c}", "book_code": f"{code_prefix}ac1",
-                "chapters": [(str(i), f"Chapter {i}: Financial Accounting") for i in range(1, 12)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Business Studies", "book_name": f"Business Studies Class {c}", "book_code": f"{code_prefix}bs1",
-                "chapters": [(str(i), f"Chapter {i}: Principles of Management") for i in range(1, 12)], "language": "English"
-            })
-            OFFICIAL_NCERT_BOOKS.append({
-                "class": c, "subject": "Economics", "book_name": f"Economics Class {c}", "book_code": f"{code_prefix}ec1",
-                "chapters": [(str(i), f"Chapter {i}: Micro & Macro Economics") for i in range(1, 12)], "language": "English"
-            })
-
-        records = []
-        if class_code == "ALL" or class_num == "ALL":
-            matching_books = OFFICIAL_NCERT_BOOKS
-        else:
-            matching_books = [b for b in OFFICIAL_NCERT_BOOKS if b["class"] == class_num]
-        
-        # Generate direct NCERT textbook records
-        for b in matching_books:
-            b_class = b["class"]
-            ch_list = []
-            for ch_no, ch_title in b["chapters"]:
-                ch_code = str(ch_no).zfill(2)
-                ch_pdf_url = f"https://ncert.nic.in/textbook/pdf/{b['book_code']}{ch_code}.pdf"
-                ch_list.append({
-                    "chapter_no": ch_no,
-                    "chapter_name": ch_title,
-                    "pdf_url": ch_pdf_url
-                })
+        try:
+            # Fetch Live Syllabus Structure
+            import urllib.request
+            req = urllib.request.Request(BASE_URL, headers={'User-Agent': 'Mozilla/5.0'})
+            resp = urllib.request.urlopen(req)
+            html = resp.read().decode('utf-8')
             
-            full_book_url = f"https://ncert.nic.in/textbook/pdf/{b['book_code']}ps.pdf"
-            records.append({
-                "title": f"Class {b_class} {b['subject']}: {b['book_name']}",
-                "description": f"Official NCERT textbook for Class {b_class} {b['subject']} ({b['language']} Medium).",
-                "class": f"Class {b_class}",
-                "subject": b['subject'],
-                "language": b['language'],
-                "book_name": b['book_name'],
-                "book_code": b['book_code'],
-                "external_url": full_book_url,
-                "source_name": "NCERT",
-                "resource_type_slug": "book",
-                "chapters": ch_list,
-            })
+            # Remove comments to prevent matching commented-out books (like Marigold vs Mridang)
+            html = re.sub(r'//.*', '', html)
+            html = re.sub(r'/\*.*?\*/', '', html, flags=re.DOTALL)
 
-        return records
+            m_change1 = re.search(r'function change1\(sind\)(.*?)function', html, re.DOTALL)
+            if not m_change1:
+                logger.error("Could not find change1 function in NCERT HTML")
+                return []
+                
+            change1_body = m_change1.group(1)
+            
+            class_subj_pattern = re.compile(r'if\s*\(\s*\(document\.test\.tclass\.value\s*==\s*(\d+)\)\s*&&\s*\(document\.test\.tsubject\.options\[sind\]\.text\s*==\s*["\']([^"\']+)["\']\)\s*\)\s*\{([^}]+)\}', re.DOTALL)
+            matches = class_subj_pattern.findall(change1_body)
+            
+            book_pattern = re.compile(r'document\.test\.tbook\.options\[(\d+)\]\.text\s*=\s*["\']([^"\']+)["\'];.*?document\.test\.tbook\.options\[\1\]\.value\s*=\s*["\']textbook\.php\?([^=]+)=([^"\']+)["\']', re.DOTALL)
+            
+            records = []
+            
+            for class_str, subj_str, block in matches:
+                # Filter by target class
+                if class_num != "ALL" and class_str != class_num:
+                    continue
+                    
+                book_matches = book_pattern.findall(block)
+                for b_idx, b_name, b_prefix, b_range in book_matches:
+                    # Some prefixes point to full books or have ps (prelims), we only care about standard chapter ranges for metadata
+                    if 'ps' in b_range: 
+                        continue
+                        
+                    # Extract chapter range (e.g. 0-9)
+                    r_parts = b_range.split('-')
+                    if len(r_parts) != 2:
+                        continue
+                    try:
+                        start_ch = int(r_parts[0])
+                        end_ch = int(r_parts[1])
+                    except ValueError:
+                        continue
+                        
+                    ch_list = []
+                    # In NCERT, Chapters are 1-indexed for content usually, but the range might say 0-9.
+                    # Usually 0 or 1 to N. Let's just generate what is required based on the range.
+                    # wait, if range is 0-9, chapters are typically 1 to 9 (0 is often prelims). 
+                    actual_start = 1 if start_ch == 0 else start_ch
+                    for ch_no in range(actual_start, end_ch + 1):
+                        ch_code = str(ch_no).zfill(2)
+                        ch_pdf_url = f"https://ncert.nic.in/textbook/pdf/{b_prefix}{ch_code}.pdf"
+                        ch_list.append({
+                            "chapter_no": ch_no,
+                            "chapter_name": f"Chapter {ch_no}",
+                            "pdf_url": ch_pdf_url
+                        })
+                    
+                    full_book_url = f"https://ncert.nic.in/textbook/pdf/{b_prefix}ps.pdf"
+                    records.append({
+                        "title": f"Class {class_str} {subj_str}: {b_name}",
+                        "description": f"Official NCERT textbook for Class {class_str} {subj_str}.",
+                        "class": f"Class {class_str}",
+                        "subject": subj_str,
+                        "language": "English" if "English" in b_name else "Hindi" if "Hindi" in b_name else "Sanskrit" if "Sanskrit" in b_name else "English/Hindi",
+                        "book_name": b_name,
+                        "chapters": ch_list,
+                        "pdf_url": full_book_url,
+                        "source_name": "NCERT",
+                        "resource_type_slug": "book"
+                    })
+                    
+            return records
+
+        except Exception as e:
+            logger.error(f"Error scraping NCERT JS variables: {e}")
+            return []
 
     def fetch_metadata(self) -> List[Dict[str, Any]]:
         """Fetch all official NCERT metadata records across Class 1 to 12."""
