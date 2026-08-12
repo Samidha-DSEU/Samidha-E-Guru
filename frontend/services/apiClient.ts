@@ -4,11 +4,8 @@ const getBaseUrl = (): string => {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
-  // Render Production Backend URL (Commented out - connecting to local server)
-  // return "https://samidha-e-guru.onrender.com/api/v1";
-
-  // Connected to local backend server
-  return "http://localhost:8000/api/v1";
+  // Default to Production Backend URL if no env variable is provided
+  return "https://samidha-e-guru.onrender.com/api/v1";
 };
 
 export const apiClient = axios.create({
