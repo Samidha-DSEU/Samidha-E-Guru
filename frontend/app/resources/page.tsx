@@ -442,18 +442,12 @@ export default function ResourcesPage() {
                     </div>
                   </div>
 
-                  {/* ACTION BUTTONS (LEARN WITH AI & PDF PREVIEW) */}
+                  {/* ACTION BUTTONS */}
                   <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2">
-                    <Link href={`/resources/${res.id}/learn-ai`} className="block">
-                      <Button size="sm" className="w-full bg-gradient-to-r from-sky-600 via-indigo-600 to-purple-600 hover:from-sky-700 hover:to-purple-700 text-white shadow-sm text-xs font-semibold py-2">
-                        <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Learn with AI Workspace
-                      </Button>
-                    </Link>
-
                     <div className="flex items-center gap-2">
                       <Link href={`/resources/${res.id}`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full text-xs">
-                          📄 PDF Preview
+                        <Button variant="outline" size="sm" className="w-full text-xs font-semibold bg-sky-50 dark:bg-sky-900/10 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/20">
+                          <Sparkles className="h-3 w-3 mr-1" /> AI Workspace
                         </Button>
                       </Link>
 
@@ -464,7 +458,7 @@ export default function ResourcesPage() {
                         className="flex-1"
                       >
                         <Button variant="ghost" size="sm" className="w-full text-xs text-zinc-500 hover:text-sky-600">
-                          Open External <ExternalLink className="h-3 w-3 ml-1" />
+                          Direct Open <ExternalLink className="h-3 w-3 ml-1" />
                         </Button>
                       </a>
                     </div>

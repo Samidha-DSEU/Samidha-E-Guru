@@ -70,17 +70,20 @@ export function PdfPreviewTab({ pdfUrl, title }: PdfPreviewTabProps) {
         }`}
       >
         {isLoading && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-zinc-50/80 dark:bg-zinc-950/80 backdrop-blur-sm">
-            <RefreshCw className="h-8 w-8 text-sky-500 animate-spin mb-4" />
-            <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Loading Document...</p>
-            <p className="text-xs text-zinc-500">Bypassing restrictions to securely fetch PDF</p>
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-zinc-50/80 dark:bg-zinc-950/80 backdrop-blur-md">
+            <RefreshCw className="h-10 w-10 text-sky-500 animate-spin mb-4" />
+            <p className="text-base font-bold text-zinc-700 dark:text-zinc-300">Loading Document...</p>
+            <p className="text-xs text-zinc-500 mt-2 font-medium">Establishing secure stream with NCERT servers</p>
           </div>
         )}
         <iframe
           src={embedSrc}
-          onLoad={() => setIsLoading(false)}
+          onLoad={() => {
+            // Ensure loading state is visible for at least 1.5s to avoid flashing on quick errors
+            setTimeout(() => setIsLoading(false), 1500);
+          }}
           title={`PDF Preview - ${title}`}
-          className={`w-full h-full border-0 bg-white transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+          className={`w-full h-full border-0 bg-white transition-opacity duration-1000 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
         />
       </div>
     </div>
