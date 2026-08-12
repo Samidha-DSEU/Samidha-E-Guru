@@ -222,7 +222,7 @@ export default function ResourcesPage() {
       {/* FOLDER SYSTEM EXPLORER */}
       {/* For NCERT Official: Class -> Subject -> Chapters */}
       {/* For SAMIDHA & Others: Class -> Subject -> Category -> Files */}
-      {((activeSource === "ncert" && !selectedSubject) || (activeSource !== "ncert" && !selectedCategory)) && (
+      {activeSource !== "all" && ((activeSource === "ncert" && !selectedSubject) || (activeSource !== "ncert" && !selectedCategory)) && (
         <div className="space-y-4">
           {!selectedClass ? (
             <div className="space-y-3">
