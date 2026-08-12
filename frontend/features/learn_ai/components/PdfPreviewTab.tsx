@@ -14,7 +14,7 @@ export function PdfPreviewTab({ pdfUrl, title }: PdfPreviewTabProps) {
   const [viewerMode, setViewerMode] = useState<"proxy" | "google" | "direct">("proxy");
 
   // API Base URL for SAMIDHA High-Speed Stream Proxy
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://samidha-e-guru.onrender.com/api/v1";
   const proxyStreamUrl = `${apiBaseUrl}/resources/pdf-proxy/stream?url=${encodeURIComponent(pdfUrl)}`;
   const googleDocsViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`;
 
