@@ -166,22 +166,16 @@ def get_all_scraper_jobs(
     jobs = db.query(ScraperJob).order_by(ScraperJob.created_at.desc()).all()
     now_utc = datetime.now(timezone.utc)
     
-    # Auto-complete any old jobs that finished or got stuck in 'running'
+    # Check for jobs that have been stuck in 'running' for more than 5 minutes and mark them as failed
     for j in jobs:
         if j.status == "running":
             created_at = j.created_at
             if created_at is not None:
                 if created_at.tzinfo is None:
                     created_at = created_at.replace(tzinfo=timezone.utc)
-                if (now_utc - created_at).total_seconds() > 5:
-                    j.status = "completed"
-                    if not j.resources_added:
-                        j.resources_found = 38
-                        j.resources_added = 38
-                        j.total_subjects_found = 4
-                        j.total_chapters_found = 38
-                    if not j.duration_seconds:
-                        j.duration_seconds = 0.23
+                if (now_utc - created_at).total_seconds() > 300:  # 5 minutes timeout
+                    j.status = "failed"
+                    j.error_log = "Job timed out."
                     db.commit()
 
     data = [

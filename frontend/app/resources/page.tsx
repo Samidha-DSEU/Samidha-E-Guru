@@ -72,7 +72,8 @@ export default function ResourcesPage() {
           subject_name: selectedSubject || undefined,
           resource_category: selectedCategory || undefined,
           search: searchTerm || undefined,
-          sort_by: sortBy
+          sort_by: sortBy,
+          limit: 1000
         }
       });
       return res.data;
