@@ -48,7 +48,7 @@ def get_resources(
     if target_class:
         query = query.filter(Resource.target_class == target_class)
     if subject_name:
-        query = query.filter(Resource.subject_name.ilike(f"%{subject_name}%"))
+        query = query.filter(Resource.subject_name == subject_name)
     if resource_category:
         query = query.filter(Resource.resource_category == resource_category)
     if search:
