@@ -166,10 +166,11 @@ export default function ResourcesPage() {
   };
 
   return (
-    <div className="relative overflow-hidden space-y-8 selection:bg-sky-500 selection:text-white">
+    <div className="relative overflow-hidden min-h-screen space-y-8 selection:bg-sky-500 selection:text-white">
       <CursorDotsCanvas />
 
-      {/* Header Banner */}
+      <div className="relative z-10 space-y-8">
+        {/* Header Banner */}
       <ScrollReveal direction="zoom" delay={0}>
         <div className="space-y-3">
           <AnimatedText
@@ -588,6 +589,7 @@ export default function ResourcesPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

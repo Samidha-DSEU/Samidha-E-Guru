@@ -245,6 +245,23 @@ export const CursorDotsCanvas: React.FC = () => {
 
     initCanvas();
 
+    // Delayed init to catch Next.js theme hydration on initial mount
+    const timer = setTimeout(() => {
+      initCanvas();
+    }, 150);
+
+    // MutationObserver to re-initialize canvas dots when user toggles Dark/Light theme!
+    let themeObserver: MutationObserver | null = null;
+    if (typeof MutationObserver !== "undefined") {
+      themeObserver = new MutationObserver(() => {
+        initCanvas();
+      });
+      themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"]
+      });
+    }
+
     // Use ResizeObserver so canvas adjusts dot mesh when section content expands or contracts on tab switching!
     let resizeObserver: ResizeObserver | null = null;
     if (typeof ResizeObserver !== "undefined" && canvas.parentElement) {
@@ -265,6 +282,8 @@ export const CursorDotsCanvas: React.FC = () => {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      clearTimeout(timer);
+      if (themeObserver) themeObserver.disconnect();
       if (resizeObserver) resizeObserver.disconnect();
       window.removeEventListener("resize", initCanvas);
       window.removeEventListener("mousemove", handleMouseMove);
@@ -278,7 +297,7 @@ export const CursorDotsCanvas: React.FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none absolute inset-0 w-full h-full -z-10 transition-opacity duration-500"
+      className="pointer-events-none absolute inset-0 w-full h-full z-0 transition-opacity duration-500"
     />
   );
 };
