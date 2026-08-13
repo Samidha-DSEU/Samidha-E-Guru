@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Filter, BookOpen, ExternalLink, Bookmark, Eye, Star, Folder, ChevronRight, User, Calendar, X, Sparkles } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
@@ -48,12 +49,32 @@ const CATEGORIES = ["Notes", "Question Paper / PYQ", "Sample Paper", "Worksheet"
 
 export default function ResourcesPage() {
   const queryClient = useQueryClient();
-  const [activeSource, setActiveSource] = useState<string>("all"); // all, ncert, samidha, kvs, diksha
-  const [selectedClass, setSelectedClass] = useState<string | null>(null);
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+
+  const paramSource = searchParams.get("source") || "all";
+  const paramClass = searchParams.get("class");
+  const paramSubject = searchParams.get("subject");
+  const paramCategory = searchParams.get("category");
+
+  const [activeSource, setActiveSource] = useState<string>(paramSource); // all, ncert, samidha, kvs, diksha
+  const [selectedClass, setSelectedClass] = useState<string | null>(paramClass);
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(paramSubject);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(paramCategory);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<string>("latest"); // latest, top_rated, most_viewed
+
+  // Sync state to URL query parameters so back button and page refresh preserve exact folder state
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (activeSource !== "all") params.set("source", activeSource);
+    if (selectedClass) params.set("class", selectedClass);
+    if (selectedSubject) params.set("subject", selectedSubject);
+    if (selectedCategory) params.set("category", selectedCategory);
+    
+    const queryStr = params.toString();
+    const newUrl = queryStr ? `/resources?${queryStr}` : "/resources";
+    window.history.replaceState(null, "", newUrl);
+  }, [activeSource, selectedClass, selectedSubject, selectedCategory]);
 
   // RATING MODAL STATE
   const [ratingResourceId, setRatingResourceId] = useState<string | null>(null);
@@ -73,7 +94,7 @@ export default function ResourcesPage() {
           resource_category: selectedCategory || undefined,
           search: searchTerm || undefined,
           sort_by: sortBy,
-          limit: 1000
+          limit: 100
         }
       });
       return res.data;
@@ -96,7 +117,47 @@ export default function ResourcesPage() {
     }
   });
 
-  const resources = data?.data || [];
+  const resources = useMemo(() => data?.data || [], [data]);
+
+  const classList = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of resources) {
+      if (r.target_class) {
+        map.set(r.target_class, (map.get(r.target_class) || 0) + 1);
+      }
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => {
+        const numA = parseInt(a.match(/\d+/)?.[0] || "999");
+        const numB = parseInt(b.match(/\d+/)?.[0] || "999");
+        return numA - numB;
+      })
+      .map(([cls, count]) => ({ cls, count }));
+  }, [resources]);
+
+  const subjectList = useMemo(() => {
+    if (!selectedClass) return [];
+    const map = new Map<string, number>();
+    for (const r of resources) {
+      if (r.target_class === selectedClass && r.subject_name) {
+        map.set(r.subject_name, (map.get(r.subject_name) || 0) + 1);
+      }
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([sub, count]) => ({ sub, count }));
+  }, [resources, selectedClass]);
+
+  const categoryList = useMemo(() => {
+    if (!selectedClass || !selectedSubject) return [];
+    const set = new Set<string>();
+    for (const r of resources) {
+      if (r.target_class === selectedClass && r.subject_name === selectedSubject && r.resource_category) {
+        set.add(r.resource_category);
+      }
+    }
+    return Array.from(set).sort();
+  }, [resources, selectedClass, selectedSubject]);
 
   const handleResetFolders = () => {
     setSelectedClass(null);
@@ -228,93 +289,77 @@ export default function ResourcesPage() {
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Step 1: Select Class Folder</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {Array.from(new Set(resources.map(r => r.target_class).filter(Boolean)))
-                  .sort((a, b) => {
-                    const numA = parseInt(a!.match(/\d+/)?.[0] || "999");
-                    const numB = parseInt(b!.match(/\d+/)?.[0] || "999");
-                    return numA - numB;
-                  })
-                  .map((cls) => {
-                  const count = resources.filter(r => r.target_class === cls).length;
-                  return (
-                    <button
-                      key={cls}
-                      onClick={() => setSelectedClass(cls!)}
-                      className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-sky-500 dark:hover:border-sky-500 hover:shadow-md flex items-center justify-between transition-all text-left group"
-                    >
-                      <div className="flex items-center gap-2.5 sm:gap-3">
-                        <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-sky-500 group-hover:scale-110 transition-transform shrink-0" />
-                        <div>
-                          <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{cls}</h4>
-                          <span className="text-[10px] text-zinc-500 block">
-                            {count > 0 ? `${count} Resources` : "Empty Folder"}
-                          </span>
-                        </div>
-                      </div>
-                      {count > 0 && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800">
-                          {count}
+                {classList.map(({ cls, count }) => (
+                  <button
+                    key={cls}
+                    onClick={() => setSelectedClass(cls)}
+                    className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:border-sky-500 dark:hover:border-sky-500 hover:shadow-md flex items-center justify-between transition-transform duration-200 text-left group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5 sm:gap-3">
+                      <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-sky-500 group-hover:scale-110 transition-transform shrink-0" />
+                      <div>
+                        <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{cls}</h4>
+                        <span className="text-[10px] text-zinc-500 block">
+                          {count > 0 ? `${count} Resources` : "Empty Folder"}
                         </span>
-                      )}
-                    </button>
-                  );
-                })}
+                      </div>
+                    </div>
+                    {count > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800">
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                ))}
               </div>
             </div>
           ) : !selectedSubject ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Step 2: Select Subject Folder in {selectedClass}</h3>
-                <button onClick={() => setSelectedClass(null)} className="text-xs text-sky-600 hover:underline">
+                <button onClick={() => setSelectedClass(null)} className="text-xs text-sky-600 dark:text-sky-400 hover:underline cursor-pointer">
                   ← Back to Classes
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {Array.from(new Set(
-                  resources.filter(r => r.target_class === selectedClass && r.subject_name).map(r => r.subject_name)
-                )).sort().map((sub) => {
-                  const count = resources.filter(r => r.target_class === selectedClass && r.subject_name === sub).length;
-                  return (
-                    <button
-                      key={sub}
-                      onClick={() => setSelectedSubject(sub!)}
-                      className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-md flex items-center justify-between transition-all text-left group"
-                    >
-                      <div className="flex items-center gap-2.5 sm:gap-3">
-                        <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-500 group-hover:scale-110 transition-transform shrink-0" />
-                        <div>
-                          <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{sub}</h4>
-                          <span className="text-[10px] text-zinc-500 block">
-                            {count > 0 ? `${count} Resources` : "Empty Folder"}
-                          </span>
-                        </div>
-                      </div>
-                      {count > 0 && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                          {count}
+                {subjectList.map(({ sub, count }) => (
+                  <button
+                    key={sub}
+                    onClick={() => setSelectedSubject(sub)}
+                    className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-md flex items-center justify-between transition-transform duration-200 text-left group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5 sm:gap-3">
+                      <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-500 group-hover:scale-110 transition-transform shrink-0" />
+                      <div>
+                        <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{sub}</h4>
+                        <span className="text-[10px] text-zinc-500 block">
+                          {count > 0 ? `${count} Resources` : "Empty Folder"}
                         </span>
-                      )}
-                    </button>
-                  );
-                })}
+                      </div>
+                    </div>
+                    {count > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                ))}
               </div>
             </div>
           ) : activeSource !== "ncert" ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Step 3: Select Material Type Folder in {selectedClass} ({selectedSubject})</h3>
-                <button onClick={() => setSelectedSubject(null)} className="text-xs text-sky-600 hover:underline">
+                <button onClick={() => setSelectedSubject(null)} className="text-xs text-sky-600 dark:text-sky-400 hover:underline cursor-pointer">
                   ← Back to Subjects
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {Array.from(new Set(
-                  resources.filter(r => r.target_class === selectedClass && r.subject_name === selectedSubject && r.resource_category).map(r => r.resource_category)
-                )).sort().map((cat) => (
+                {categoryList.map((cat) => (
                   <button
                     key={cat}
-                    onClick={() => setSelectedCategory(cat!)}
-                    className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md flex items-center gap-2.5 sm:gap-3 transition-all text-left group"
+                    onClick={() => setSelectedCategory(cat)}
+                    className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md flex items-center gap-2.5 sm:gap-3 transition-transform duration-200 text-left group cursor-pointer"
                   >
                     <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-indigo-500 group-hover:scale-110 transition-transform shrink-0" />
                     <div>
@@ -423,7 +468,7 @@ export default function ResourcesPage() {
                       </button>
                     </div>
 
-                    <Link href={`/resources/${res.id}`}>
+                    <Link href={`/resources/${res.id}?fromSource=${activeSource}${selectedClass ? `&fromClass=${encodeURIComponent(selectedClass)}` : ''}${selectedSubject ? `&fromSubject=${encodeURIComponent(selectedSubject)}` : ''}${selectedCategory ? `&fromCategory=${encodeURIComponent(selectedCategory)}` : ''}`}>
                       <h3 className="font-semibold text-base text-zinc-900 dark:text-zinc-100 line-clamp-2 hover:text-sky-600 transition-colors cursor-pointer pt-1">
                         {res.title}
                       </h3>
@@ -448,13 +493,13 @@ export default function ResourcesPage() {
                   {/* ACTION BUTTONS */}
                   <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Link href={`/resources/${res.id}`} className="flex-1 min-w-[100px]">
+                      <Link href={`/resources/${res.id}?fromSource=${activeSource}${selectedClass ? `&fromClass=${encodeURIComponent(selectedClass)}` : ''}${selectedSubject ? `&fromSubject=${encodeURIComponent(selectedSubject)}` : ''}${selectedCategory ? `&fromCategory=${encodeURIComponent(selectedCategory)}` : ''}`} className="flex-1 min-w-[100px]">
                         <Button variant="outline" size="sm" className="w-full text-xs font-semibold bg-zinc-50 dark:bg-zinc-800/60 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700">
                           <BookOpen className="h-3 w-3 mr-1 text-zinc-500" /> PDF Preview
                         </Button>
                       </Link>
 
-                      <Link href={`/resources/${res.id}/learn-ai`} className="flex-1 min-w-[120px]">
+                      <Link href={`/resources/${res.id}/learn-ai?fromSource=${activeSource}${selectedClass ? `&fromClass=${encodeURIComponent(selectedClass)}` : ''}${selectedSubject ? `&fromSubject=${encodeURIComponent(selectedSubject)}` : ''}${selectedCategory ? `&fromCategory=${encodeURIComponent(selectedCategory)}` : ''}`} className="flex-1 min-w-[120px]">
                         <Button variant="primary" size="sm" className="w-full text-xs font-semibold bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white shadow-sm">
                           <Sparkles className="h-3 w-3 mr-1 text-amber-300" /> Learn With AI
                         </Button>

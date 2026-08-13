@@ -2,7 +2,7 @@
 
 import React, { use } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { BookOpen, ExternalLink, Bookmark, Eye, ArrowLeft, Share2, ShieldCheck, Sparkles, Check } from "lucide-react";
 import { resourceService } from "@/features/resources/services/resourceService";
@@ -16,6 +16,25 @@ import { toast } from "react-hot-toast";
 
 export default function ResourceDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const searchParams = useSearchParams();
+
+  const fromSource = searchParams.get("fromSource");
+  const fromClass = searchParams.get("fromClass");
+  const fromSubject = searchParams.get("fromSubject");
+  const fromCategory = searchParams.get("fromCategory");
+
+  const backParams = new URLSearchParams();
+  if (fromSource) backParams.set("source", fromSource);
+  if (fromClass) backParams.set("class", fromClass);
+  if (fromSubject) backParams.set("subject", fromSubject);
+  if (fromCategory) backParams.set("category", fromCategory);
+
+  const backHref = backParams.toString() ? `/resources?${backParams.toString()}` : "/resources";
+  const backLabel = fromClass && fromSubject
+    ? `Back to ${fromSource ? fromSource.toUpperCase() : ''} ${fromClass} (${fromSubject})`
+    : fromClass
+    ? `Back to ${fromClass}`
+    : "Back to Resources Hub";
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["resource", id],
@@ -65,12 +84,12 @@ export default function ResourceDetailsPage({ params }: { params: Promise<{ id: 
   return (
     <div className="max-w-4xl mx-auto space-y-8 py-4">
       {/* Back Link */}
-      <button 
-        onClick={() => router.back()} 
+      <Link 
+        href={backHref} 
         className="inline-flex items-center text-sm text-zinc-500 hover:text-sky-600 font-medium transition-colors cursor-pointer bg-transparent border-0 p-0"
       >
-        <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Resources
-      </button>
+        <ArrowLeft className="h-4 w-4 mr-1.5" /> {backLabel}
+      </Link>
 
       {/* Main Resource Card */}
       <Card className="space-y-6">

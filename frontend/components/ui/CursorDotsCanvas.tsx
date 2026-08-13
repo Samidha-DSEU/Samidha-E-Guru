@@ -47,6 +47,9 @@ export const CursorDotsCanvas: React.FC = () => {
       return 32; // Desktop
     };
 
+    let cols = 0;
+    let rows = 0;
+
     const initCanvas = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       const rect = canvas.getBoundingClientRect();
@@ -57,26 +60,27 @@ export const CursorDotsCanvas: React.FC = () => {
       canvas.height = height * dpr;
       ctx.scale(dpr, dpr);
 
+      const isDark = document.documentElement.classList.contains("dark");
+
       // Re-populate dot grid
       dots = [];
       const spacing = getSpacing(width);
-      const cols = Math.ceil(width / spacing) + 1;
-      const rows = Math.ceil(height / spacing) + 1;
+      cols = Math.ceil(width / spacing) + 1;
+      rows = Math.ceil(height / spacing) + 1;
 
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
           const x = i * spacing;
           const y = j * spacing;
 
-          // Theme palette: Sky blue, Indigo, and Soft Violet
-          const colors = [
-            "14, 165, 233", // sky-500
-            "99, 102, 241", // indigo-500
-            "168, 85, 247", // purple-500
-          ];
+          // Theme palette: Vibrant Cyan/Sky, Electric Indigo, Neon Violet
+          const colors = isDark
+            ? ["56, 189, 248", "129, 140, 248", "192, 132, 252"] // Vibrant neon dark mode colors
+            : ["14, 165, 233", "99, 102, 241", "168, 85, 247"];
+
           const color = colors[(i + j) % colors.length];
-          const baseAlpha = Math.random() * 0.25 + 0.15; // 0.15 - 0.40 opacity
-          const baseSize = Math.random() * 0.8 + 1.4; // 1.4px - 2.2px radius
+          const baseAlpha = isDark ? Math.random() * 0.35 + 0.30 : Math.random() * 0.25 + 0.15;
+          const baseSize = isDark ? Math.random() * 1.0 + 1.8 : Math.random() * 0.8 + 1.4;
 
           dots.push({
             x,
@@ -137,6 +141,43 @@ export const CursorDotsCanvas: React.FC = () => {
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
+      const isDark = document.documentElement.classList.contains("dark");
+
+      // Draw subtle ambient grid mesh lines connecting matrix dots
+      for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+          const idx = i * rows + j;
+          const curr = dots[idx];
+          if (!curr) continue;
+
+          // Connect right neighbor
+          if (i < cols - 1) {
+            const right = dots[(i + 1) * rows + j];
+            if (right) {
+              ctx.beginPath();
+              ctx.moveTo(curr.x, curr.y);
+              ctx.lineTo(right.x, right.y);
+              ctx.strokeStyle = isDark ? "rgba(56, 189, 248, 0.12)" : "rgba(14, 165, 233, 0.08)";
+              ctx.lineWidth = 0.7;
+              ctx.stroke();
+            }
+          }
+
+          // Connect bottom neighbor
+          if (j < rows - 1) {
+            const bottom = dots[i * rows + (j + 1)];
+            if (bottom) {
+              ctx.beginPath();
+              ctx.moveTo(curr.x, curr.y);
+              ctx.lineTo(bottom.x, bottom.y);
+              ctx.strokeStyle = isDark ? "rgba(56, 189, 248, 0.12)" : "rgba(14, 165, 233, 0.08)";
+              ctx.lineWidth = 0.7;
+              ctx.stroke();
+            }
+          }
+        }
+      }
+
       // Render & update dots
       const activeDotsNearCursor: Dot[] = [];
 
@@ -159,7 +200,7 @@ export const CursorDotsCanvas: React.FC = () => {
           dot.x += (targetX - dot.x) * 0.15;
           dot.y += (targetY - dot.y) * 0.15;
 
-          dot.size = dot.baseSize + force * 2.5;
+          dot.size = dot.baseSize + force * 2.8;
           dot.alpha = Math.min(dot.baseAlpha + force * 0.6, 0.95);
 
           activeDotsNearCursor.push(dot);
@@ -188,12 +229,12 @@ export const CursorDotsCanvas: React.FC = () => {
           const lineDist = Math.sqrt(ldx * ldx + ldy * ldy);
 
           if (lineDist < 60) {
-            const lineAlpha = (1 - lineDist / 60) * 0.25;
+            const lineAlpha = (1 - lineDist / 60) * 0.35;
             ctx.beginPath();
             ctx.moveTo(d1.x, d1.y);
             ctx.lineTo(d2.x, d2.y);
-            ctx.strokeStyle = `rgba(14, 165, 233, ${lineAlpha})`;
-            ctx.lineWidth = 0.8;
+            ctx.strokeStyle = isDark ? `rgba(56, 189, 248, ${lineAlpha})` : `rgba(14, 165, 233, ${lineAlpha})`;
+            ctx.lineWidth = 1.0;
             ctx.stroke();
           }
         }
