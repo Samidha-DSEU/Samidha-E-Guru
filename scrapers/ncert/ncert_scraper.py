@@ -180,6 +180,8 @@ class NCERTMetadataScraper:
         
         # If class matches official catalog, generate direct NCERT textbook records
         for b in matching_books:
+            if b.get("language") not in ("English", "Hindi"):
+                continue
             ch_list = []
             for ch_no, ch_title in b["chapters"]:
                 ch_code = str(ch_no).zfill(2)
@@ -208,10 +210,11 @@ class NCERTMetadataScraper:
         return records
 
     def fetch_metadata(self) -> List[Dict[str, Any]]:
-        """Fetch all official NCERT metadata records across Class 1 to 12."""
+        """Fetch all official NCERT metadata records across Class 1 to 12 (English & Hindi only)."""
         all_materials = []
         for code in CLASS_CODES:
             records = self.scrape_class(code)
+            records = [r for r in records if r.get("language") in ("English", "Hindi")]
             all_materials.extend(records)
         return all_materials
 

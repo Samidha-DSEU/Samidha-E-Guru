@@ -42,7 +42,7 @@ async def get_ai_workspace(
     db: Session = Depends(get_db)
 ):
     """
-    Proxy endpoint: Retrieves cached AI Tutor Workspace payload from 
+    Proxy endpoint: Retrieves base AI Tutor Workspace metadata from 
     the dedicated MongoDB Learn AI microservice.
     """
     res_uuid = parse_uuid(resource_id)
@@ -51,7 +51,7 @@ async def get_ai_workspace(
     pdf_url = resource.external_url if (resource and resource.external_url) else "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
 
     try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        async with httpx.AsyncClient(timeout=8.0) as client:
             resp = await client.get(
                 f"{LEARN_AI_SERVICE_URL}/api/v1/learn-ai/workspace/{resource_id}",
                 params={"title": title, "pdf_url": pdf_url}
@@ -59,48 +59,62 @@ async def get_ai_workspace(
             if resp.status_code == 200:
                 data = resp.json().get("data", {})
                 data["pdf_url"] = pdf_url
-                return StandardResponse.success_response(data=data, message="Workspace retrieved from Learn AI MongoDB service.")
+                return StandardResponse.success_response(data=data, message="Workspace metadata retrieved.")
+            else:
+                detail_text = resp.json().get("detail", resp.text)
+                raise HTTPException(status_code=resp.status_code, detail=f"Learn AI Service Error: {detail_text}")
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
-        logger.warning(f"Microservice proxy offline, using local workspace fallback: {e}")
+        logger.warning(f"Microservice proxy offline: {e}")
 
-    # Graceful fallback if microservice is offline
-    fallback_workspace = {
+    # Return base empty workspace metadata without fake LLM pre-generation
+    minimal_workspace = {
         "resource_id": resource_id,
         "resource_title": title,
         "pdf_url": pdf_url,
-        "summaries": {
-            "one_min_bullets": [
-                f"Core theme of {title} focuses on fundamental academic concepts.",
-                "Key formulas and principles govern practical problem solving.",
-                "Essential textbook definitions provide base for exam readiness."
-            ],
-            "five_min_paragraph": f"This chapter '{title}' covers foundational concepts essential for board and competitive exams.",
-            "revision_notes": ["Rule 1: Verify key formulas before applying.", "Rule 2: Identify textbook definitions."]
-        },
-        "mind_map": {"id": "root", "label": title, "children": []},
-        "flashcards": [
-            {"id": "fc-1", "front": f"What is the main concept of {title}?", "back": "To establish clear foundational understanding.", "difficulty": "Easy", "tag": "Concept"}
-        ],
-        "study_tools": {
-            "definitions": [{"term": "Primary Concept", "definition": "A fundamental principle in curriculum."}],
-            "formulas": [{"name": "Standard Identity", "latex": "a^2 + b^2 = c^2", "explanation": "Fundamental relationship."}],
-            "mnemonics": [{"phrase": "OIL RIG", "concept": "Redox Reactions", "explanation": "Oxidation Is Loss, Reduction Is Gain."}],
-            "common_mistakes": [{"misconception": "Sign errors", "correction": "Write standard form first.", "reason": "Avoid sign calculation mistakes."}],
-            "video_scripts": [{"scene": "Intro", "narration": f"Welcome to {title}!", "visual": "Title header."}]
-        },
-        "question_bank": [
-            {
-                "id": "q1",
-                "bloom_level": "Remember",
-                "question_type": "MCQ",
-                "question": f"Which statement best describes {title}?",
-                "options": [{"id": "A", "text": "It provides foundational principles for academic study."}, {"id": "B", "text": "Unrelated to board exams."}],
-                "correct_answer": "A",
-                "explanation": "Option A accurately reflects curriculum objective."
-            }
-        ]
+        "summaries": None,
+        "mind_map": None,
+        "flashcards": None,
+        "study_tools": None,
+        "question_bank": None
     }
-    return StandardResponse.success_response(data=fallback_workspace, message="AI Tutor Workspace retrieved (fallback mode).")
+    return StandardResponse.success_response(data=minimal_workspace, message="Base AI Workspace loaded.")
+
+
+@router.get("/workspace/{resource_id}/section/{section_name}", response_model=StandardResponse[Dict[str, Any]])
+async def get_ai_workspace_section(
+    resource_id: str,
+    section_name: str,
+    db: Session = Depends(get_db)
+):
+    """Proxy endpoint: Generates specific workspace section on demand via microservice."""
+    res_uuid = parse_uuid(resource_id)
+    resource = db.query(Resource).filter(Resource.id == res_uuid).first() if res_uuid else None
+    title = resource.title if resource else f"Resource {resource_id}"
+    pdf_url = resource.external_url if (resource and resource.external_url) else "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
+
+    try:
+        async with httpx.AsyncClient(timeout=25.0) as client:
+            resp = await client.get(
+                f"{LEARN_AI_SERVICE_URL}/api/v1/learn-ai/workspace/{resource_id}/section/{section_name}",
+                params={"title": title, "pdf_url": pdf_url}
+            )
+            if resp.status_code == 200:
+                data = resp.json().get("data", {})
+                return StandardResponse.success_response(data=data, message=f"Section '{section_name}' generated successfully.")
+            else:
+                err_detail = resp.json().get("detail", resp.text)
+                status_code = resp.status_code
+                raise HTTPException(status_code=status_code, detail=f"LLM Section Generation Error: {err_detail}")
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        err_msg = str(e)
+        logger.error(f"Error calling Learn AI Microservice: {err_msg}")
+        is_rate_limit = "429" in err_msg or "rate_limit" in err_msg.lower()
+        status_code = 429 if is_rate_limit else 500
+        raise HTTPException(status_code=status_code, detail=f"Learn AI Service Connection Error: {err_msg}")
 
 
 @router.post("/query", response_model=StandardResponse[Dict[str, Any]])
@@ -108,24 +122,28 @@ async def solve_chapter_doubt(
     request: RagQueryRequest,
     db: Session = Depends(get_db)
 ):
-    """Proxy endpoint: Forwards doubt solver queries to MongoDB microservice or Groq LLM directly."""
+    """Proxy endpoint: Forwards doubt solver queries to microservice or Groq LLM directly."""
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
-    # 1. Try forwarding to separate Microservice
+    # 1. Forward to separate Microservice
     try:
-        async with httpx.AsyncClient(timeout=8.0) as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.post(
                 f"{LEARN_AI_SERVICE_URL}/api/v1/learn-ai/query",
                 json={"resource_id": request.resource_id, "question": request.question}
             )
             if resp.status_code == 200:
                 return StandardResponse.success_response(data=resp.json().get("data", {}), message="Doubt solved via MongoDB service.")
+            else:
+                err_detail = resp.json().get("detail", resp.text)
+                raise HTTPException(status_code=resp.status_code, detail=f"LLM Doubt Solver Error: {err_detail}")
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
-        logger.warning(f"Microservice proxy offline for doubt query: {e}")
+        logger.warning(f"Microservice proxy connection error: {e}")
 
     # 2. Direct Groq LLM Fallback (if microservice port 8001 is offline)
-    import os
     groq_key = os.getenv("GROQ_API_KEY")
     res_uuid = parse_uuid(request.resource_id)
     resource = db.query(Resource).filter(Resource.id == res_uuid).first() if res_uuid else None
@@ -142,7 +160,7 @@ Provide a direct, thorough, step-by-step academic response with exact textbook f
 Include page citation tag '[Page 1]' at relevant key points."""
 
             completion = groq_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3
             )
@@ -155,14 +173,16 @@ Include page citation tag '[Page 1]' at relevant key points."""
                 message="Doubt solved via Groq LLM."
             )
         except Exception as groq_err:
-            logger.warning(f"Direct Groq call error: {groq_err}")
+            err_msg = str(groq_err)
+            logger.error(f"Direct Groq API call error: {err_msg}")
+            is_rate_limit = "429" in err_msg or "rate_limit" in err_msg.lower() or "blocked" in err_msg.lower()
+            status_code = 429 if is_rate_limit else 400
+            raise HTTPException(status_code=status_code, detail=f"Groq LLM Error ({status_code}): {err_msg}")
 
-    # 3. Static fallback if no Groq key is set
-    fallback_answer = {
-        "answer": f"For **{resource_title}**, regarding '{request.question}':\n\n1. **Euclid's Division Lemma**: $a = bq + r$ where $0 \\le r < b$ [Page 1].\n2. **Fundamental Theorem of Arithmetic**: Every composite number can be uniquely factored into primes [Page 3].\n3. **HCF and LCM Relation**: $\\text{{HCF}}(a, b) \\times \\text{{LCM}}(a, b) = a \\times b$ [Page 5].",
-        "sources": [{"page_number": 1, "content_snippet": f"Textbook content for {resource_title}"}]
-    }
-    return StandardResponse.success_response(data=fallback_answer, message="Doubt query answered.")
+    raise HTTPException(
+        status_code=500,
+        detail="LLM Configuration Error: GROQ_API_KEY is not set on the server."
+    )
 
 
 @router.post("/quiz/submit", response_model=StandardResponse[Dict[str, Any]])

@@ -233,8 +233,10 @@ async function scrapeBook(classCode, subjVal, subjText, bookVal, bookText) {
   const bookPdf  = extractBookPdf(html);
   const chapters = extractChapters(html);
   const language = detectLanguage(bookName + " " + subjText, bookVal);
-
-  console.log(`    ✓ ${bookVal}  (${language})  → ${chapters.length} chapters`);
+  if (!["English", "Hindi"].includes(language)) {
+    console.log(`    ✗ Skipping ${bookVal} (${language}) — only English & Hindi allowed.`);
+    return null;
+  }
 
   return {
     class        : String(parseInt(classCode, 10)),  // "01" → "1"

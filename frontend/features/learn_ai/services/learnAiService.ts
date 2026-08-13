@@ -101,6 +101,11 @@ export const learnAiService = {
     return res.data.data;
   },
 
+  async getWorkspaceSection(resourceId: string, section: string): Promise<Record<string, any>> {
+    const res = await apiClient.get(`/learn-ai/workspace/${resourceId}/section/${section}`);
+    return res.data.data;
+  },
+
   async askDoubt(resourceId: string, question: string): Promise<DoubtResponse> {
     const res = await apiClient.post("/learn-ai/query", {
       resource_id: resourceId,

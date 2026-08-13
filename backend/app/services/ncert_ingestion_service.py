@@ -71,8 +71,10 @@ class NCERTIngestionService:
                 unscraped_classes.append(class_title)
                 continue
 
+            records = [r for r in records if r.get("language") in ("English", "Hindi")]
+
             if not records:
-                logger.warning(f"⚠️ No records found for {class_title}")
+                logger.warning(f"⚠️ No English/Hindi records found for {class_title}")
                 unscraped_classes.append(class_title)
                 continue
 

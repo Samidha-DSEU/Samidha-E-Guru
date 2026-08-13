@@ -57,11 +57,15 @@ export function DoubtSolverTab({ resourceId, title }: { resourceId: string; titl
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages((prev) => [...prev, botMsg]);
-    } catch (err) {
+    } catch (err: any) {
+      const realErrorText =
+        err?.response?.data?.detail ||
+        err?.message ||
+        "An unexpected error occurred while contacting the LLM service.";
       const errorMsg: DoubtMessage = {
         id: (Date.now() + 1).toString(),
         sender: "bot",
-        text: "I encountered an issue retrieving information from the textbook. Please try asking again.",
+        text: `⚠️ **LLM Error**: ${realErrorText}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages((prev) => [...prev, errorMsg]);

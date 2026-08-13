@@ -57,22 +57,23 @@ class RAGService:
                 answer_text = response.choices[0].message.content
                 return {"answer": answer_text, "sources": sources}
             except Exception as e:
-                logger.error(f"Groq API call error: {e}")
+                err_str = str(e)
+                logger.error(f"Groq API call error: {err_str}")
+                is_rate_limit = "429" in err_str or "rate_limit" in err_str.lower() or "limit" in err_str.lower()
+                status_code = 429 if is_rate_limit else 400
+                raise ValueError(f"LLM Error ({status_code}): {err_str}")
 
-        # Intelligent Fallback response if offline / API key missing
-        fallback_answer = (
-            f"Based on textbook analysis for this chapter: {question}\n\n"
-            "• Core Principle: Review standard definitions and step-by-step proofs.\n"
-            "• Key Concept: Pay attention to sign conventions and mathematical properties.\n"
-            "• Exam Tip: Write intermediate steps clearly for step-marking."
-        )
-        return {"answer": fallback_answer, "sources": sources if sources else [{"page_number": 1, "content_snippet": "Relevant textbook chapter content."}]}
+        if not client:
+            raise ValueError("LLM Configuration Error: GROQ_API_KEY is missing or invalid on server.")
+
+        if not context_str:
+            raise ValueError("Context Error: No parsed PDF chunks found for this resource in MongoDBAtlas vector store.")
 
     @classmethod
     def get_or_generate_workspace(cls, db: Database, resource_id: str, resource_title: str, pdf_url: str = "") -> Dict[str, Any]:
         """
         Retrieves cached workspace from MongoDB `ai_workspace_caches` (sub-15ms)
-        or generates a fresh workspace via Groq LLM JSON pipeline.
+        or returns workspace metadata with default chat state (without pre-generating all modules).
         """
         cache_coll = db["ai_workspace_caches"]
         cached = cache_coll.find_one({"resource_id": resource_id})
@@ -82,91 +83,158 @@ class RAGService:
                 data["pdf_url"] = pdf_url
             return data
 
-        # Load context from MongoDB chunks
+        # Default minimal workspace metadata without pre-generating heavy modules
+        empty_workspace = {
+            "resource_id": resource_id,
+            "resource_title": resource_title,
+            "pdf_url": pdf_url or "https://ncert.nic.in/textbook/pdf/jemh101.pdf",
+            "summaries": None,
+            "mind_map": None,
+            "flashcards": None,
+            "study_tools": None,
+            "question_bank": None
+        }
+        return empty_workspace
+
+    @classmethod
+    def generate_workspace_section(cls, db: Database, resource_id: str, section: str, resource_title: str, pdf_url: str = "") -> Dict[str, Any]:
+        """
+        Generates a specific workspace section on demand via Groq LLM (or returns from MongoDB cache).
+        Section options: 'summaries', 'mindmap', 'flashcards', 'tools', 'quiz'
+        """
+        cache_coll = db["ai_workspace_caches"]
+        cached = cache_coll.find_one({"resource_id": resource_id})
+        workspace_data = cached.get("workspace_data", {}) if cached else {}
+
+        # Normalize section key mapping
+        sec_key_map = {
+            "summaries": "summaries",
+            "mindmap": "mind_map",
+            "flashcards": "flashcards",
+            "tools": "study_tools",
+            "quiz": "question_bank"
+        }
+        target_key = sec_key_map.get(section, section)
+
+        # 1. Return from cache if already generated
+        if workspace_data and workspace_data.get(target_key) is not None:
+            return {target_key: workspace_data[target_key]}
+
+        # 2. Check LLM Client
+        client = cls.get_groq_client()
+        if not client:
+            raise ValueError("LLM Configuration Error: GROQ_API_KEY is missing or invalid on server.")
+
+        # 3. Load text chunks from MongoDB
         chunks_coll = db["ai_chunks"]
         chunks = list(chunks_coll.find({"resource_id": resource_id}).limit(15))
         full_text = "\n\n".join([c.get("content", "") for c in chunks])
         if not full_text:
-            full_text = f"Sample study content for chapter: {resource_title}"
+            full_text = f"Academic study content for chapter titled: {resource_title}"
 
-        workspace_payload = cls._generate_default_workspace(resource_id, resource_title, pdf_url)
-        client = cls.get_groq_client()
-
-        if client:
-            try:
-                prompt = f"""Generate a comprehensive multi-item academic JSON study workspace payload for textbook chapter titled '{resource_title}'.
+        # 4. Construct Section-Specific Prompt
+        prompts = {
+            "summaries": f"""Generate detailed academic summaries for textbook chapter '{resource_title}'.
 Content snippet: {full_text[:3500]}
-
-IMPORTANT REQUIREMENT: Generate at least 6 Flashcards, 6 Bloom's Practice Questions, 4 Main Mind Map Branches, 4 Definitions, 4 LaTeX Formulas, and 4 Common Mistakes.
-
-Return valid JSON matching this exact structure:
+Return valid JSON:
 {{
   "summaries": {{
     "one_min_bullets": ["Key point 1", "Key point 2", "Key point 3", "Key point 4"],
     "five_min_paragraph": "Comprehensive theoretical and practical overview...",
-    "revision_notes": ["Rule 1...", "Rule 2...", "Rule 3...", "Rule 4..."]
-  }},
+    "revision_notes": ["Rule 1: Always verify key formulas.", "Rule 2: Note sign conventions."]
+  }}
+}}""",
+            "mindmap": f"""Generate a 4-branch hierarchical Mind Map JSON for textbook chapter '{resource_title}'.
+Content snippet: {full_text[:3500]}
+Return valid JSON:
+{{
   "mind_map": {{
     "id": "root",
     "label": "{resource_title}",
     "children": [
-      {{"id": "b1", "label": "1. Foundational Concepts", "children": []}},
-      {{"id": "b2", "label": "2. Core Theorems & Derivations", "children": []}},
-      {{"id": "b3", "label": "3. Problem Solving Applications", "children": []}},
-      {{"id": "b4", "label": "4. Common Traps & Strategy", "children": []}}
+      {{"id": "b1", "label": "1. Foundational Concepts", "children": [{{"id": "b1-1", "label": "Definitions & Axioms", "children": []}}]}},
+      {{"id": "b2", "label": "2. Core Theorems & Proofs", "children": [{{"id": "b2-1", "label": "Standard Identities", "children": []}}]}},
+      {{"id": "b3", "label": "3. Problem Solving Applications", "children": [{{"id": "b3-1", "label": "Numerical Methods", "children": []}}]}},
+      {{"id": "b4", "label": "4. Common Traps & Strategy", "children": [{{"id": "b4-1", "label": "Exam Mistakes", "children": []}}]}}
     ]
-  }},
+  }}
+}}""",
+            "flashcards": f"""Generate 6 interactive 3D study flashcards for textbook chapter '{resource_title}'.
+Content snippet: {full_text[:3500]}
+Return valid JSON:
+{{
   "flashcards": [
-    {{"id": "fc-1", "front": "Core Question 1?", "back": "Detailed multi-sentence explanation.", "difficulty": "Easy", "tag": "Concept"}},
-    {{"id": "fc-2", "front": "Core Question 2?", "back": "Detailed multi-sentence explanation.", "difficulty": "Medium", "tag": "Application"}},
-    {{"id": "fc-3", "front": "Core Question 3?", "back": "Detailed multi-sentence explanation.", "difficulty": "Hard", "tag": "Proof"}},
-    {{"id": "fc-4", "front": "Core Question 4?", "back": "Detailed multi-sentence explanation.", "difficulty": "Medium", "tag": "Exam Trap"}},
-    {{"id": "fc-5", "front": "Core Question 5?", "back": "Detailed multi-sentence explanation.", "difficulty": "Hard", "tag": "Verification"}},
-    {{"id": "fc-6", "front": "Core Question 6?", "back": "Detailed multi-sentence explanation.", "difficulty": "Easy", "tag": "Strategy"}}
-  ],
+    {{"id": "fc-1", "front": "What is the primary theorem of {resource_title}?", "back": "Detailed definition and formula.", "difficulty": "Easy", "tag": "Concept"}},
+    {{"id": "fc-2", "front": "How do you solve standard numerical problems?", "back": "Step-by-step methodology.", "difficulty": "Medium", "tag": "Application"}},
+    {{"id": "fc-3", "front": "What is the proof procedure?", "back": "Proof by contradiction steps.", "difficulty": "Hard", "tag": "Proof"}},
+    {{"id": "fc-4", "front": "What is a frequent exam mistake?", "back": "Sign convention errors.", "difficulty": "Medium", "tag": "Exam Trap"}},
+    {{"id": "fc-5", "front": "How to verify solutions?", "back": "Domain check verification.", "difficulty": "Hard", "tag": "Verification"}},
+    {{"id": "fc-6", "front": "What is the key revision rule?", "back": "Daily formula recite step.", "difficulty": "Easy", "tag": "Strategy"}}
+  ]
+}}""",
+            "tools": f"""Generate study tools (Definitions, LaTeX Formulas, Mnemonics, Common Mistakes, Video Scripts) for '{resource_title}'.
+Content snippet: {full_text[:3500]}
+Return valid JSON:
+{{
   "study_tools": {{
-    "definitions": [{{"term": "Term 1", "definition": "Exact textbook definition."}}],
-    "formulas": [{{"name": "Formula 1", "latex": "a = bq + r", "explanation": "Detailed explanation."}}],
-    "mnemonics": [{{"phrase": "Mnemonic", "concept": "Concept", "explanation": "Memory tip."}}],
-    "common_mistakes": [{{"misconception": "Error", "correction": "Fix", "reason": "Why"}}],
-    "video_scripts": [{{"scene": "Scene 1", "narration": "Script text", "visual": "Animation description"}}]
-  }},
+    "definitions": [{{"term": "Fundamental Identity", "definition": "Key mathematical relationship."}}],
+    "formulas": [{{"name": "Standard Identity", "latex": "a = bq + r", "explanation": "Division relationship."}}],
+    "mnemonics": [{{"phrase": "OIL RIG", "concept": "Redox", "explanation": "Oxidation Is Loss"}}],
+    "common_mistakes": [{{"misconception": "Sign errors", "correction": "Write standard form first", "reason": "Avoid sign loss"}}],
+    "video_scripts": [{{"scene": "Intro", "narration": "Welcome to chapter guide", "visual": "Title animation"}}]
+  }}
+}}""",
+            "quiz": f"""Generate 6 Bloom's Taxonomy practice questions (Remembering, Understanding, Applying, Analyzing, Evaluating, Creating) for '{resource_title}'.
+Content snippet: {full_text[:3500]}
+Return valid JSON:
+{{
   "question_bank": [
     {{
       "id": "q1",
       "bloom_level": "Remembering",
       "question_type": "MCQ",
-      "question": "Question text?",
+      "question": "What is the primary condition?",
       "options": [{{"id": "A", "text": "Option A"}}, {{"id": "B", "text": "Option B"}}, {{"id": "C", "text": "Option C"}}, {{"id": "D", "text": "Option D"}}],
       "correct_answer": "A",
-      "explanation": "Detailed step-by-step explanation."
+      "explanation": "Detailed explanation."
     }}
   ]
-}}
-"""
-                resp = client.chat.completions.create(
-                    model=settings.GROQ_MODEL,
-                    messages=[{"role": "user", "content": prompt}],
-                    response_format={"type": "json_object"},
-                    temperature=0.2
+}}"""
+        }
+
+        prompt = prompts.get(section, prompts["summaries"])
+
+        # 5. Invoke Groq API
+        try:
+            resp = client.chat.completions.create(
+                model=settings.GROQ_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=0.2
+            )
+            generated = json.loads(resp.choices[0].message.content)
+            
+            # Merge into MongoDB workspace cache
+            if target_key in generated:
+                workspace_data[target_key] = generated[target_key]
+                workspace_data["resource_id"] = resource_id
+                workspace_data["resource_title"] = resource_title
+                workspace_data["pdf_url"] = pdf_url or "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
+                
+                cache_coll.update_one(
+                    {"resource_id": resource_id},
+                    {"$set": {"resource_id": resource_id, "workspace_data": workspace_data}},
+                    upsert=True
                 )
-                generated = json.loads(resp.choices[0].message.content)
-                if "summaries" in generated and "flashcards" in generated:
-                    generated["resource_id"] = resource_id
-                    generated["resource_title"] = resource_title
-                    generated["pdf_url"] = pdf_url or "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
-                    workspace_payload = generated
-            except Exception as e:
-                logger.error(f"Groq workspace generation error: {e}")
-
-        # Save to MongoDB cache
-        cache_coll.update_one(
-            {"resource_id": resource_id},
-            {"$set": {"resource_id": resource_id, "workspace_data": workspace_payload}},
-            upsert=True
-        )
-
-        return workspace_payload
+                return {target_key: generated[target_key]}
+            else:
+                return generated
+        except Exception as err:
+            err_str = str(err)
+            logger.error(f"Groq section generation error for '{section}': {err_str}")
+            is_rate_limit = "429" in err_str or "rate_limit" in err_str.lower() or "limit" in err_str.lower() or "blocked" in err_str.lower() or "permission" in err_str.lower()
+            status_code = 429 if is_rate_limit else 400
+            raise ValueError(f"LLM Error ({status_code}): {err_str}")
 
     @classmethod
     def grade_quiz(cls, db: Database, resource_id: str, user_id: str, answers: Dict[str, str]) -> Dict[str, Any]:

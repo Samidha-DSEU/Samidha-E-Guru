@@ -29,13 +29,36 @@ def get_workspace(
     pdf_url: Optional[str] = "https://ncert.nic.in/textbook/pdf/jemh101.pdf",
     db: Database = Depends(get_mongo_db)
 ):
-    """Retrieve workspace from MongoDB Atlas."""
+    """Retrieve base workspace metadata from MongoDB Atlas."""
     workspace = RAGService.get_or_generate_workspace(db, resource_id, title, pdf_url)
     return {
         "success": True,
         "message": "Workspace retrieved from MongoDB Atlas.",
         "data": workspace
     }
+
+@router.get("/workspace/{resource_id}/section/{section_name}")
+def get_workspace_section(
+    resource_id: str,
+    section_name: str,
+    title: Optional[str] = "NCERT Textbook Chapter",
+    pdf_url: Optional[str] = "https://ncert.nic.in/textbook/pdf/jemh101.pdf",
+    db: Database = Depends(get_mongo_db)
+):
+    """On-demand section workspace generation via Groq LLM."""
+    try:
+        data = RAGService.generate_workspace_section(db, resource_id, section_name, title, pdf_url)
+        return {
+            "success": True,
+            "message": f"Workspace section '{section_name}' generated successfully.",
+            "data": data
+        }
+    except ValueError as val_err:
+        err_msg = str(val_err)
+        status_code = 429 if "429" in err_msg or "Rate Limit" in err_msg else 400
+        raise HTTPException(status_code=status_code, detail=err_msg)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"LLM Section Generation Error: {str(exc)}")
 
 @router.post("/query")
 def solve_doubt(
@@ -46,12 +69,19 @@ def solve_doubt(
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
     
-    result = RAGService.solve_doubt(db, request.resource_id, request.question)
-    return {
-        "success": True,
-        "message": "Doubt query solved successfully.",
-        "data": result
-    }
+    try:
+        result = RAGService.solve_doubt(db, request.resource_id, request.question)
+        return {
+            "success": True,
+            "message": "Doubt query solved successfully.",
+            "data": result
+        }
+    except ValueError as val_err:
+        err_msg = str(val_err)
+        status_code = 429 if "429" in err_msg or "Rate Limit" in err_msg else 400
+        raise HTTPException(status_code=status_code, detail=err_msg)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"LLM Doubt Solver Error: {str(exc)}")
 
 @router.post("/quiz/submit")
 def submit_quiz(
