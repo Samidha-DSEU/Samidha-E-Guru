@@ -126,24 +126,24 @@ export default function ResourcesPage() {
       </ScrollReveal>
 
       {/* SOURCE TABS (HORIZONTAL SWIPE BAR ON MOBILE, FLEX WRAP ON DESKTOP) */}
-      <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3 overflow-x-auto scrollbar-none snap-x sm:flex-wrap">
+      <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800/80 pb-3 overflow-x-auto scrollbar-none snap-x sm:flex-wrap">
         <button
           onClick={() => { setActiveSource("all"); handleResetFolders(); }}
-          className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap snap-start ${
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap snap-start cursor-pointer ${
             activeSource === "all"
-              ? "bg-sky-600 text-white shadow-md shadow-sky-500/20"
-              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
+              ? "bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md shadow-sky-500/25 ring-2 ring-sky-400/30"
+              : "bg-zinc-100 dark:bg-zinc-900/80 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800"
           }`}
         >
-          <Sparkles className="h-4 w-4" /> 🌟 ALL RESOURCES
+          <Sparkles className="h-3.5 w-3.5" /> ALL RESOURCES
         </button>
 
         <button
           onClick={() => { setActiveSource("ncert"); handleResetFolders(); }}
-          className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all shrink-0 whitespace-nowrap snap-start ${
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all shrink-0 whitespace-nowrap snap-start cursor-pointer ${
             activeSource === "ncert"
-              ? "bg-sky-600 text-white shadow-md shadow-sky-500/20"
-              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
+              ? "bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md shadow-sky-500/25 ring-2 ring-sky-400/30"
+              : "bg-zinc-100 dark:bg-zinc-900/80 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800"
           }`}
         >
           🏛️ NCERT Official
@@ -151,10 +151,10 @@ export default function ResourcesPage() {
 
         <button
           onClick={() => { setActiveSource("samidha"); handleResetFolders(); }}
-          className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap snap-start ${
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap snap-start cursor-pointer ${
             activeSource === "samidha"
-              ? "bg-sky-600 text-white shadow-md shadow-sky-500/20"
-              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
+              ? "bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md shadow-sky-500/25 ring-2 ring-sky-400/30"
+              : "bg-zinc-100 dark:bg-zinc-900/80 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800"
           }`}
         >
           ⭐ SAMIDHA SHIKSHA LIBRARY
@@ -162,10 +162,10 @@ export default function ResourcesPage() {
 
         <button
           onClick={() => { setActiveSource("kvs"); handleResetFolders(); }}
-          className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all shrink-0 whitespace-nowrap snap-start ${
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all shrink-0 whitespace-nowrap snap-start cursor-pointer ${
             activeSource === "kvs"
-              ? "bg-sky-600 text-white shadow-md shadow-sky-500/20"
-              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
+              ? "bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md shadow-sky-500/25 ring-2 ring-sky-400/30"
+              : "bg-zinc-100 dark:bg-zinc-900/80 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800"
           }`}
         >
           🏫 KVS / Kendriya Vidyalaya
@@ -173,10 +173,10 @@ export default function ResourcesPage() {
 
         <button
           onClick={() => { setActiveSource("diksha"); handleResetFolders(); }}
-          className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all shrink-0 whitespace-nowrap snap-start ${
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all shrink-0 whitespace-nowrap snap-start cursor-pointer ${
             activeSource === "diksha"
-              ? "bg-sky-600 text-white shadow-md shadow-sky-500/20"
-              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
+              ? "bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md shadow-sky-500/25 ring-2 ring-sky-400/30"
+              : "bg-zinc-100 dark:bg-zinc-900/80 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800"
           }`}
         >
           🌐 DIKSHA / SWAYAM / NPTEL
@@ -184,19 +184,19 @@ export default function ResourcesPage() {
       </div>
 
       {/* BREADCRUMB NAVIGATION */}
-      <div className="flex items-center gap-2 text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-900/60 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 flex-wrap">
-        <button onClick={handleResetFolders} className="font-semibold text-sky-600 hover:underline">
+      <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md p-3.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-sm flex-wrap">
+        <button onClick={handleResetFolders} className="font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer">
           Home
         </button>
         <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
-        <button onClick={handleResetFolders} className={`font-semibold capitalize hover:underline ${selectedClass ? 'text-sky-600' : 'text-zinc-700 dark:text-zinc-300'}`}>
+        <button onClick={handleResetFolders} className={`font-semibold capitalize hover:underline cursor-pointer ${selectedClass ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-800 dark:text-zinc-200'}`}>
           {activeSource === "all" ? "All Educational Materials" : activeSource === "samidha" ? "SAMIDHA Shiksha Library" : activeSource.toUpperCase()}
         </button>
 
         {selectedClass && (
           <>
             <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
-            <button onClick={() => { setSelectedSubject(null); setSelectedCategory(null); }} className="font-semibold text-sky-600 hover:underline">
+            <button onClick={() => { setSelectedSubject(null); setSelectedCategory(null); }} className="font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer">
               {selectedClass}
             </button>
           </>
@@ -205,7 +205,7 @@ export default function ResourcesPage() {
         {selectedSubject && (
           <>
             <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
-            <button onClick={() => setSelectedCategory(null)} className="font-semibold text-sky-600 hover:underline">
+            <button onClick={() => setSelectedCategory(null)} className="font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer">
               {selectedSubject}
             </button>
           </>

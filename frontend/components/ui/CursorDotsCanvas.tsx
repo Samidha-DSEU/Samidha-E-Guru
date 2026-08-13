@@ -204,6 +204,15 @@ export const CursorDotsCanvas: React.FC = () => {
 
     initCanvas();
 
+    // Use ResizeObserver so canvas adjusts dot mesh when section content expands or contracts on tab switching!
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && canvas.parentElement) {
+      resizeObserver = new ResizeObserver(() => {
+        initCanvas();
+      });
+      resizeObserver.observe(canvas.parentElement);
+    }
+
     window.addEventListener("resize", initCanvas);
     window.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseleave", handleMouseLeave);
@@ -215,6 +224,7 @@ export const CursorDotsCanvas: React.FC = () => {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      if (resizeObserver) resizeObserver.disconnect();
       window.removeEventListener("resize", initCanvas);
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeave);
