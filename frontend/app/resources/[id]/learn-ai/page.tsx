@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useState, useEffect } from "react";
+import React, { use, useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +22,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 
 type TabType = "doubts" | "summaries" | "mindmap" | "flashcards" | "tools" | "quiz";
 
-export default function LearnAiWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
+function LearnAiWorkspaceContent({ params }: { params: Promise<{ id: string }> }) {
   const { id: resourceId } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -325,5 +325,18 @@ export default function LearnAiWorkspacePage({ params }: { params: Promise<{ id:
         )}
       </div>
     </div>
+  );
+}
+
+export default function LearnAiWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={
+      <div className="max-w-5xl mx-auto py-12 px-4">
+        <Skeleton className="h-10 w-64 rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
+      </div>
+    }>
+      <LearnAiWorkspaceContent params={params} />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use } from "react";
+import React, { use, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -14,7 +14,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { formatDate } from "@/lib/utils";
 import { toast } from "react-hot-toast";
 
-export default function ResourceDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+function ResourceDetailsContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const searchParams = useSearchParams();
 
@@ -139,5 +139,18 @@ export default function ResourceDetailsPage({ params }: { params: Promise<{ id: 
         </div>
       </Card>
     </div>
+  );
+}
+
+export default function ResourceDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={
+      <div className="max-w-4xl mx-auto space-y-6 py-6">
+        <Skeleton className="h-8 w-1/4" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
+      </div>
+    }>
+      <ResourceDetailsContent params={params} />
+    </Suspense>
   );
 }

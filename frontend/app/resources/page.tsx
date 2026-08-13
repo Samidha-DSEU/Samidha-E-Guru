@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -47,7 +47,7 @@ const SUBJECTS = [
 ];
 const CATEGORIES = ["Notes", "Question Paper / PYQ", "Sample Paper", "Worksheet"];
 
-export default function ResourcesPage() {
+function ResourcesPageContent() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
 
@@ -591,5 +591,18 @@ export default function ResourcesPage() {
       )}
       </div>
     </div>
+  );
+}
+
+export default function ResourcesPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-7xl mx-auto py-8 space-y-6">
+        <Skeleton className="h-10 w-64 rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
+      </div>
+    }>
+      <ResourcesPageContent />
+    </Suspense>
   );
 }
