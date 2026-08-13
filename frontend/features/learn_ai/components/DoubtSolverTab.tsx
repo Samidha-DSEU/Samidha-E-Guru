@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { MessageSquare, Send, Bot, User, Sparkles, BookOpen, AlertCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { MessageSquare, Send, Bot, User, Sparkles, BookOpen, AlertCircle, Clock } from "lucide-react";
 import { learnAiService, DoubtResponse } from "../services/learnAiService";
 import { Button } from "@/components/ui/Button";
 
@@ -16,6 +16,7 @@ interface DoubtMessage {
 export function DoubtSolverTab({ resourceId, title }: { resourceId: string; title: string }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rateLimitSeconds, setRateLimitSeconds] = useState<number>(0);
   const [messages, setMessages] = useState<DoubtMessage[]>([
     {
       id: "welcome",
@@ -24,6 +25,15 @@ export function DoubtSolverTab({ resourceId, title }: { resourceId: string; titl
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
+
+  // Countdown timer for rate limit window
+  useEffect(() => {
+    if (rateLimitSeconds <= 0) return;
+    const interval = setInterval(() => {
+      setRateLimitSeconds((prev) => (prev > 1 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [rateLimitSeconds]);
 
   const suggestedQuestions = [
     "What are the key formulas in this chapter?",
@@ -34,7 +44,7 @@ export function DoubtSolverTab({ resourceId, title }: { resourceId: string; titl
 
   const handleSend = async (questionText?: string) => {
     const query = (questionText || input).trim();
-    if (!query || loading) return;
+    if (!query || loading || rateLimitSeconds > 0) return;
 
     const userMsg: DoubtMessage = {
       id: Date.now().toString(),
@@ -58,14 +68,24 @@ export function DoubtSolverTab({ resourceId, title }: { resourceId: string; titl
       };
       setMessages((prev) => [...prev, botMsg]);
     } catch (err: any) {
+      const status = err?.response?.status;
       const realErrorText =
         err?.response?.data?.detail ||
         err?.message ||
         "An unexpected error occurred while contacting the LLM service.";
+      
+      const isRateLimit = status === 429 || realErrorText.includes("429") || realErrorText.toLowerCase().includes("limit reached") || realErrorText.toLowerCase().includes("wait");
+
+      if (isRateLimit) {
+        setRateLimitSeconds(60);
+      }
+
       const errorMsg: DoubtMessage = {
         id: (Date.now() + 1).toString(),
         sender: "bot",
-        text: `⚠️ **LLM Error**: ${realErrorText}`,
+        text: isRateLimit
+          ? "⚡ **ChatPDF / LLM Request Quota Reached**: You have reached the maximum allowed questions per minute. Please try again after 60 seconds."
+          : `⚠️ **LLM Error**: ${realErrorText}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages((prev) => [...prev, errorMsg]);
@@ -90,6 +110,19 @@ export function DoubtSolverTab({ resourceId, title }: { resourceId: string; titl
           </p>
         </div>
       </div>
+
+      {/* Rate Limit Alert Banner */}
+      {rateLimitSeconds > 0 && (
+        <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/80 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between shadow-sm animate-pulse">
+          <div className="flex items-center gap-2 font-medium">
+            <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>⚡ ChatPDF / LLM request quota limit reached. Please wait <strong>{rateLimitSeconds}s</strong> before asking your next question.</span>
+          </div>
+          <span className="px-2.5 py-1 rounded-md bg-amber-200/80 dark:bg-amber-900/80 font-mono text-[11px] font-bold text-amber-900 dark:text-amber-100">
+            {rateLimitSeconds}s
+          </span>
+        </div>
+      )}
 
       {/* Chat Conversation Box */}
       <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-900 overflow-hidden flex flex-col h-[520px]">

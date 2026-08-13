@@ -10,6 +10,7 @@ from app.db.session import get_db
 from app.schemas.common import StandardResponse
 from app.schemas.learn_ai import RagQueryRequest, QuizSubmitRequest
 from app.models.resources import Resource
+from app.services.chatpdf_service import chatpdf_service
 
 logger = logging.getLogger(__name__)
 
@@ -122,11 +123,51 @@ async def solve_chapter_doubt(
     request: RagQueryRequest,
     db: Session = Depends(get_db)
 ):
-    """Proxy endpoint: Forwards doubt solver queries to microservice or Groq LLM directly."""
+    """
+    Doubt Solver endpoint: Executes queries against ChatPDF API engine
+    or falls back seamlessly to the dedicated RAG microservice / Groq LLM.
+    """
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
-    # 1. Forward to separate Microservice
+    res_uuid = parse_uuid(request.resource_id)
+    resource = db.query(Resource).filter(Resource.id == res_uuid).first() if res_uuid else None
+    resource_title = resource.title if resource else "NCERT Study Chapter"
+    pdf_url = resource.external_url if (resource and resource.external_url) else "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
+
+    # 1. Try ChatPDF API Engine if configured
+    if chatpdf_service.is_configured():
+        try:
+            source_id = await chatpdf_service.add_pdf_by_url(pdf_url)
+            if source_id:
+                chat_res = await chatpdf_service.query_document(source_id, request.question)
+                if chat_res.get("rate_limited"):
+                    raise HTTPException(
+                        status_code=429,
+                        detail=chat_res.get("answer", "⚡ ChatPDF request quota limit reached. Please wait 60s before submitting your next question.")
+                    )
+                if chat_res.get("status") == "success":
+                    # Format references as page citation sources
+                    raw_refs = chat_res.get("references", [])
+                    sources = [
+                        {"page_number": ref.get("pageNumber", 1), "content_snippet": ref.get("text", f"Page {ref.get('pageNumber', 1)} reference")}
+                        for ref in raw_refs
+                    ] or [{"page_number": 1, "content_snippet": f"Document context from {resource_title}"}]
+
+                    return StandardResponse.success_response(
+                        data={
+                            "answer": chat_res.get("answer"),
+                            "sources": sources,
+                            "provider": "ChatPDF API"
+                        },
+                        message="Doubt solved via ChatPDF API."
+                    )
+        except HTTPException as http_exc:
+            raise http_exc
+        except Exception as chatpdf_err:
+            logger.warning(f"ChatPDF service query error, falling back: {chatpdf_err}")
+
+    # 2. Forward to separate RAG Microservice
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.post(
@@ -143,11 +184,8 @@ async def solve_chapter_doubt(
     except Exception as e:
         logger.warning(f"Microservice proxy connection error: {e}")
 
-    # 2. Direct Groq LLM Fallback (if microservice port 8001 is offline)
+    # 3. Direct Groq LLM Fallback (if microservice port 8001 is offline)
     groq_key = os.getenv("GROQ_API_KEY")
-    res_uuid = parse_uuid(request.resource_id)
-    resource = db.query(Resource).filter(Resource.id == res_uuid).first() if res_uuid else None
-    resource_title = resource.title if resource else "NCERT Study Chapter"
 
     if groq_key:
         try:
@@ -168,7 +206,8 @@ Include page citation tag '[Page 1]' at relevant key points."""
             return StandardResponse.success_response(
                 data={
                     "answer": llm_text,
-                    "sources": [{"page_number": 1, "content_snippet": f"Content from {resource_title}"}]
+                    "sources": [{"page_number": 1, "content_snippet": f"Content from {resource_title}"}],
+                    "provider": "Groq LLM"
                 },
                 message="Doubt solved via Groq LLM."
             )
@@ -177,11 +216,12 @@ Include page citation tag '[Page 1]' at relevant key points."""
             logger.error(f"Direct Groq API call error: {err_msg}")
             is_rate_limit = "429" in err_msg or "rate_limit" in err_msg.lower() or "blocked" in err_msg.lower()
             status_code = 429 if is_rate_limit else 400
-            raise HTTPException(status_code=status_code, detail=f"Groq LLM Error ({status_code}): {err_msg}")
+            detail_text = "⚡ LLM request limit reached. Please wait 60s before submitting your next question." if is_rate_limit else f"Groq LLM Error ({status_code}): {err_msg}"
+            raise HTTPException(status_code=status_code, detail=detail_text)
 
     raise HTTPException(
         status_code=500,
-        detail="LLM Configuration Error: GROQ_API_KEY is not set on the server."
+        detail="LLM Configuration Error: Neither ChatPDF nor Groq API keys are set on the server."
     )
 
 
