@@ -75,11 +75,17 @@ export default function ResourceDetailsPage({ params }: { params: Promise<{ id: 
       {/* Main Resource Card */}
       <Card className="space-y-6">
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="px-3 py-1 bg-sky-500/10 text-sky-600 dark:text-sky-400 backdrop-blur-md rounded-lg text-xs font-semibold uppercase border border-sky-200 dark:border-sky-800 flex items-center gap-1">
               <ShieldCheck className="h-3.5 w-3.5 text-sky-500" />
               Verified NCERT Content
             </span>
+
+            <Link href={`/resources/${id}/learn-ai`}>
+              <Button size="sm" className="bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-semibold text-xs shadow-md">
+                <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-300" /> Open Learn With AI Workspace
+              </Button>
+            </Link>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">

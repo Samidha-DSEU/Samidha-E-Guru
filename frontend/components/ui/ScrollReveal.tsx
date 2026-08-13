@@ -15,7 +15,7 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
   className = "",
   delay = 0,
   direction = "up",
-  once = false, // Default false: bi-directional continuous scroll animations!
+  once = true, // Default true: reveal once to avoid scroll jank!
   onClick,
   style = {},
   ...props
@@ -26,14 +26,18 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsVisible(entry.isIntersecting);
-        if (entry.isIntersecting && once && ref.current) {
-          observer.unobserve(ref.current);
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          if (once && ref.current) {
+            observer.unobserve(ref.current);
+          }
+        } else if (!once) {
+          setIsVisible(false);
         }
       },
       {
-        threshold: 0.02, // Low 2% threshold so animations trigger reliably on mobile viewports
-        rootMargin: "0px 0px 40px 0px",
+        threshold: 0.05,
+        rootMargin: "0px 0px 50px 0px",
       }
     );
 
@@ -50,17 +54,17 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
     if (!isVisible) {
       switch (direction) {
         case "up":
-          return "opacity-0 translate-y-10 scale-[0.97]";
+          return "opacity-0 translate-y-6 scale-[0.98]";
         case "down":
-          return "opacity-0 -translate-y-10 scale-[0.97]";
+          return "opacity-0 -translate-y-6 scale-[0.98]";
         case "left":
-          return "opacity-0 -translate-x-10 scale-[0.97]";
+          return "opacity-0 -translate-x-6 scale-[0.98]";
         case "right":
-          return "opacity-0 translate-x-10 scale-[0.97]";
+          return "opacity-0 translate-x-6 scale-[0.98]";
         case "zoom":
-          return "opacity-0 scale-90";
+          return "opacity-0 scale-95";
         default:
-          return "opacity-0 translate-y-10";
+          return "opacity-0 translate-y-6";
       }
     }
     return "opacity-100 translate-y-0 translate-x-0 scale-100";
@@ -71,12 +75,12 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
       ref={ref}
       onClick={onClick}
       style={{
-        transitionDuration: "650ms",
+        transitionDuration: "450ms",
         transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
         transitionDelay: `${isVisible ? delay : 0}ms`,
         ...style,
       }}
-      className={`transition-all transform-gpu will-change-transform ${getDirectionStyles()} ${className}`}
+      className={`transition-[transform,opacity] transform-gpu will-change-transform ${getDirectionStyles()} ${className}`}
       {...props}
     >
       {children}

@@ -387,7 +387,7 @@ export default function ResourcesPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {resources.map((res) => (
-                <Card key={res.id} className="flex flex-col justify-between space-y-4 group">
+                  <Card key={res.id} className="flex flex-col justify-between space-y-4 group">
                   <div className="space-y-3">
                     {/* CLASSIFICATION BADGES */}
                     <div className="flex flex-wrap items-center justify-between gap-1.5">
@@ -399,9 +399,12 @@ export default function ResourcesPage() {
                         )}
                         {res.subject_name && (
                           <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded border border-emerald-200 dark:border-emerald-800">
-                            {res.subject_name}
+                            {res.subject_name.replace(/\s*\((Hindi|English)\)/i, "")}
                           </span>
                         )}
+                        <span className="px-2 py-0.5 bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 text-[10px] font-bold rounded border border-violet-200 dark:border-violet-800">
+                          {`${res.title} ${res.subject_name || ''} ${res.description || ''}`.toLowerCase().includes("hindi") ? "Hindi" : "English"}
+                        </span>
                         {res.resource_category && (
                           <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded border border-indigo-200 dark:border-indigo-800">
                             {res.resource_category}
@@ -444,10 +447,16 @@ export default function ResourcesPage() {
 
                   {/* ACTION BUTTONS */}
                   <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Link href={`/resources/${res.id}`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full text-xs font-semibold bg-sky-50 dark:bg-sky-900/10 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/20">
-                          <Sparkles className="h-3 w-3 mr-1" /> AI Workspace
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link href={`/resources/${res.id}`} className="flex-1 min-w-[100px]">
+                        <Button variant="outline" size="sm" className="w-full text-xs font-semibold bg-zinc-50 dark:bg-zinc-800/60 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700">
+                          <BookOpen className="h-3 w-3 mr-1 text-zinc-500" /> PDF Preview
+                        </Button>
+                      </Link>
+
+                      <Link href={`/resources/${res.id}/learn-ai`} className="flex-1 min-w-[120px]">
+                        <Button variant="primary" size="sm" className="w-full text-xs font-semibold bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white shadow-sm">
+                          <Sparkles className="h-3 w-3 mr-1 text-amber-300" /> Learn With AI
                         </Button>
                       </Link>
 
@@ -455,9 +464,9 @@ export default function ResourcesPage() {
                         href={res.external_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1"
+                        className="w-full sm:w-auto"
                       >
-                        <Button variant="ghost" size="sm" className="w-full text-xs text-zinc-500 hover:text-sky-600">
+                        <Button variant="ghost" size="sm" className="w-full text-xs text-zinc-500 hover:text-sky-600 px-2">
                           Direct Open <ExternalLink className="h-3 w-3 ml-1" />
                         </Button>
                       </a>

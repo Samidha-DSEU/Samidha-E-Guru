@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 
 interface TiltCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -11,17 +11,18 @@ interface TiltCardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const TiltCard: React.FC<TiltCardProps> = ({
   children,
   className = "",
-  maxTilt = 8,
+  maxTilt = 6,
   onClick,
   style = {},
   ...props
 }) => {
   const cardRef = useRef<HTMLDivElement | null>(null);
-  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, shineX: 50, shineY: 50 });
-  const [isHovered, setIsHovered] = useState(false);
+  const innerRef = useRef<HTMLDivElement | null>(null);
+  const shineRef = useRef<HTMLDivElement | null>(null);
+  const rafId = useRef<number | null>(null);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
+    if (!cardRef.current || !innerRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -35,13 +36,32 @@ export const TiltCard: React.FC<TiltCardProps> = ({
     const shineX = (x / rect.width) * 100;
     const shineY = (y / rect.height) * 100;
 
-    setTilt({ rotateX, rotateY, shineX, shineY });
+    if (rafId.current) cancelAnimationFrame(rafId.current);
+    rafId.current = requestAnimationFrame(() => {
+      if (innerRef.current) {
+        innerRef.current.style.transform = `rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.015, 1.015, 1.015)`;
+        innerRef.current.style.transition = "transform 80ms ease-out";
+      }
+      if (shineRef.current) {
+        shineRef.current.style.background = `radial-gradient(circle at ${shineX.toFixed(1)}% ${shineY.toFixed(1)}%, rgba(255, 255, 255, 0.15) 0%, transparent 60%)`;
+        shineRef.current.style.opacity = "1";
+      }
+    });
   };
 
-  const handleMouseEnter = () => setIsHovered(true);
+  const handleMouseEnter = () => {
+    if (shineRef.current) shineRef.current.style.opacity = "1";
+  };
+
   const handleMouseLeave = () => {
-    setIsHovered(false);
-    setTilt({ rotateX: 0, rotateY: 0, shineX: 50, shineY: 50 });
+    if (rafId.current) cancelAnimationFrame(rafId.current);
+    if (innerRef.current) {
+      innerRef.current.style.transform = "rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)";
+      innerRef.current.style.transition = "transform 400ms ease-in-out";
+    }
+    if (shineRef.current) {
+      shineRef.current.style.opacity = "0";
+    }
   };
 
   return (
@@ -59,23 +79,13 @@ export const TiltCard: React.FC<TiltCardProps> = ({
       {...props}
     >
       <div
-        style={{
-          transform: isHovered
-            ? `rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) scale3d(1.02, 1.02, 1.02)`
-            : "rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)",
-          transition: isHovered ? "transform 100ms ease-out" : "transform 500ms ease-in-out",
-        }}
+        ref={innerRef}
         className="relative overflow-hidden transform-gpu will-change-transform h-full w-full"
       >
-        {/* Specular Light Sweep Overlay */}
-        {isHovered && (
-          <div
-            style={{
-              background: `radial-gradient(circle at ${tilt.shineX}% ${tilt.shineY}%, rgba(255, 255, 255, 0.15) 0%, transparent 60%)`,
-            }}
-            className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-300"
-          />
-        )}
+        <div
+          ref={shineRef}
+          className="absolute inset-0 pointer-events-none z-10 opacity-0 transition-opacity duration-300"
+        />
         {children}
       </div>
     </div>
