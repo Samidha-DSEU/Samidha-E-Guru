@@ -145,6 +145,21 @@ export default function CommunityPage() {
     }
   };
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (activeCommentPostId) {
+      interval = setInterval(async () => {
+        try {
+          const res = await communityService.getComments(activeCommentPostId);
+          if (res.data) setPostComments(res.data);
+        } catch {
+          // ignore background errors
+        }
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [activeCommentPostId]);
+
   const handleCreateComment = async (e: React.FormEvent, postId: string) => {
     e.preventDefault();
     if (!commentInput.trim()) return;
