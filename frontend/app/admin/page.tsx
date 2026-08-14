@@ -128,7 +128,7 @@ export default function AdminDashboardPage() {
   }, [user, params, router]);
 
   // ACTIVE TAB FILTER FROM METRIC CARDS
-  const [activeTab, setActiveTab] = useState<"volunteers" | "resources" | "events" | "deletions">("volunteers");
+  const [activeTab, setActiveTab] = useState<"users" | "volunteers" | "resources" | "events" | "deletions">("volunteers");
 
   // USER MANAGEMENT STATE
   const [userSearch, setUserSearch] = useState("");
@@ -451,6 +451,16 @@ export default function AdminDashboardPage() {
 
         {/* NAVIGATION TABS HEADER */}
         <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3 flex-wrap">
+          {user?.role?.name === "super_admin" && (
+            <button
+              onClick={() => setActiveTab("users")}
+              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+                activeTab === "users" ? "bg-sky-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600"
+              }`}
+            >
+              👥 Platform Users Directory
+            </button>
+          )}
 
           <button
             onClick={() => setActiveTab("volunteers")}
@@ -488,6 +498,129 @@ export default function AdminDashboardPage() {
             🗑️ Deletion Requests ({pendingDeletions.length})
           </button>
         </div>
+
+        {/* TAB 1: PLATFORM USER DIRECTORY & MANAGEMENT */}
+        {activeTab === "users" && user?.role?.name === "super_admin" && (
+          <Card className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <Users className="h-5 w-5 text-sky-500" /> Platform User Directory & Role Promotion
+              </h2>
+
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Search className="h-4 w-4 absolute left-3 top-2.5 text-zinc-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    className="pl-9 pr-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 w-48 sm:w-64"
+                  />
+                </div>
+
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
+                >
+                  <option value="">All Roles</option>
+                  <option value="student">Student</option>
+                  <option value="volunteer">Volunteer</option>
+                  <option value="alumni">Alumni</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 text-xs font-semibold uppercase border-b border-zinc-200 dark:border-zinc-800">
+                  <tr>
+                    <th className="px-4 py-3">User Name</th>
+                    <th className="px-4 py-3">Email Address</th>
+                    <th className="px-4 py-3">Assigned Role</th>
+                    <th className="px-4 py-3">Joined Date</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {usersLoading ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                        Loading users directory...
+                      </td>
+                    </tr>
+                  ) : allUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-xs">
+                        No users found matching search query.
+                      </td>
+                    </tr>
+                  ) : (
+                    allUsers.map((u) => (
+                      <tr key={u.id}>
+                        <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center font-bold text-xs">
+                            {u.full_name.charAt(0).toUpperCase()}
+                          </div>
+                          <span>{u.full_name}</span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">{u.email}</td>
+                        <td className="px-4 py-3 text-xs">
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                              u.role === "admin" || u.role === "super_admin"
+                                ? "bg-purple-100 text-purple-700"
+                                : u.role === "volunteer"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : u.role === "alumni"
+                                ? "bg-indigo-100 text-indigo-700"
+                                : "bg-sky-100 text-sky-700"
+                            }`}>
+                              {u.role}
+                            </span>
+                            {u.role === "volunteer" && u.volunteer_profile?.assigned_role && (
+                              <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-amber-50 text-amber-600 border border-amber-200">
+                                {u.volunteer_profile.assigned_role}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-zinc-400">{new Date(u.created_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-right space-x-1.5">
+                          <div className="flex items-center gap-2">
+                            {u.role === "volunteer" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setAssigningDesignationUser(u);
+                                  setDesignationError(null);
+                                }}
+                                className="text-xs h-7 px-2 text-amber-600 border-amber-200"
+                              >
+                                <ShieldCheck className="h-3 w-3 mr-1" /> {u.volunteer_profile?.assigned_role ? "Edit Role" : "Assign Role"}
+                              </Button>
+                            )}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setDeletingUser(u)}
+                            className="text-xs h-7 px-2 text-rose-600 border-rose-200"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
 
         {/* TAB 2: PENDING VOLUNTEERS QUEUE */}
         {activeTab === "volunteers" && (
