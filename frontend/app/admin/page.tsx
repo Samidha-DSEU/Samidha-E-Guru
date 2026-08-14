@@ -16,6 +16,7 @@ import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { AnimatedText } from "@/components/ui/AnimatedText";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { CursorDotsCanvas } from "@/components/ui/CursorDotsCanvas";
 
 interface VolunteerApplication {
   id: string;
@@ -119,10 +120,6 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (user) {
       const slug = getUserSlug(user);
-      if (user.role?.name === "super_admin") {
-        router.replace(`/super-admin/${slug}`);
-        return;
-      }
       if (!params || !params.username) {
         router.replace(`/admin/${slug}`);
       }
@@ -366,7 +363,9 @@ export default function AdminDashboardPage() {
 
   return (
     <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-      <div className="space-y-8">
+      <div className="relative z-10">
+        <CursorDotsCanvas />
+        <div className="space-y-8 max-w-7xl mx-auto pb-16 relative z-10 pt-6">
         {user?.role?.name === "super_admin" && (
           <div className="bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 rounded-2xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
             <div className="flex items-center gap-3">
@@ -1340,6 +1339,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </ProtectedRoute>
   );

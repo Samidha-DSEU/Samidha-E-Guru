@@ -11,6 +11,7 @@ import { Card, Skeleton } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { CursorDotsCanvas } from "@/components/ui/CursorDotsCanvas";
 
 interface ScraperJobItem {
   id: string;
@@ -142,7 +143,8 @@ export default function SuperAdminDashboardPage() {
 
   return (
     <ProtectedRoute allowedRoles={["super_admin"]}>
-      <div className="space-y-8">
+      <CursorDotsCanvas />
+      <div className="space-y-8 relative z-10">
         {/* Header Banner */}
         <div className="bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 border border-zinc-800 rounded-3xl p-8 text-white space-y-3 shadow-xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold uppercase tracking-wider">
