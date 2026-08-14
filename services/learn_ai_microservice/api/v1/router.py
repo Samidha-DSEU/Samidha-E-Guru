@@ -1,6 +1,7 @@
 import os
 import logging
-from typing import Dict, Any, Optional, List
+import httpx
+from typing import Dict, Any, Optional, List, Tuple
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from pymongo.database import Database
 from db.mongo import get_mongo_db
@@ -15,25 +16,36 @@ from schemas.learn_ai import (
     QuizSubmitResponse,
     AIWorkspacePayload
 )
-from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/learn-ai", tags=["Learn AI Microservice"])
 
-class IngestPdfRequest(BaseModel):
-    resource_id: str
-    pdf_url: str
-    title: str
+MAIN_BACKEND_URL = os.getenv("MAIN_BACKEND_URL", "https://samidha-e-guru.onrender.com/api/v1")
+
+def fetch_resource_details(resource_id: str) -> Tuple[str, str]:
+    """Securely fetches verified resource metadata from the main PostgreSQL backend."""
+    try:
+        response = httpx.get(f"{MAIN_BACKEND_URL}/resources/{resource_id}", timeout=10.0)
+        if response.status_code == 200:
+            data = response.json().get("data", {})
+            title = data.get("title", "Study Material")
+            pdf_url = data.get("external_url", "")
+            return title, pdf_url
+        else:
+            logger.warning(f"Failed to fetch resource {resource_id} from main backend: {response.status_code}")
+    except Exception as e:
+        logger.error(f"Error fetching resource details from main backend: {e}")
+    
+    return "Study Material", "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
 
 @router.get("/workspace/{resource_id}")
 def get_workspace(
     resource_id: str,
-    title: Optional[str] = "NCERT Textbook Chapter",
-    pdf_url: Optional[str] = "https://ncert.nic.in/textbook/pdf/jemh101.pdf",
     db: Database = Depends(get_mongo_db)
 ):
     """Retrieve base workspace metadata from MongoDB Atlas."""
+    title, pdf_url = fetch_resource_details(resource_id)
     workspace = RAGService.get_or_generate_workspace(db, resource_id, title, pdf_url)
     return {
         "success": True,
@@ -45,12 +57,11 @@ def get_workspace(
 def get_workspace_section(
     resource_id: str,
     section_name: str,
-    title: Optional[str] = "NCERT Textbook Chapter",
-    pdf_url: Optional[str] = "https://ncert.nic.in/textbook/pdf/jemh101.pdf",
     db: Database = Depends(get_mongo_db)
 ):
     """On-demand section workspace generation via Groq LLM."""
     try:
+        title, pdf_url = fetch_resource_details(resource_id)
         data = RAGService.generate_workspace_section(db, resource_id, section_name, title, pdf_url)
         return {
             "success": True,
@@ -73,11 +84,10 @@ async def solve_doubt(
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
     
-    resource_title = request.resource_title or "Study Chapter"
-    pdf_url = request.pdf_url or "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
+    resource_title, pdf_url = fetch_resource_details(request.resource_id)
 
     # 1. Try ChatPDF
-    if chatpdf_service.is_configured():
+    if chatpdf_service.is_configured() and pdf_url:
         try:
             source_id = await chatpdf_service.add_pdf_by_url(pdf_url)
             if source_id:
@@ -141,17 +151,20 @@ def submit_quiz(
 @router.post("/ingest/{resource_id}")
 async def trigger_ingestion(
     resource_id: str,
-    payload: IngestPdfRequest,
     background_tasks: BackgroundTasks,
     db: Database = Depends(get_mongo_db)
 ):
     """Triggers background PDF parsing and MongoDB vector storage."""
+    title, pdf_url = fetch_resource_details(resource_id)
+    if not pdf_url:
+        raise HTTPException(status_code=400, detail="Resource does not have a valid PDF URL.")
+
     background_tasks.add_task(
         PDFIngestionService.ingest_resource_pdf,
         db,
         resource_id,
-        payload.pdf_url,
-        payload.title
+        pdf_url,
+        title
     )
     return {
         "success": True,

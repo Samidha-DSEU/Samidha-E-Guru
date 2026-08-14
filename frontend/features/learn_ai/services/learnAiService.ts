@@ -1,4 +1,5 @@
 import { apiClient } from "@/services/apiClient";
+import axios from "axios";
 
 export interface SourceCitation {
   page_number: number;
@@ -95,58 +96,37 @@ export interface QuizResult {
   }>;
 }
 
-import axios from "axios";
+// Robustly get the base URL, appending /api/v1/learn-ai if the user only provided the domain
+let baseLearnAiUrl = process.env.NEXT_PUBLIC_LEARN_AI_SERVICE_URL || "https://samidha-learn-ai-service.onrender.com/api/v1/learn-ai";
+if (baseLearnAiUrl.endsWith("/")) {
+  baseLearnAiUrl = baseLearnAiUrl.slice(0, -1);
+}
+if (!baseLearnAiUrl.endsWith("/api/v1/learn-ai")) {
+  baseLearnAiUrl += "/api/v1/learn-ai";
+}
 
-// Dedicated axios client for the Learn AI Microservice
 export const learnAiApiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_LEARN_AI_SERVICE_URL || "https://samidha-learn-ai-service.onrender.com/api/v1/learn-ai",
+  baseURL: baseLearnAiUrl,
   headers: {
     "Content-Type": "application/json"
   }
 });
 
-// Fetch resource details from main backend before calling microservice
-async function getResourceDetails(resourceId: string): Promise<{ title: string; pdfUrl: string }> {
-  try {
-    const res = await apiClient.get(`/resources/${resourceId}`);
-    const data = res.data.data;
-    return {
-      title: data.title || "NCERT Textbook Chapter",
-      pdfUrl: data.external_url || "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
-    };
-  } catch (error) {
-    console.warn("Could not fetch resource details for Learn AI, using defaults", error);
-    return {
-      title: "NCERT Textbook Chapter",
-      pdfUrl: "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
-    };
-  }
-}
-
 export const learnAiService = {
   async getWorkspace(resourceId: string): Promise<AIWorkspacePayload> {
-    const { title, pdfUrl } = await getResourceDetails(resourceId);
-    const res = await learnAiApiClient.get(`/workspace/${resourceId}`, {
-      params: { title, pdf_url: pdfUrl }
-    });
+    const res = await learnAiApiClient.get(`/workspace/${resourceId}`);
     return res.data.data;
   },
 
   async getWorkspaceSection(resourceId: string, section: string): Promise<Record<string, any>> {
-    const { title, pdfUrl } = await getResourceDetails(resourceId);
-    const res = await learnAiApiClient.get(`/workspace/${resourceId}/section/${section}`, {
-      params: { title, pdf_url: pdfUrl }
-    });
+    const res = await learnAiApiClient.get(`/workspace/${resourceId}/section/${section}`);
     return res.data.data;
   },
 
   async askDoubt(resourceId: string, question: string): Promise<DoubtResponse> {
-    const { title, pdfUrl } = await getResourceDetails(resourceId);
     const res = await learnAiApiClient.post("/query", {
       resource_id: resourceId,
-      question,
-      resource_title: title,
-      pdf_url: pdfUrl
+      question
     });
     return res.data.data;
   },
@@ -160,11 +140,6 @@ export const learnAiService = {
   },
 
   async triggerIngestion(resourceId: string): Promise<void> {
-    const { title, pdfUrl } = await getResourceDetails(resourceId);
-    await learnAiApiClient.post(`/ingest/${resourceId}`, {
-      resource_id: resourceId,
-      title,
-      pdf_url: pdfUrl
-    });
+    await learnAiApiClient.post(`/ingest/${resourceId}`);
   }
 };
