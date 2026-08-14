@@ -78,6 +78,7 @@ interface UserItem {
   avatar_url?: string;
   is_active: boolean;
   created_at: string;
+  volunteer_profile?: any;
 }
 
 interface UserActivityLog {
