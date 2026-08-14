@@ -257,9 +257,7 @@ def create_resource(
         source_type="samidha",
         thumbnail_url=req.thumbnail_url,
         uploader_id=current_user.id,
-        verification_status="pending" if require_verification else "approved",
-        approved_by=None,
-        approval_reason="verification_disabled" if not require_verification else None
+        verification_status="pending" if require_verification else "approved"
     )
     db.add(resource)
     db.commit()
