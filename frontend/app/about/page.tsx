@@ -143,19 +143,93 @@ export default function AboutPage() {
               <Crown className="h-4 w-4 text-amber-500 fill-amber-500/30" /> Platform Credits & Leadership
             </div>
             <AnimatedText
-              text="Meet the Core Builders"
-              gradientWords={["Core", "Builders"]}
+              text="Architects & Core Builders"
+              gradientWords={["Architects", "Core"]}
               className="text-3xl sm:text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight"
             />
             <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-              Honoring the dedicated leaders and student-volunteers who build and lead the SAMIDHA E-GURU platform.
+              Honoring the lead visionary architects, operational heads, and student-volunteers who engineered the SAMIDHA E-GURU platform.
             </p>
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {creditsList.map((member, idx) => (
-            <ScrollReveal key={idx} direction="up" delay={idx * 100}>
+        {/* TOP FEATURED LEAD ARCHITECT: FEYAZ */}
+        <ScrollReveal direction="up" delay={100}>
+          <TiltCard maxTilt={3}>
+            <div className="p-8 sm:p-10 rounded-[2.5rem] bg-gradient-to-br from-amber-500/20 via-sky-500/10 to-indigo-500/20 dark:from-amber-950/60 dark:via-zinc-900 dark:to-indigo-950/60 border-2 border-amber-500/50 shadow-2xl backdrop-blur-2xl space-y-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none text-amber-500">
+                <Crown className="h-48 w-48" />
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-200/60 dark:border-zinc-800/80 pb-6">
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-600 text-white flex items-center justify-center font-black text-2xl shadow-xl shadow-amber-500/30 shrink-0 border border-amber-300">
+                    F
+                  </div>
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full text-[11px] font-black uppercase tracking-wider border border-amber-500/40 mb-1">
+                      <Crown className="h-3.5 w-3.5 fill-amber-500" /> Founder & Lead Platform Architect
+                    </div>
+                    <h3 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
+                      FEYAZ
+                    </h3>
+                  </div>
+                </div>
+                <div className="px-4 py-2 bg-white/80 dark:bg-zinc-900/80 border border-amber-500/30 rounded-xl text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-2 shadow-sm">
+                  <GraduationCap className="h-4 w-4 text-purple-500" /> CSE 4th Year (Operational & Volunteer Head)
+                </div>
+              </div>
+
+              <p className="text-sm sm:text-base text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
+                Spearheaded the core platform vision, full-stack architecture, database design, and operational workflows for SAMIDHA E-GURU. Led the digital transformation from traditional classroom drives to a modern, scalable learning ecosystem.
+              </p>
+
+              <div className="flex items-center gap-4 text-xs font-bold text-zinc-500 uppercase tracking-widest pt-2">
+                <span>G.B. Pant Engineering College (DSEU Okhla-1)</span>
+                <span>•</span>
+                <span className="text-amber-600 dark:text-amber-400">Chief System Architect</span>
+              </div>
+            </div>
+          </TiltCard>
+        </ScrollReveal>
+
+        {/* OTHER CORE TEAM MEMBERS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            {
+              name: "HIMANSHU BANSAL",
+              role: "Operational and Volunteer Head",
+              branch: "CSE 4th Year",
+              rank: 2,
+              badge: "👑 Operational & Tech Co-Head",
+              color: "from-sky-500/20 via-indigo-500/10 to-purple-500/20 border-sky-500/40 text-sky-500"
+            },
+            {
+              name: "ADARSH",
+              role: "Senior Volunteer",
+              branch: "CSE 4th Year",
+              rank: 3,
+              badge: "⭐ Senior Core Contributor",
+              color: "from-purple-500/20 via-pink-500/10 to-rose-500/20 border-purple-500/40 text-purple-500"
+            },
+            {
+              name: "RAHUL ARYAN",
+              role: "Volunteer",
+              branch: "CSE 2nd Year",
+              rank: 4,
+              badge: "🚀 Active Educator Volunteer",
+              color: "from-emerald-500/20 via-teal-500/10 to-cyan-500/20 border-emerald-500/40 text-emerald-500"
+            },
+            {
+              name: "AMAN KUSHWAHA",
+              role: "Volunteer",
+              branch: "CSE 2nd Year",
+              rank: 5,
+              badge: "🚀 Active Educator Volunteer",
+              color: "from-indigo-500/20 via-blue-500/10 to-sky-500/20 border-indigo-500/40 text-indigo-500"
+            }
+          ].map((member, idx) => (
+            <ScrollReveal key={idx} direction="up" delay={(idx + 2) * 100}>
               <TiltCard className="h-full">
                 <div className={`p-6 rounded-3xl bg-gradient-to-br ${member.color} bg-white/80 dark:bg-zinc-900/90 border backdrop-blur-xl shadow-xl space-y-4 h-full flex flex-col justify-between transition-transform hover:scale-[1.02]`}>
                   <div className="space-y-3">
@@ -167,7 +241,7 @@ export default function AboutPage() {
                     </div>
 
                     <div>
-                      <h3 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
+                      <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
                         {member.name}
                       </h3>
                       <p className="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wide mt-0.5">
@@ -178,7 +252,7 @@ export default function AboutPage() {
                     <div className="pt-2 border-t border-zinc-200/50 dark:border-zinc-800/50 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400 font-semibold">
                       <span className="flex items-center gap-1.5">
                         <GraduationCap className="h-4 w-4 text-purple-500" />
-                        Department & Year
+                        Dept & Year
                       </span>
                       <span className="px-2.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-lg font-bold text-[11px]">
                         {member.branch}
