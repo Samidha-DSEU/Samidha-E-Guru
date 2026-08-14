@@ -114,7 +114,7 @@ export default function CommunityPage() {
       const res = await communityService.likePost(postId);
       if (res.data) {
         setPosts((prev) =>
-          prev.map((p) => (p.id === postId ? { ...p, likes_count: res.data?.likes_count ?? p.likes_count } : p))
+          prev.map((p) => (p.id === postId ? { ...p, likes_count: res.data?.likes_count ?? p.likes_count, has_liked: res.data?.liked } : p))
         );
       }
     } catch {
@@ -227,91 +227,89 @@ export default function CommunityPage() {
             ) : (
               posts.map((post, idx) => (
                 <ScrollReveal key={post.id} direction="up" delay={idx * 100}>
-                  <TiltCard>
-                    <Card className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center font-bold text-sm overflow-hidden border border-sky-200 dark:border-sky-800">
-                          {post.author_avatar ? (
-                            <img src={post.author_avatar} alt={post.author_name || "Author"} className="w-full h-full object-cover" />
-                          ) : (
-                            (post.author_name || "User").slice(0, 2).toUpperCase()
-                          )}
-                        </div>
-                    <div>
-                      <h4 className="font-semibold text-sm">{post.author_name || "Community Member"}</h4>
-                      <span className="text-[11px] text-sky-600 dark:text-sky-400 font-medium inline-flex items-center gap-1 capitalize">
-                        <Award className="h-3 w-3" />
-                        {(post.author_role || "member").replace("_", " ")}
-                      </span>
+                  <Card className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center font-bold text-sm overflow-hidden border border-sky-200 dark:border-sky-800">
+                        {post.author_avatar ? (
+                          <img src={post.author_avatar} alt={post.author_name || "Author"} className="w-full h-full object-cover" />
+                        ) : (
+                          (post.author_name || "User").slice(0, 2).toUpperCase()
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm">{post.author_name || "Community Member"}</h4>
+                        <span className="text-[11px] text-sky-600 dark:text-sky-400 font-medium inline-flex items-center gap-1 capitalize">
+                          <Award className="h-3 w-3" />
+                          {(post.author_role || "member").replace("_", " ")}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-                    {post.title}
-                  </h3>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-line">
-                    {post.content}
-                  </p>
+                    <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+                      {post.title}
+                    </h3>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-line">
+                      {post.content}
+                    </p>
 
-                  <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-6 text-xs text-zinc-500 font-medium">
-                    <button
-                      onClick={() => handleLike(post.id)}
-                      disabled={likingPosts.has(post.id)}
-                      className={`flex items-center gap-1.5 transition-colors ${likingPosts.has(post.id) ? "opacity-50 cursor-not-allowed text-sky-600" : "hover:text-sky-600"}`}
-                    >
-                      <ThumbsUp className={`h-4 w-4 ${likingPosts.has(post.id) ? "animate-pulse" : ""}`} /> {post.likes_count} Likes
-                    </button>
-                    <button onClick={() => loadComments(post.id)} className="flex items-center gap-1.5 hover:text-sky-600 transition-colors">
-                      <MessageCircle className="h-4 w-4" /> {post.comments_count} Comments
-                    </button>
-                    <button onClick={() => handleShare(post.title, post.id)} className="flex items-center gap-1.5 hover:text-sky-600 transition-colors">
-                      <Share2 className="h-4 w-4" /> Share
-                    </button>
-                  </div>
+                    <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-6 text-xs text-zinc-500 font-medium">
+                      <button
+                        onClick={() => handleLike(post.id)}
+                        disabled={likingPosts.has(post.id)}
+                        className={`flex items-center gap-1.5 transition-colors ${likingPosts.has(post.id) ? "opacity-50 cursor-not-allowed text-sky-600" : post.has_liked ? "text-sky-600" : "hover:text-sky-600"}`}
+                      >
+                        <ThumbsUp className={`h-4 w-4 ${post.has_liked ? "fill-sky-600" : ""} ${likingPosts.has(post.id) ? "animate-pulse" : ""}`} /> {post.likes_count} Likes
+                      </button>
+                      <button onClick={() => loadComments(post.id)} className="flex items-center gap-1.5 hover:text-sky-600 transition-colors">
+                        <MessageCircle className="h-4 w-4" /> {post.comments_count} Comments
+                      </button>
+                      <button onClick={() => handleShare(post.title, post.id)} className="flex items-center gap-1.5 hover:text-sky-600 transition-colors">
+                        <Share2 className="h-4 w-4" /> Share
+                      </button>
+                    </div>
 
-                  {activeCommentPostId === post.id && (
-                    <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
-                      {commentsLoading ? (
-                        <div className="text-center py-4 text-zinc-500 text-xs">Loading comments...</div>
-                      ) : (
-                        <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                          {postComments.length === 0 ? (
-                            <div className="text-center text-xs text-zinc-500">No comments yet. Be the first!</div>
-                          ) : (
-                            postComments.map((c: any) => (
-                              <div key={c.id} className="bg-zinc-50 dark:bg-zinc-900/50 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                                <div className="flex items-center gap-2 mb-1.5">
-                                  <div className="h-6 w-6 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center font-bold text-[10px] overflow-hidden">
-                                    {c.author_avatar ? <img src={c.author_avatar} alt="Avatar" className="w-full h-full object-cover" /> : c.author_name.slice(0, 2).toUpperCase()}
+                    {activeCommentPostId === post.id && (
+                      <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
+                        {commentsLoading ? (
+                          <div className="text-center py-4 text-zinc-500 text-xs">Loading comments...</div>
+                        ) : (
+                          <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                            {postComments.length === 0 ? (
+                              <div className="text-center text-xs text-zinc-500">No comments yet. Be the first!</div>
+                            ) : (
+                              postComments.map((c: any) => (
+                                <div key={c.id} className="bg-zinc-50 dark:bg-zinc-900/50 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <div className="h-6 w-6 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center font-bold text-[10px] overflow-hidden">
+                                      {c.author_avatar ? <img src={c.author_avatar} alt="Avatar" className="w-full h-full object-cover" /> : c.author_name.slice(0, 2).toUpperCase()}
+                                    </div>
+                                    <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100">{c.author_name}</span>
+                                    <span className="text-[9px] text-zinc-400">{new Date(c.created_at).toLocaleDateString()}</span>
                                   </div>
-                                  <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100">{c.author_name}</span>
-                                  <span className="text-[9px] text-zinc-400">{new Date(c.created_at).toLocaleDateString()}</span>
+                                  <p className="text-xs text-zinc-600 dark:text-zinc-400 pl-8">{c.content}</p>
                                 </div>
-                                <p className="text-xs text-zinc-600 dark:text-zinc-400 pl-8">{c.content}</p>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      )}
-                      <form onSubmit={(e) => handleCreateComment(e, post.id)} className="flex gap-2 pt-2">
-                        <input
-                          type="text"
-                          placeholder="Write a comment..."
-                          value={commentInput}
-                          onChange={(e) => setCommentInput(e.target.value)}
-                          className="flex-1 px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-700 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        />
-                        <Button type="submit" isLoading={submittingComment} disabled={!commentInput.trim()} size="sm" className="bg-sky-600 hover:bg-sky-500 text-white px-3">
-                          Post
-                        </Button>
-                      </form>
-                    </div>
-                  )}
-                </Card>
-              </TiltCard>
-            </ScrollReveal>
-          ))
-        )}
+                              ))
+                            )}
+                          </div>
+                        )}
+                        <form onSubmit={(e) => handleCreateComment(e, post.id)} className="flex gap-2 pt-2">
+                          <input
+                            type="text"
+                            placeholder="Write a comment..."
+                            value={commentInput}
+                            onChange={(e) => setCommentInput(e.target.value)}
+                            className="flex-1 px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-700 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          />
+                          <Button type="submit" isLoading={submittingComment} disabled={!commentInput.trim()} size="sm" className="bg-sky-600 hover:bg-sky-500 text-white px-3">
+                            Post
+                          </Button>
+                        </form>
+                      </div>
+                    )}
+                  </Card>
+                </ScrollReveal>
+              ))
+            )}
           </div>
 
           {/* Sidebar Mentorship Topics */}

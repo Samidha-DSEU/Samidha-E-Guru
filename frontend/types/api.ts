@@ -93,6 +93,7 @@ export interface CommunityPostItem {
   content: string;
   post_type: "general" | "mentorship" | "career_guidance" | "article";
   likes_count: number;
+  has_liked?: boolean;
   comments_count: number;
   author_id: string;
   author_name?: string;

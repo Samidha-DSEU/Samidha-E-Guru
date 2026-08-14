@@ -29,7 +29,8 @@ def get_posts(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     post_type: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     query = db.query(Post).filter(Post.is_public == True)
     if post_type:
@@ -41,6 +42,10 @@ def get_posts(
 
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 0
 
+    liked_post_ids = {
+        like.post_id for like in db.query(Like.post_id).filter(Like.user_id == current_user.id).all()
+    }
+
     data = [
         {
             "id": str(p.id),
@@ -48,6 +53,7 @@ def get_posts(
             "content": p.content,
             "post_type": p.post_type,
             "likes_count": p.likes_count,
+            "has_liked": p.id in liked_post_ids,
             "comments_count": p.comments_count,
             "author_id": str(p.author_id),
             "author_name": p.author.profile.full_name if p.author and p.author.profile else "Community User",
