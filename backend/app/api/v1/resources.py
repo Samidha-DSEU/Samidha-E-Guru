@@ -10,6 +10,7 @@ from app.schemas.common import StandardResponse, MetaSchema
 from app.models.resources import Resource, ResourceRating
 from app.middlewares.auth_middleware import get_current_user, require_approved_volunteer
 from app.models.auth import User
+from app.services.settings_service import SettingsService
 
 router = APIRouter()
 
@@ -29,6 +30,38 @@ class RateResourceRequest(BaseModel):
     feedback: Optional[str] = None
 
 
+@router.get("/folders", response_model=StandardResponse[List[dict]])
+def get_resource_folders(
+    source_type: str = Query(...),
+    target_class: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    if not target_class:
+        # Return distinct classes
+        classes = db.query(Resource.target_class).filter(
+            Resource.source_type == source_type,
+            Resource.target_class.isnot(None)
+        ).distinct().all()
+        import re
+        def extract_number(s):
+            m = re.search(r'\d+', s)
+            return int(m.group()) if m else 999
+
+        sorted_classes = sorted([c[0] for c in classes], key=extract_number)
+        data = [{"class": c} for c in sorted_classes]
+    else:
+        # Return distinct subjects for that class
+        subjects = db.query(Resource.subject_name).filter(
+            Resource.source_type == source_type,
+            Resource.target_class == target_class,
+            Resource.subject_name.isnot(None)
+        ).distinct().all()
+        sorted_subjects = sorted([s[0] for s in subjects])
+        data = [{"subject": s} for s in sorted_subjects]
+
+    return StandardResponse.success_response(data=data, message="Folders retrieved")
+
+
 @router.get("", response_model=StandardResponse[List[dict]])
 def get_resources(
     source_type: Optional[str] = Query(None),
@@ -41,6 +74,25 @@ def get_resources(
     limit: int = Query(20, ge=1, le=5000),
     db: Session = Depends(get_db)
 ):
+    query = db.query(
+        Resource.id,
+        Resource.title,
+        Resource.description,
+        Resource.thumbnail_url,
+        Resource.external_url,
+        Resource.target_class,
+        Resource.subject_name,
+        Resource.resource_category,
+        Resource.source_type,
+        Resource.rating_avg,
+        Resource.rating_count,
+        Resource.views_count,
+        Resource.bookmarks_count,
+        Resource.created_at,
+        User.id.label("uploader_id") # dummy join representation if needed, but wait we need uploader info
+    ).outerjoin(User, Resource.uploader_id == User.id)
+
+    # We will do a full object query for now since relationship joins are complex with with_entities, but let's just query the model to keep it simple and safe for existing code, or just use `db.query(Resource)` because lazy loading is fast enough for 20 items.
     query = db.query(Resource).filter(Resource.verification_status == "approved")
 
     if source_type:
@@ -67,6 +119,7 @@ def get_resources(
     resources = query.offset(offset).limit(limit).all()
 
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 0
+    has_next = page < total_pages
 
     data = [
         {
@@ -93,7 +146,8 @@ def get_resources(
         page=page,
         limit=limit,
         total_items=total_items,
-        total_pages=total_pages
+        total_pages=total_pages,
+        has_next=has_next
     )
 
     return StandardResponse.success_response(
@@ -164,6 +218,17 @@ def request_resource_deletion(
     if not resource:
         raise HTTPException(status_code=404, detail="Resource not found or unauthorized")
 
+    require_verification = SettingsService.get_setting(db, "require_volunteer_verification", default=True)
+    if not require_verification:
+        # Bypass admin review for deletion
+        resource.is_deleted = True
+        resource.deletion_reason = req.reason.strip()
+        db.commit()
+        return StandardResponse.success_response(
+            data={"id": str(id), "is_deleted": True},
+            message="Resource deleted successfully (Verification disabled)."
+        )
+
     resource.verification_status = "deletion_pending"
     resource.deletion_reason = req.reason.strip()
     db.commit()
@@ -180,6 +245,8 @@ def create_resource(
     current_user: User = Depends(require_approved_volunteer),
     db: Session = Depends(get_db)
 ):
+    require_verification = SettingsService.get_setting(db, "require_volunteer_verification", default=True)
+
     resource = Resource(
         title=req.title.strip(),
         description=req.description.strip() if req.description else None,
@@ -190,7 +257,9 @@ def create_resource(
         source_type="samidha",
         thumbnail_url=req.thumbnail_url,
         uploader_id=current_user.id,
-        verification_status="pending"
+        verification_status="pending" if require_verification else "approved",
+        approved_by=None,
+        approval_reason="verification_disabled" if not require_verification else None
     )
     db.add(resource)
     db.commit()

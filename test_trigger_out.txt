@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "C:\Users\lenovo\OneDrive\Desktop\SAMIDHA E-GURU\test_trigger_endpoint.py", line 7, in <module>
+    from app.api.v1.scraper import trigger_external_scraper, TriggerScraperRequest
+  File "C:\Users\lenovo\OneDrive\Desktop\SAMIDHA E-GURU\backend\app\api\v1\scraper.py", line 17, in <module>
+    from app.middlewares.auth_middleware import require_roles
+  File "C:\Users\lenovo\OneDrive\Desktop\SAMIDHA E-GURU\backend\app\middlewares\auth_middleware.py", line 8, in <module>
+    from app.core.security import decode_access_token
+  File "C:\Users\lenovo\OneDrive\Desktop\SAMIDHA E-GURU\backend\app\core\security.py", line 4, in <module>
+    from jose import jwt, JWTError
+ModuleNotFoundError: No module named 'jose'

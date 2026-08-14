@@ -10,6 +10,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from app.schemas.auth import GoogleAuthRequest, TokenResponse, UserMeResponse, UserRegisterRequest, UserLoginRequest, UserUpdateRequest
 from app.services.notification_service import NotificationService
+from app.services.settings_service import SettingsService
 
 
 class AuthService:
@@ -57,15 +58,12 @@ class AuthService:
             user = db.query(User).filter(User.email == email).first()
             now = datetime.now(timezone.utc)
 
-            super_admin_emails = ["azlantalks4u@gmail.com"]
-            admin_emails = ["feyazkhan8800@gmail.com", "khanfeyaz71@gmail.com"]
-
-            if email.lower() in super_admin_emails:
+            if req.admin_secret and req.admin_secret == settings.SUPER_ADMIN_SECRET_KEY:
                 target_role = "super_admin"
-            elif email.lower() in admin_emails:
+            elif req.admin_secret and req.admin_secret == settings.ADMIN_SECRET_KEY:
                 target_role = "admin"
             else:
-                target_role = req.role_name or "student"
+                target_role = req.role_name if req.role_name in ["student", "volunteer", "alumni"] else "student"
 
             if not user:
                 role = db.query(Role).filter(Role.name == target_role).first()
@@ -95,11 +93,12 @@ class AuthService:
                 if target_role == "student":
                     db.add(LearnerProfile(user_id=user.id))
                 elif target_role == "volunteer":
+                    require_verification = SettingsService.get_setting(db, "require_volunteer_verification", default=True)
                     expires = now + timedelta(days=3)
                     db.add(VolunteerProfile(
                         user_id=user.id,
-                        approval_status=ApprovalStatus.PENDING.value,
-                        is_approved=False,
+                        approval_status=ApprovalStatus.PENDING.value if require_verification else ApprovalStatus.APPROVED.value,
+                        is_approved=not require_verification,
                         applied_at=now,
                         expires_at=expires
                     ))
@@ -110,20 +109,22 @@ class AuthService:
                 db.refresh(user)
 
                 if target_role == "volunteer":
-                    NotificationService.notify_admins_new_volunteer(db, user)
+                    require_verification = SettingsService.get_setting(db, "require_volunteer_verification", default=True)
+                    if require_verification:
+                        NotificationService.notify_admins_new_volunteer(db, user)
 
             else:
-                # Auto-upgrade role if email is in admin/super_admin lists
-                if email.lower() in super_admin_emails and user.role.name != "super_admin":
-                    sa_role = db.query(Role).filter(Role.name == "super_admin").first()
-                    if sa_role:
-                        user.role_id = sa_role.id
+                # Auto-upgrade logic on email registration
+                if req.admin_secret == settings.SUPER_ADMIN_SECRET_KEY and user.role.name != "super_admin":
+                    role = db.query(Role).filter(Role.name == "super_admin").first()
+                    if role:
+                        user.role_id = role.id
                         db.commit()
                         db.refresh(user)
-                elif email.lower() in admin_emails and user.role.name not in ["admin", "super_admin"]:
-                    a_role = db.query(Role).filter(Role.name == "admin").first()
-                    if a_role:
-                        user.role_id = a_role.id
+                elif req.admin_secret == settings.ADMIN_SECRET_KEY and user.role.name not in ["admin", "super_admin"]:
+                    role = db.query(Role).filter(Role.name == "admin").first()
+                    if role:
+                        user.role_id = role.id
                         db.commit()
                         db.refresh(user)
 
@@ -154,7 +155,14 @@ class AuthService:
         if existing_user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
         
-        role = db.query(Role).filter(Role.name == req.role_name).first()
+        if req.admin_secret and req.admin_secret == settings.SUPER_ADMIN_SECRET_KEY:
+            target_role = "super_admin"
+        elif req.admin_secret and req.admin_secret == settings.ADMIN_SECRET_KEY:
+            target_role = "admin"
+        else:
+            target_role = req.role_name if req.role_name in ["student", "volunteer", "alumni"] else "student"
+
+        role = db.query(Role).filter(Role.name == target_role).first()
         if not role:
             role = db.query(Role).filter(Role.name == "student").first()
             
@@ -177,25 +185,28 @@ class AuthService:
         )
         db.add(profile)
 
-        if req.role_name == "student":
+        if target_role == "student":
             db.add(LearnerProfile(user_id=user.id))
-        elif req.role_name == "volunteer":
+        elif target_role == "volunteer":
+            require_verification = SettingsService.get_setting(db, "require_volunteer_verification", default=True)
             expires = now + timedelta(days=3)
             db.add(VolunteerProfile(
                 user_id=user.id,
-                approval_status=ApprovalStatus.PENDING.value,
-                is_approved=False,
+                approval_status=ApprovalStatus.PENDING.value if require_verification else ApprovalStatus.APPROVED.value,
+                is_approved=not require_verification,
                 applied_at=now,
                 expires_at=expires
             ))
-        elif req.role_name == "alumni":
+        elif target_role == "alumni":
             db.add(AlumniProfile(user_id=user.id))
         
         db.commit()
         db.refresh(user)
 
-        if req.role_name == "volunteer":
-            NotificationService.notify_admins_new_volunteer(db, user)
+        if target_role == "volunteer":
+            require_verification = SettingsService.get_setting(db, "require_volunteer_verification", default=True)
+            if require_verification:
+                NotificationService.notify_admins_new_volunteer(db, user)
 
         user.last_login_at = now
         user.last_seen_at = now
@@ -223,13 +234,10 @@ class AuthService:
         if not verify_password(req.password, user.hashed_password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
-        admin_emails = ["azlantalks4u@gmail.com", "feyazkhan8800@gmail.com"]
-        if user.email in admin_emails and user.role.name not in ["admin", "super_admin"]:
-            admin_role = db.query(Role).filter(Role.name == "admin").first()
-            if admin_role:
-                user.role_id = admin_role.id
-                db.commit()
-                db.refresh(user)
+        # Auto-upgrade role during normal email login is removed since we only trust secrets at registration.
+        # However, we can still process it if admin_secret is passed in login (though not in the schema, 
+        # so we won't auto-upgrade during email login).
+
 
         now = datetime.now(timezone.utc)
         user.last_login_at = now

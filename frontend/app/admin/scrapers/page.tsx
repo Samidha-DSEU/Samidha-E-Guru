@@ -59,6 +59,7 @@ export default function ScraperManagerPage() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [capabilities, setCapabilities] = useState<any[]>([]);
 
   const fetchJobs = async () => {
     try {
@@ -76,18 +77,30 @@ export default function ScraperManagerPage() {
     }
   };
 
+  const fetchCapabilities = async () => {
+    try {
+      const res = await apiClient.get<StandardResponse<any[]>>("/scraper/capabilities");
+      if (res.data?.success) {
+        setCapabilities(res.data.data || []);
+      }
+    } catch (err) {
+      console.error("Failed fetching capabilities:", err);
+    }
+  };
+
   useEffect(() => {
+    fetchCapabilities();
     fetchJobs();
     const interval = setInterval(fetchJobs, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  const handleTriggerScrape = async (classCode: string) => {
+  const handleTriggerScrape = async (classCode: string, scraperType: string) => {
     setScrapingClass(classCode);
     setMessage(null);
     try {
       const res = await apiClient.post<StandardResponse<any>>("/scraper/trigger", {
-        source_name: "NCERT Metadata Scraper",
+        scraper_type: scraperType,
         target_class: classCode,
         subject_name: "All Subjects",
         max_items: 100
@@ -202,56 +215,79 @@ export default function ScraperManagerPage() {
         </div>
       )}
 
-      {/* STEP 1: CLASS-WISE SCRAPER LAUNCHER */}
-      <Card className="p-5 space-y-4 border-zinc-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <Play className="h-4 w-4 text-sky-500" /> Step 1: Select Class to Scrape
-            </h3>
-            <p className="text-xs text-zinc-500">Trigger individual class scrapers or launch full 1-12 curriculum scraping.</p>
-          </div>
+      {/* Capability-driven Scraper Engine Cards */}
+      <div className="space-y-4">
+        {capabilities.map(cap => {
+          const isEngineRunning = jobs.some(j => (j.status === "running" || j.status === "pending") && j.source_name === cap.display_name);
+          const anyEngineRunning = jobs.some(j => j.status === "running" || j.status === "pending");
           
-          <Button
-            size="sm"
-            onClick={() => handleTriggerScrape("ALL")}
-            disabled={scrapingClass !== null}
-            className="bg-sky-600 hover:bg-sky-700 text-white text-xs"
-          >
-            {scrapingClass === "ALL" ? (
-              <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-            ) : (
-              <Play className="h-3.5 w-3.5 mr-1.5" />
-            )}
-            Scrape All Classes (1-12)
-          </Button>
-        </div>
+          return (
+            <Card key={cap.type} className="p-5 space-y-4 border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden">
+              {anyEngineRunning && !isEngineRunning && (
+                 <div className="absolute inset-0 bg-zinc-50/50 dark:bg-zinc-900/50 z-10 flex items-center justify-center backdrop-blur-[1px]">
+                   <span className="bg-zinc-800 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">Queue Locked (Other Engine Active)</span>
+                 </div>
+              )}
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <Play className="h-4 w-4 text-sky-500" /> {cap.display_name}
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    {cap.supports_class_filter ? "Trigger individual class scrapers or launch full 1-12 curriculum scraping." : "Scrapes all available hub resources simultaneously."}
+                  </p>
+                </div>
+                
+                <Button
+                  size="sm"
+                  onClick={() => handleTriggerScrape("ALL", cap.type)}
+                  disabled={scrapingClass !== null || anyEngineRunning}
+                  className="bg-sky-600 hover:bg-sky-700 text-white text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isEngineRunning && scrapingClass === "ALL" ? (
+                    <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <Play className="h-3.5 w-3.5 mr-1.5" />
+                  )}
 
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2 pt-2">
-          {classesList.map(cNum => {
-            const isScrapingThis = scrapingClass === cNum;
-            return (
-              <button
-                key={cNum}
-                onClick={() => handleTriggerScrape(cNum)}
-                disabled={scrapingClass !== null}
-                className={`py-3 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-1 ${
-                  isScrapingThis
-                    ? "bg-sky-500 text-white border-sky-600 ring-2 ring-sky-300"
-                    : "bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:border-sky-500 hover:bg-sky-50/50 dark:hover:bg-sky-950/30"
-                }`}
-              >
-                {isScrapingThis ? (
-                  <RefreshCw className="h-4 w-4 animate-spin text-white" />
-                ) : (
-                  <BookOpen className="h-4 w-4 text-sky-500" />
-                )}
-                <span>Class {cNum}</span>
-              </button>
-            );
-          })}
-        </div>
-      </Card>
+                  {cap.supports_class_filter ? "Scrape All Classes (1-12)" : "Scrape Full Hub"}
+                </Button>
+              </div>
+
+              {cap.supports_class_filter && (
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2 pt-2">
+                  {classesList.map(cNum => {
+                    const isScrapingThis = (scrapingClass === cNum && isEngineRunning) || jobs.some(j => (j.status === "running" || j.status === "pending") && j.class_code === cNum && j.source_name === cap.display_name);
+                    return (
+                      <button
+                        key={cNum}
+                        onClick={() => handleTriggerScrape(cNum, cap.type)}
+                        disabled={scrapingClass !== null || (anyEngineRunning && !isScrapingThis)}
+                        className={`py-3 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-1 ${
+                          isScrapingThis
+                            ? "opacity-100 cursor-not-allowed bg-sky-500 text-white border-sky-600 ring-2 ring-sky-300"
+                            : scrapingClass !== null || anyEngineRunning
+                            ? "opacity-50 cursor-not-allowed bg-zinc-50 dark:bg-zinc-900 text-zinc-400 border-zinc-200 dark:border-zinc-800"
+                            : "bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:border-sky-500 hover:bg-sky-50/50 dark:hover:bg-sky-950/30"
+                        }`}
+                      >
+                        {isScrapingThis ? (
+                          <RefreshCw className="h-4 w-4 animate-spin text-white" />
+                        ) : (
+                          <BookOpen className="h-4 w-4 text-sky-500" />
+                        )}
+                        <span>Class {cNum}</span>
+                      </button>
+                    );
+                  })}
+
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
 
       {/* LIVE TERMINAL */}
       <TerminalLogStream />

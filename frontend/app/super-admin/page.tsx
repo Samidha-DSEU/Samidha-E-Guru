@@ -11,6 +11,7 @@ import { Card, Skeleton } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { CursorDotsCanvas } from "@/components/ui/CursorDotsCanvas";
 
 interface ScraperJobItem {
   id: string;
@@ -54,12 +55,12 @@ export default function SuperAdminDashboardPage() {
     }
   }, [user, params, router]);
 
-  const [activeTab, setActiveTab] = useState<"scrapers" | "payloads" | "users">("scrapers");
+  const [activeTab, setActiveTab] = useState<"scrapers" | "payloads" | "users" | "settings">("scrapers");
 
   // SCRAPER FORM STATE
   const [isTriggerModalOpen, setIsTriggerModalOpen] = useState(false);
   const [scraperForm, setScraperForm] = useState({
-    source_name: "NCERT & CBSE Question Bank",
+    scraper_type: "ncert",
     target_class: "Class 10",
     subject_name: "Mathematics",
     max_items: 50,
@@ -90,6 +91,34 @@ export default function SuperAdminDashboardPage() {
     }
   });
 
+  const { data: capsData } = useQuery({
+    queryKey: ["scraperCapabilities"],
+    queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<any[]>>("/scraper/capabilities");
+      return res.data;
+    }
+  });
+  const capabilities = capsData?.data || [];
+
+  const { data: settingsData, refetch: refetchSettings } = useQuery({
+    queryKey: ["systemSettings"],
+    queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<any[]>>("/settings");
+      return res.data;
+    }
+  });
+  const systemSettings = settingsData?.data || [];
+
+  const updateSettingMutation = useMutation({
+    mutationFn: async (args: { key: string; value: any }) => {
+      const res = await apiClient.patch(`/settings/${args.key}`, { value: args.value });
+      return res.data;
+    },
+    onSuccess: () => {
+      refetchSettings();
+    }
+  });
+
   // MUTATION TO TRIGGER EXTERNAL SCRAPER
   const triggerScraperMutation = useMutation({
     mutationFn: async (data: typeof scraperForm) => {
@@ -103,8 +132,8 @@ export default function SuperAdminDashboardPage() {
   });
 
   const jobs = jobsData?.data || [];
-  const isAnyJobRunning = jobs.some(job => job.status === "running");
-  const isGlobalLoading = triggerScraperMutation.isPending || isAnyJobRunning;
+  const isAnyJobRunning = jobs.some(job => job.status === "running" || job.status === "pending");
+  const isGlobalLoading = triggerScraperMutation.isPending;
   const contract = contractData?.data;
 
   const handleTriggerSubmit = (e: React.FormEvent) => {
@@ -114,7 +143,8 @@ export default function SuperAdminDashboardPage() {
 
   return (
     <ProtectedRoute allowedRoles={["super_admin"]}>
-      <div className="space-y-8">
+      <CursorDotsCanvas />
+      <div className="space-y-8 relative z-10">
         {/* Header Banner */}
         <div className="bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 border border-zinc-800 rounded-3xl p-8 text-white space-y-3 shadow-xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold uppercase tracking-wider">
@@ -199,76 +229,107 @@ export default function SuperAdminDashboardPage() {
           >
             📜 Payload Contracts & Webhook Spec
           </button>
+
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeTab === "settings" ? "bg-rose-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600"
+            }`}
+          >
+            🔒 System Settings
+          </button>
         </div>
 
         {/* TAB 1: EXTERNAL SCRAPER ENGINE & TRIGGER */}
         {activeTab === "scrapers" && (
           <div className="space-y-6">
-            {/* Class-wise Quick Scraper Launcher Grid (Class 1 to Class 12) */}
-            <Card className="p-5 space-y-4 border-zinc-200 dark:border-zinc-800 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                    <Cpu className="h-5 w-5 text-emerald-500" /> Educational Web Scraper Control Center
-                  </h2>
-                  <p className="text-xs text-zinc-500">
-                    Click any Class button below to launch parallel Playwright/Async crawling for Class 1 to 12 (NCERT & CBSE).
-                  </p>
-                </div>
+            {/* Capability-driven Scraper Engine Cards */}
+            <div className="space-y-4">
+              {capabilities.map(cap => {
+                const isEngineRunning = jobs.some(j => (j.status === "running" || j.status === "pending") && j.source_name === cap.display_name);
+                const anyEngineRunning = jobs.some(j => j.status === "running" || j.status === "pending");
+                
+                return (
+                  <Card key={cap.type} className="p-5 space-y-4 border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden">
+                    {/* Background Overlay if another engine is running to show the queue dependency visually */}
+                    {anyEngineRunning && !isEngineRunning && (
+                       <div className="absolute inset-0 bg-zinc-50/50 dark:bg-zinc-900/50 z-10 flex items-center justify-center backdrop-blur-[1px]">
+                         <span className="bg-zinc-800 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">Queue Locked (Other Engine Active)</span>
+                       </div>
+                    )}
+                    
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                          <Cpu className="h-5 w-5 text-emerald-500" /> {cap.display_name}
+                        </h2>
+                        <p className="text-xs text-zinc-500">
+                          {cap.supports_class_filter ? "Parallel crawling for Classes 1 to 12." : "Scrapes all available hub resources simultaneously."}
+                        </p>
+                      </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    onClick={() => {
-                      triggerScraperMutation.mutate({
-                        source_name: "NCERT Official Metadata Scraper",
-                        target_class: "ALL",
-                        subject_name: "All Subjects",
-                        max_items: 200,
-                        external_scraper_url: "https://ncert.nic.in"
-                      });
-                    }}
-                    isLoading={isGlobalLoading}
-                    className="bg-sky-600 hover:bg-sky-500 text-white text-xs"
-                  >
-                    <Play className="h-3.5 w-3.5 mr-1" /> Scrape All Classes (1-12)
-                  </Button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          onClick={() => {
+                            triggerScraperMutation.mutate({
+                              scraper_type: cap.type,
+                              target_class: "ALL",
+                              subject_name: "All Subjects",
+                              max_items: cap.supports_class_filter ? 200 : 5000,
+                              external_scraper_url: ""
+                            });
+                          }}
+                          disabled={isGlobalLoading || anyEngineRunning}
+                          className="bg-sky-600 hover:bg-sky-500 text-white text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isGlobalLoading || isEngineRunning ? (
+                            <RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" />
+                          ) : (
+                            <Play className="h-3.5 w-3.5 mr-1" />
+                          )} {cap.supports_class_filter ? "Scrape All Classes (1-12)" : "Scrape Full Hub"}
+                        </Button>
+                      </div>
+                    </div>
 
-                  <Button
-                    onClick={() => setIsTriggerModalOpen(true)}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs"
-                  >
-                    <Play className="h-3.5 w-3.5 mr-1" /> Custom Trigger
-                  </Button>
-                </div>
-              </div>
-
-              {/* Class 1 to 12 Grid Buttons */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2 pt-2">
-                {Array.from({ length: 12 }, (_, i) => (i + 1).toString()).map((cNum) => (
-                  <button
-                    key={cNum}
-                    onClick={() => {
-                      triggerScraperMutation.mutate({
-                        source_name: "NCERT Official Metadata Scraper",
-                        target_class: cNum,
-                        subject_name: "All Subjects",
-                        max_items: 100,
-                        external_scraper_url: "https://ncert.nic.in"
-                      });
-                    }}
-                    disabled={isGlobalLoading}
-                    className={`py-3 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-1 ${
-                      isGlobalLoading
-                        ? "opacity-50 cursor-not-allowed bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-zinc-400"
-                        : "bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30"
-                    }`}
-                  >
-                    {isGlobalLoading ? <RefreshCw className="h-4 w-4 text-emerald-500 animate-spin" /> : <Code className="h-4 w-4 text-emerald-500" />}
-                    <span>Class {cNum}</span>
-                  </button>
-                ))}
-              </div>
-            </Card>
+                    {/* Class 1 to 12 Grid Buttons (Only if supported) */}
+                    {cap.supports_class_filter && (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2 pt-2">
+                        {Array.from({ length: 12 }, (_, i) => (i + 1).toString()).map((cNum) => {
+                          const isThisClassActive = jobs.some(j => (j.status === "running" || j.status === "pending") && j.class_code === cNum && j.source_name === cap.display_name);
+                          const isButtonDisabled = isGlobalLoading || anyEngineRunning;
+                          
+                          return (
+                            <button
+                              key={cNum}
+                              onClick={() => {
+                                triggerScraperMutation.mutate({
+                                  scraper_type: cap.type,
+                                  target_class: cNum,
+                                  subject_name: "All Subjects",
+                                  max_items: 100,
+                                  external_scraper_url: ""
+                                });
+                              }}
+                              disabled={isButtonDisabled && !isThisClassActive}
+                              className={`py-3 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-1 ${
+                                isThisClassActive
+                                  ? "opacity-100 cursor-not-allowed bg-emerald-500 text-white border-emerald-600 ring-2 ring-emerald-300"
+                                  : isButtonDisabled
+                                  ? "opacity-50 cursor-not-allowed bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-zinc-400"
+                                  : "bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30"
+                              }`}
+                            >
+                              {isThisClassActive ? <RefreshCw className="h-4 w-4 text-white animate-spin" /> : <Code className="h-4 w-4 text-emerald-500" />}
+                              <span>Class {cNum}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
 
             {/* SCRAPER JOBS TABLE */}
             <Card className="space-y-4 border-zinc-200 dark:border-zinc-800">
@@ -323,6 +384,11 @@ export default function SuperAdminDashboardPage() {
                             }`}>
                               {job.status}
                             </span>
+                            {job.status === "failed" && job.error_log && (
+                              <div className="mt-2 text-[10px] text-rose-600 bg-rose-50 dark:bg-rose-950/30 p-1.5 rounded border border-rose-200 dark:border-rose-900/50 max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap" title={job.error_log}>
+                                {job.error_log}
+                              </div>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">
                             <div>Subjects: {job.total_subjects_found || 0} | Chapters: {job.total_chapters_found || 0}</div>
@@ -406,13 +472,13 @@ export default function SuperAdminDashboardPage() {
 
               <form onSubmit={handleTriggerSubmit} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Scraper Source Name *</label>
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Scraper Type *</label>
                   <input
                     type="text"
                     required
-                    placeholder="E.g., NCERT & CBSE Official Question Bank"
-                    value={scraperForm.source_name}
-                    onChange={(e) => setScraperForm({ ...scraperForm, source_name: e.target.value })}
+                    placeholder="E.g., ncert or kvs"
+                    value={scraperForm.scraper_type}
+                    onChange={(e) => setScraperForm({ ...scraperForm, scraper_type: e.target.value })}
                     className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
@@ -492,6 +558,57 @@ export default function SuperAdminDashboardPage() {
             </div>
           </div>
         )}
+        {/* TAB 3: SYSTEM SETTINGS */}
+        {activeTab === "settings" && (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                <Settings className="w-5 h-5 text-rose-500" /> System Configurations
+              </h2>
+              <p className="text-zinc-500 text-sm">
+                Manage global application settings, verification toggles, and security overrides.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="p-6 border-zinc-200 dark:border-zinc-800">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="space-y-1">
+                    <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <UserPlus className="w-4 h-4 text-emerald-500" />
+                      Strict Volunteer Verification
+                    </h3>
+                    <p className="text-sm text-zinc-500">
+                      If disabled, newly registered Volunteers/Alumni will be automatically approved and their uploaded resources bypass manual admin review.
+                    </p>
+                  </div>
+                  <div>
+                    {(() => {
+                      const strictVerifySetting = systemSettings.find(s => s.key === "require_volunteer_verification");
+                      const isStrict = strictVerifySetting ? strictVerifySetting.value === true : true;
+                      
+                      return (
+                        <div className="flex items-center">
+                           <button
+                             onClick={() => updateSettingMutation.mutate({ key: "require_volunteer_verification", value: !isStrict })}
+                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isStrict ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                           >
+                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isStrict ? 'translate-x-6' : 'translate-x-1'}`} />
+                           </button>
+                        </div>
+                      )
+                    })()}
+                  </div>
+                </div>
+                <div className="text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg flex items-center gap-2 border border-zinc-100 dark:border-zinc-800">
+                   <ShieldAlert className="w-4 h-4 text-amber-500" />
+                   Disabling this reduces onboarding friction but increases spam risk.
+                </div>
+              </Card>
+            </div>
+          </div>
+        )}
+
       </div>
     </ProtectedRoute>
   );

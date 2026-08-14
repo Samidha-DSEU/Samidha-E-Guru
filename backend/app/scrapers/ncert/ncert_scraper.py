@@ -217,8 +217,8 @@ class NCERTMetadataScraper(BaseMetadataScraper):
                     
                     if len(b_prefix) >= 2:
                         lang_code = b_prefix[1].lower()
-                        if lang_code == 'u' or lang_code == 's':
-                            # Block Urdu and Sanskrit mediums completely
+                        if lang_code not in ('e', 'h'):
+                            # Block all regional languages, Urdu ('u'), and Sanskrit ('s')
                             continue
                             
                         detected_medium = 'Hindi' if lang_code == 'h' else 'English'
