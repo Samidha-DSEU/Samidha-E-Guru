@@ -4,11 +4,10 @@ import { useState } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/context/AuthContext";
-import { FcGoogle } from "react-icons/fc";
-import { Loader2 } from "lucide-react";
+import { useAuth } from "@/features/auth/context/AuthContext";
+import { ShieldAlert, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import axios from "axios";
 
 export default function AdminGate() {
@@ -81,7 +80,7 @@ export default function AdminGate() {
             {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <FcGoogle className="mr-2 h-5 w-5" />
+              <ShieldAlert className="mr-2 h-5 w-5 text-rose-500" />
             )}
             Authenticate with Google
           </Button>
