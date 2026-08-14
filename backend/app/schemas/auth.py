@@ -64,6 +64,10 @@ class VolunteerProfileSchema(BaseModel):
     organization: Optional[str] = None
     expertise_areas: Optional[List[str]] = None
     volunteer_hours: int = 0
+    academic_year: Optional[str] = None
+    whatsapp_number: Optional[str] = None
+    assigned_role: Optional[str] = None
+    is_featured_mentor: bool = False
     is_approved: bool = False
     approval_status: str = "PENDING"
     applied_at: Optional[datetime] = None
@@ -117,6 +121,8 @@ class LearnerProfileUpdateRequest(BaseModel):
 class VolunteerProfileUpdateRequest(BaseModel):
     organization: Optional[str] = None
     expertise_areas: Optional[List[str]] = None
+    academic_year: Optional[str] = None
+    whatsapp_number: Optional[str] = None
 
 
 class AlumniProfileUpdateRequest(BaseModel):

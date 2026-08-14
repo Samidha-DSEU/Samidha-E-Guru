@@ -52,6 +52,10 @@ export interface UserProfile {
     applied_at?: string;
     expires_at?: string;
     rejection_reason?: string;
+    assigned_role?: string;
+    is_featured_mentor?: boolean;
+    academic_year?: string;
+    whatsapp_number?: string;
   };
   alumni_profile?: {
     graduation_year?: number;

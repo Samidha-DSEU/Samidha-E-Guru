@@ -21,7 +21,7 @@ export const communityService = {
   },
 
   async likePost(postId: string) {
-    const res = await apiClient.post<StandardResponse<{ liked: boolean }>>(`/community/posts/${postId}/like`);
+    const res = await apiClient.post<StandardResponse<{ liked: boolean; likes_count: number }>>(`/community/posts/${postId}/like`);
     return res.data;
   }
 };

@@ -617,17 +617,24 @@ export default function AdminDashboardPage() {
                           </Button>
 
                           {u.role === "volunteer" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setAssigningDesignationUser(u);
-                                setDesignationError(null);
-                              }}
-                              className="text-xs h-7 px-2 text-amber-600 border-amber-200"
-                            >
-                              <ShieldCheck className="h-3 w-3 mr-1" /> Assign Role & Head
-                            </Button>
+                            <div className="flex items-center justify-end gap-2">
+                              {u.volunteer_profile?.assigned_role && (
+                                <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                  {u.volunteer_profile.assigned_role}
+                                </span>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setAssigningDesignationUser(u);
+                                  setDesignationError(null);
+                                }}
+                                className="text-xs h-7 px-2 text-amber-600 border-amber-200"
+                              >
+                                <ShieldCheck className="h-3 w-3 mr-1" /> {u.volunteer_profile?.assigned_role ? "Edit Role" : "Assign Role"}
+                              </Button>
+                            </div>
                           )}
 
                           {u.role !== "admin" && u.role !== "super_admin" && (

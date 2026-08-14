@@ -87,6 +87,11 @@ class VolunteerProfile(Base):
     expertise_areas: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
     volunteer_hours: Mapped[int] = mapped_column(Integer, default=0)
     
+    academic_year: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    whatsapp_number: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    assigned_role: Mapped[Optional[str]] = mapped_column(String(255), default="Operational & Volunteer Head", nullable=True)
+    is_featured_mentor: Mapped[bool] = mapped_column(Boolean, default=False)
+    
     # Approval Lifecycle & Purge Fields
     approval_status: Mapped[str] = mapped_column(String(20), default=ApprovalStatus.PENDING.value, nullable=False)
     is_approved: Mapped[bool] = mapped_column(Boolean, default=False)

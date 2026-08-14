@@ -92,13 +92,45 @@ export default function CommunityPage() {
   };
 
   const handleLike = async (postId: string) => {
+    // Optimistic update
+    const previousPosts = [...posts];
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id === postId) {
+          // Simplistic optimistic toggle (assumes we toggle, but backend will correct)
+          return { ...p, likes_count: p.likes_count + 1 };
+        }
+        return p;
+      })
+    );
     try {
-      setPosts((prev) =>
-        prev.map((p) => (p.id === postId ? { ...p, likes_count: p.likes_count + 1 } : p))
-      );
-      await communityService.likePost(postId);
+      const res = await communityService.likePost(postId);
+      if (res.data) {
+        // Correct with actual count
+        setPosts((prev) =>
+          prev.map((p) => (p.id === postId ? { ...p, likes_count: res.data?.likes_count ?? p.likes_count } : p))
+        );
+      }
     } catch {
-      // Ignore
+      // Revert on error
+      setPosts(previousPosts);
+    }
+  };
+
+  const handleShare = async (title: string, id: string) => {
+    const url = `${window.location.origin}/community?post=${id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `SAMIDHA E-GURU Community: ${title}`,
+          url: url,
+        });
+      } catch (err) {
+        // user cancelled or error
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      alert("Link copied to clipboard!");
     }
   };
 
@@ -180,10 +212,10 @@ export default function CommunityPage() {
                     >
                       <ThumbsUp className="h-4 w-4" /> {post.likes_count} Likes
                     </button>
-                    <button className="flex items-center gap-1.5 hover:text-sky-600 transition-colors">
+                    <button onClick={() => alert("Comments feature is under development.")} className="flex items-center gap-1.5 hover:text-sky-600 transition-colors">
                       <MessageCircle className="h-4 w-4" /> {post.comments_count} Comments
                     </button>
-                    <button className="flex items-center gap-1.5 hover:text-sky-600 transition-colors">
+                    <button onClick={() => handleShare(post.title, post.id)} className="flex items-center gap-1.5 hover:text-sky-600 transition-colors">
                       <Share2 className="h-4 w-4" /> Share
                     </button>
                   </div>
@@ -228,7 +260,7 @@ export default function CommunityPage() {
                   <select
                     value={newPost.post_type}
                     onChange={(e) => setNewPost({ ...newPost, post_type: e.target.value })}
-                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-transparent dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                   >
                     <option value="general">General Question</option>
                     <option value="career_guidance">Career Guidance</option>

@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { BookOpen, GraduationCap, ShieldCheck, Award, Eye, EyeOff, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
-import { CursorDotsCanvas } from "@/components/ui/CursorDotsCanvas";
+
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { AnimatedText } from "@/components/ui/AnimatedText";
 import { TypewriterText } from "@/components/ui/TypewriterText";
@@ -133,8 +133,6 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-[85vh] flex items-center justify-center py-10 px-4 selection:bg-sky-500 selection:text-white">
-      <CursorDotsCanvas />
-
       <div className="w-full max-w-md space-y-6 relative z-10">
         {/* Header Title with Blur-Fade Reveal */}
         <ScrollReveal direction="down" delay={0}>

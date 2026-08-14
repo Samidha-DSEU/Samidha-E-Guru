@@ -79,8 +79,8 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert("Image size should be less than 2MB");
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Image size should be less than 5MB");
         return;
       }
       const reader = new FileReader();
@@ -311,17 +311,17 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
 
             {roleName === "volunteer" && (
               <div className="space-y-3 pt-2">
-                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[11px]">
-                  <span className="font-bold text-amber-700 dark:text-amber-300">SAMIDHA Role Designation:</span>{" "}
-                  <span className="font-extrabold text-amber-600 dark:text-amber-200">
-                    {user?.volunteer_profile?.organization?.includes("Head")
-                      ? user?.volunteer_profile?.organization
-                      : "Operational & Volunteer Head (Assigned by Admin)"}
-                  </span>
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    *Designations are assigned exclusively by Admin for 3rd and 4th year volunteers.
-                  </p>
-                </div>
+                {user?.volunteer_profile?.assigned_role && (
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[11px]">
+                    <span className="font-bold text-amber-700 dark:text-amber-300">SAMIDHA Role Designation:</span>{" "}
+                    <span className="font-extrabold text-amber-600 dark:text-amber-200 uppercase">
+                      {user.volunteer_profile.assigned_role}
+                    </span>
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      Assigned by SAMIDHA Administration
+                    </p>
+                  </div>
+                )}
 
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Academic Year *</label>
@@ -333,8 +333,8 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
                   >
                     <option value="1st Year">1st Year</option>
                     <option value="2nd Year">2nd Year</option>
-                    <option value="3rd Year">3rd Year (Eligible for Operational Head)</option>
-                    <option value="4th Year">4th Year (Eligible for Operational Head)</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
                   </select>
                 </div>
 
