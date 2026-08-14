@@ -90,9 +90,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (res.data?.data) {
         const dbUser = res.data.data;
-        if (tokenRole && dbUser.role && dbUser.role.name !== tokenRole) {
-          dbUser.role.name = tokenRole;
-        }
         setUser(dbUser);
         return dbUser;
       }
@@ -110,9 +107,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (savedUserStr) {
         try {
           const parsed = JSON.parse(savedUserStr);
-          if (tokenRole && parsed.role) {
-            parsed.role.name = tokenRole;
-          }
           setUser(parsed);
           return parsed;
         } catch {}
