@@ -100,25 +100,37 @@ class EmbeddingService:
             # Fallback to standard query + local cosine similarity computation if vector index is building
             pass
 
-        # 2. Fallback: Query all chunks for resource_id and compute cosine similarity
-        chunks = list(chunks_coll.find({"resource_id": resource_id}))
-        if not chunks:
-            # If no chunks match resource_id, return top matches across DB
-            chunks = list(chunks_coll.find().limit(20))
+        # 2. Fallback: Query all chunks with cursor to prevent OOM
+        cursor = chunks_coll.find({"resource_id": resource_id})
+        
+        # If no chunks match resource_id, fallback to general chunks
+        if chunks_coll.count_documents({"resource_id": resource_id}) == 0:
+            cursor = chunks_coll.find().limit(20)
 
+        import heapq
         scored_chunks = []
-        for chunk in chunks:
+        
+        # Stream chunks one by one to avoid memory spikes
+        for chunk in cursor:
             emb = chunk.get("embedding", [])
             if emb and len(emb) == len(query_vector):
                 score = cls._cosine_similarity(query_vector, emb)
-                scored_chunks.append({
+                
+                # Maintain top_k using a min-heap to save memory
+                item = (score, {
                     "page_number": chunk.get("page_number", 1),
                     "section_heading": chunk.get("section_heading", "General"),
                     "content": chunk.get("content", ""),
                     "score": score
                 })
+                
+                if len(scored_chunks) < top_k:
+                    heapq.heappush(scored_chunks, item)
+                else:
+                    heapq.heappushpop(scored_chunks, item)
 
-        scored_chunks.sort(key=lambda x: x["score"], reverse=True)
+        # Extract top_k items from heap and sort descending
+        scored_chunks = [item[1] for item in sorted(scored_chunks, key=lambda x: x[0], reverse=True)]
         return scored_chunks[:top_k]
 
     @staticmethod
