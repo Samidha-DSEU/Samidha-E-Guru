@@ -384,6 +384,11 @@ export default function SuperAdminDashboardPage() {
                             }`}>
                               {job.status}
                             </span>
+                            {job.status === "failed" && job.error_log && (
+                              <div className="mt-2 text-[10px] text-rose-600 bg-rose-50 dark:bg-rose-950/30 p-1.5 rounded border border-rose-200 dark:border-rose-900/50 max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap" title={job.error_log}>
+                                {job.error_log}
+                              </div>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">
                             <div>Subjects: {job.total_subjects_found || 0} | Chapters: {job.total_chapters_found || 0}</div>
