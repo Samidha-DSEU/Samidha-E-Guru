@@ -84,6 +84,37 @@ def get_pending_volunteers(
     return StandardResponse.success_response(data=data, message="Volunteer applications retrieved.")
 
 
+class AssignRoleRequest(BaseModel):
+    assigned_role: str
+
+@router.post("/volunteers/{user_id}/assign-role", response_model=StandardResponse[dict])
+def assign_volunteer_role(
+    user_id: UUID,
+    req: AssignRoleRequest,
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    volunteer_user = db.query(User).filter(User.id == user_id).first()
+    if not volunteer_user or not volunteer_user.volunteer_profile:
+        raise HTTPException(status_code=404, detail="Volunteer user not found")
+
+    vp = volunteer_user.volunteer_profile
+    vp.assigned_role = req.assigned_role.strip()
+    
+    log = ActivityLog(
+        user_id=current_user.id,
+        action="VOLUNTEER_ASSIGN_ROLE",
+        details={"volunteer_id": str(user_id), "assigned_role": vp.assigned_role}
+    )
+    db.add(log)
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={"user_id": str(user_id), "assigned_role": vp.assigned_role},
+        message="Volunteer role assigned successfully."
+    )
+
+
 @router.post("/volunteers/{user_id}/approve", response_model=StandardResponse[dict])
 def approve_volunteer(
     user_id: UUID,

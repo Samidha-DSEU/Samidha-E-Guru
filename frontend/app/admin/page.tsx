@@ -566,17 +566,24 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">{u.email}</td>
                         <td className="px-4 py-3 text-xs">
-                          <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
-                            u.role === "admin" || u.role === "super_admin"
-                              ? "bg-purple-100 text-purple-700"
-                              : u.role === "volunteer"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : u.role === "alumni"
-                              ? "bg-indigo-100 text-indigo-700"
-                              : "bg-sky-100 text-sky-700"
-                          }`}>
-                            {u.role}
-                          </span>
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                              u.role === "admin" || u.role === "super_admin"
+                                ? "bg-purple-100 text-purple-700"
+                                : u.role === "volunteer"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : u.role === "alumni"
+                                ? "bg-indigo-100 text-indigo-700"
+                                : "bg-sky-100 text-sky-700"
+                            }`}>
+                              {u.role}
+                            </span>
+                            {u.role === "volunteer" && u.volunteer_profile?.assigned_role && (
+                              <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-amber-50 text-amber-600 border border-amber-200">
+                                {u.volunteer_profile.assigned_role}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-xs text-zinc-400">{new Date(u.created_at).toLocaleDateString()}</td>
                         <td className="px-4 py-3 text-right space-x-1.5">

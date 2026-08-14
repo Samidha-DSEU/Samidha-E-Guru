@@ -73,8 +73,9 @@ export function Navbar() {
     if (!user) return "";
     const roleName = getRoleFromUserOrToken(user) || (user.role?.name ? user.role.name.toLowerCase() : "student");
     switch (roleName) {
-      case "admin":
       case "super_admin":
+        return "Super Admin Portal";
+      case "admin":
         return "Admin Portal";
       case "volunteer":
         return "Volunteer Portal";
