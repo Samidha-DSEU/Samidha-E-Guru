@@ -64,7 +64,8 @@ def get_volunteer_heads(db: Session = Depends(get_db)):
     data = []
     for u in users:
         vp = u.volunteer_profile
-        if vp and vp.is_approved and vp.assigned_role:
+        if vp and vp.is_approved and vp.assigned_role and vp.assigned_role.strip():
+            phone_number = vp.whatsapp_number or (u.profile.phone if u.profile else None)
             data.append({
                 "id": str(u.id),
                 "full_name": u.profile.full_name if u.profile else "Volunteer Head",
@@ -72,7 +73,7 @@ def get_volunteer_heads(db: Session = Depends(get_db)):
                 "samidha_designation": vp.assigned_role,
                 "subjects": vp.expertise_areas if isinstance(vp.expertise_areas, list) else (vp.expertise_areas or "General Mentorship"),
                 "email": u.email,
-                "whatsapp_number": vp.whatsapp_number,
+                "whatsapp_number": phone_number,
                 "avatar_url": u.profile.avatar_url if u.profile else None,
                 "avatar_initials": u.profile.full_name[:2].upper() if u.profile and u.profile.full_name else "VH"
             })

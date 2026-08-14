@@ -327,11 +327,11 @@ export function Navbar() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">WhatsApp Mobile Number *</label>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Mobile Number *</label>
                     <input
                       type="tel"
                       required
-                      placeholder="+91 9876543210"
+                      placeholder="e.g. 9876543210"
                       value={studentForm.mobile}
                       onChange={(e) => setStudentForm({ ...studentForm, mobile: e.target.value })}
                       className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -400,16 +400,22 @@ export function Navbar() {
                     💬 Connect Live on WhatsApp Now
                   </span>
                   
-                  <a
-                    href={`https://wa.me/${selectedVolunteer.whatsapp_number || "919876543210"}?text=${encodeURIComponent(
-                      `Hi ${selectedVolunteer.full_name}, I am ${studentForm.full_name} (Mobile: ${studentForm.mobile}). I am seeking guidance for ${studentForm.needed_subject} on SAMIDHA E-GURU.`
-                    )}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-transform active:scale-95"
-                  >
-                    <MessageSquare className="h-4 w-4" /> Open WhatsApp Chat with {selectedVolunteer.full_name}
-                  </a>
+                  {selectedVolunteer.whatsapp_number ? (
+                    <a
+                      href={`https://wa.me/${selectedVolunteer.whatsapp_number.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                        `Hi ${selectedVolunteer.full_name}, I am ${studentForm.full_name} (Mobile: ${studentForm.mobile}). I am seeking guidance for ${studentForm.needed_subject} on SAMIDHA E-GURU.`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-transform active:scale-95"
+                    >
+                      <MessageSquare className="h-4 w-4" /> Open WhatsApp Chat with {selectedVolunteer.full_name}
+                    </a>
+                  ) : (
+                    <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-100/60 dark:bg-amber-950/60 p-2.5 rounded-xl border border-amber-200 dark:border-amber-800 font-medium">
+                      ⚠️ Volunteer has not provided a mobile number. Please send a direct email below.
+                    </p>
+                  )}
 
                   <a
                     href={`mailto:${selectedVolunteer.email}?subject=${encodeURIComponent(`Mentorship Inquiry from Student ${studentForm.full_name}`)}&body=${encodeURIComponent(`Hi ${selectedVolunteer.full_name},\n\nStudent Name: ${studentForm.full_name}\nMobile: ${studentForm.mobile}\nSubject: ${studentForm.needed_subject}\n\nNote:\n${studentForm.message}`)}`}
