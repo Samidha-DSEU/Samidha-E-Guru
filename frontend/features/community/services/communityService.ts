@@ -23,5 +23,15 @@ export const communityService = {
   async likePost(postId: string) {
     const res = await apiClient.post<StandardResponse<{ liked: boolean; likes_count: number }>>(`/community/posts/${postId}/like`);
     return res.data;
+  },
+
+  async getComments(postId: string) {
+    const res = await apiClient.get<StandardResponse<any[]>>(`/community/posts/${postId}/comments`);
+    return res.data;
+  },
+
+  async createComment(postId: string, content: string) {
+    const res = await apiClient.post<StandardResponse<any>>(`/community/posts/${postId}/comments`, { content });
+    return res.data;
   }
 };
