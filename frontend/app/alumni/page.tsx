@@ -328,7 +328,7 @@ export default function AlumniDashboardPage() {
                   <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Market Insights & Guides</span>
                   <BookOpen className="h-4 w-4 text-indigo-500" />
                 </div>
-                <AnimatedNumber value="4" className="text-3xl font-bold text-zinc-900 dark:text-zinc-50" />
+                <AnimatedNumber value="0" className="text-3xl font-bold text-zinc-900 dark:text-zinc-50" />
                 <div className="text-[11px] text-indigo-600">Published Industry Advice</div>
               </Card>
             </TiltCard>
@@ -498,12 +498,8 @@ export default function AlumniDashboardPage() {
             </div>
 
             <div className="space-y-3">
-              <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Market Advice: AI & Cloud Computing Trends for 2026 Graduates</h4>
-                  <div className="text-xs text-zinc-500">Category: Industry Trend / Market Advice • Published 2 days ago</div>
-                </div>
-                <span className="px-2 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded">PUBLISHED</span>
+              <div className="text-center py-8 text-zinc-500 text-xs border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50">
+                No guides published yet.
               </div>
             </div>
           </Card>
