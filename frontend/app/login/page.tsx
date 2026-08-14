@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { BookOpen, GraduationCap, ShieldCheck, Award, Eye, EyeOff, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
-import { CursorDotsCanvas } from "@/components/ui/CursorDotsCanvas";
+
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { AnimatedText } from "@/components/ui/AnimatedText";
 import { TypewriterText } from "@/components/ui/TypewriterText";

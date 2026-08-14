@@ -23,6 +23,14 @@ class RejectRequest(BaseModel):
     reason: str
 
 
+class UpdateRoleRequest(BaseModel):
+    assigned_role: str
+
+
+class FeatureMentorRequest(BaseModel):
+    is_featured_mentor: bool
+
+
 @router.get("/dashboard", response_model=StandardResponse[dict])
 def get_admin_dashboard_metrics(
     current_user: User = Depends(require_roles(["admin", "super_admin"])),
@@ -138,6 +146,60 @@ def reject_volunteer(
     return StandardResponse.success_response(
         data={"user_id": str(user_id), "status": "REJECTED"},
         message="Volunteer account rejected."
+    )
+
+
+@router.patch("/users/{user_id}/volunteer-role", response_model=StandardResponse[dict])
+def update_volunteer_role(
+    user_id: UUID,
+    req: UpdateRoleRequest,
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user or not target_user.volunteer_profile:
+        raise HTTPException(status_code=404, detail="Volunteer not found.")
+    
+    target_user.volunteer_profile.assigned_role = req.assigned_role.strip()
+    
+    log = ActivityLog(
+        user_id=current_user.id,
+        action="UPDATE_VOLUNTEER_ROLE",
+        details={"target_user_id": str(user_id), "new_role": req.assigned_role}
+    )
+    db.add(log)
+    db.commit()
+    
+    return StandardResponse.success_response(
+        data={"user_id": str(user_id), "assigned_role": target_user.volunteer_profile.assigned_role},
+        message="Volunteer role updated successfully."
+    )
+
+
+@router.patch("/users/{user_id}/feature-mentor", response_model=StandardResponse[dict])
+def feature_mentor(
+    user_id: UUID,
+    req: FeatureMentorRequest,
+    current_user: User = Depends(require_roles(["admin", "super_admin"])),
+    db: Session = Depends(get_db)
+):
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user or not target_user.volunteer_profile:
+        raise HTTPException(status_code=404, detail="Volunteer not found.")
+    
+    target_user.volunteer_profile.is_featured_mentor = req.is_featured_mentor
+    
+    log = ActivityLog(
+        user_id=current_user.id,
+        action="TOGGLE_FEATURED_MENTOR",
+        details={"target_user_id": str(user_id), "is_featured": req.is_featured_mentor}
+    )
+    db.add(log)
+    db.commit()
+    
+    return StandardResponse.success_response(
+        data={"user_id": str(user_id), "is_featured_mentor": target_user.volunteer_profile.is_featured_mentor},
+        message="Mentor feature status updated successfully."
     )
 
 

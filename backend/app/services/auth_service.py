@@ -272,8 +272,14 @@ class AuthService:
                 setattr(current_user.learner_profile, key, value)
                 
         if req.volunteer_profile and current_user.volunteer_profile:
-            for key, value in req.volunteer_profile.model_dump(exclude_unset=True).items():
-                setattr(current_user.volunteer_profile, key, value)
+            vp = current_user.volunteer_profile
+            vp.organization = req.volunteer_profile.organization if req.volunteer_profile.organization is not None else vp.organization
+            if req.volunteer_profile.expertise_areas is not None:
+                vp.expertise_areas = req.volunteer_profile.expertise_areas
+            if req.volunteer_profile.academic_year is not None:
+                vp.academic_year = req.volunteer_profile.academic_year
+            if req.volunteer_profile.whatsapp_number is not None:
+                vp.whatsapp_number = req.volunteer_profile.whatsapp_number
                 
         if req.alumni_profile and current_user.alumni_profile:
             for key, value in req.alumni_profile.model_dump(exclude_unset=True).items():

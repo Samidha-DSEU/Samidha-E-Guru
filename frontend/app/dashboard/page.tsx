@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import axios from "axios";
 import { AnimatedText } from "@/components/ui/AnimatedText";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
@@ -18,6 +19,21 @@ export default function DashboardPage() {
   const router = useRouter();
   const params = useParams();
   const [requested, setRequested] = useState<string | null>(null);
+  const [featuredMentors, setFeaturedMentors] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchMentors = async () => {
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/community/featured-mentors`);
+        if (res.data?.data) {
+          setFeaturedMentors(res.data.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch featured mentors", err);
+      }
+    };
+    fetchMentors();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -128,26 +144,47 @@ export default function DashboardPage() {
               </div>
             )}
 
-            <div className="p-8 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-center space-y-4">
-              <div className="h-12 w-12 rounded-full bg-sky-500/10 text-sky-500 mx-auto flex items-center justify-center border border-sky-500/20">
-                <Sparkles className="h-6 w-6" />
-              </div>
-              <div className="space-y-1 max-w-md mx-auto">
-                <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Connect with Verified SAMIDHA Volunteer Heads</h4>
-                <p className="text-xs text-zinc-500">
-                  Request 1-on-1 academic assistance and doubt resolution directly from active 3rd & 4th year Operational & Volunteer Heads via Email & Instant WhatsApp.
-                </p>
-              </div>
-              <Button
-                onClick={() => {
-                  const getMentorBtn = document.querySelector('button:has(svg.lucide-sparkles)') as HTMLButtonElement;
-                  if (getMentorBtn) getMentorBtn.click();
-                  else router.push('/resources');
-                }}
-                className="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md shadow-sky-500/20"
-              >
-                <Sparkles className="h-4 w-4 mr-1.5" /> Find & Connect with Volunteer Head
-              </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {featuredMentors.length > 0 ? (
+                featuredMentors.map((mentor) => (
+                  <div key={mentor.id} className="p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 flex flex-col md:flex-row items-center gap-4">
+                    <img
+                      src={mentor.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + mentor.id}
+                      alt={mentor.full_name}
+                      className="h-16 w-16 rounded-full object-cover border-2 border-sky-100 dark:border-sky-900"
+                    />
+                    <div className="flex-1 text-center md:text-left">
+                      <h4 className="font-bold text-zinc-900 dark:text-zinc-100">{mentor.full_name}</h4>
+                      <p className="text-xs font-medium text-sky-600 dark:text-sky-400">{mentor.assigned_role || "Mentor"}</p>
+                      <p className="text-xs text-zinc-500 mt-1">{mentor.organization}</p>
+                    </div>
+                    <Button
+                      onClick={() => handleRequestMentorship(mentor.full_name)}
+                      className="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-4 py-2 rounded-xl"
+                    >
+                      Connect
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full p-8 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-center space-y-4">
+                  <div className="h-12 w-12 rounded-full bg-sky-500/10 text-sky-500 mx-auto flex items-center justify-center border border-sky-500/20">
+                    <Sparkles className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-1 max-w-md mx-auto">
+                    <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Connect with Verified SAMIDHA Volunteer Heads</h4>
+                    <p className="text-xs text-zinc-500">
+                      Request 1-on-1 academic assistance and doubt resolution directly from active 3rd & 4th year Operational & Volunteer Heads via Email & Instant WhatsApp.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => router.push('/resources')}
+                    className="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md shadow-sky-500/20"
+                  >
+                    <Sparkles className="h-4 w-4 mr-1.5" /> Find & Connect with Volunteer Head
+                  </Button>
+                </div>
+              )}
             </div>
           </Card>
         </ScrollReveal>
