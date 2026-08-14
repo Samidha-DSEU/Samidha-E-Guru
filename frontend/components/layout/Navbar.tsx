@@ -134,6 +134,9 @@ export function Navbar() {
           <Link href="/resources" className="text-sm font-semibold text-zinc-600 hover:text-sky-600 dark:text-zinc-300 dark:hover:text-sky-400 transition-colors px-1 py-1">
             Resources
           </Link>
+          <Link href="/events" className="text-sm font-semibold text-zinc-600 hover:text-sky-600 dark:text-zinc-300 dark:hover:text-sky-400 transition-colors px-1 py-1">
+            Events & Bootcamps
+          </Link>
           <Link href="/community" className="text-sm font-semibold text-zinc-600 hover:text-sky-600 dark:text-zinc-300 dark:hover:text-sky-400 transition-colors px-1 py-1">
             Community
           </Link>
@@ -206,6 +209,9 @@ export function Navbar() {
           </Link>
           <Link href="/resources" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Resources
+          </Link>
+          <Link href="/events" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Events & Bootcamps
           </Link>
           <Link href="/community" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Community

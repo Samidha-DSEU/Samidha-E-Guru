@@ -240,6 +240,10 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
                     <span className="flex items-center gap-2.5"><BookmarkCheck className="h-4 w-4 text-emerald-500" /> Educational Resource Library</span>
                     <ChevronRight className="h-3.5 w-3.5 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
                   </Link>
+                  <Link href="/events" onClick={onClose} className="flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-sky-50 dark:hover:bg-zinc-900 rounded-xl transition-colors group">
+                    <span className="flex items-center gap-2.5"><Calendar className="h-4 w-4 text-purple-500" /> Live Events & Bootcamps</span>
+                    <ChevronRight className="h-3.5 w-3.5 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
                   <Link href="/community" onClick={onClose} className="flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-sky-50 dark:hover:bg-zinc-900 rounded-xl transition-colors group">
                     <span className="flex items-center gap-2.5"><MessageSquare className="h-4 w-4 text-indigo-500" /> Community Discussion Feed</span>
                     <ChevronRight className="h-3.5 w-3.5 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
