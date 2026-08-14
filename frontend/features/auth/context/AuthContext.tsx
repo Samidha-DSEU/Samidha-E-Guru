@@ -117,11 +117,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return parsed;
         } catch {}
       }
-      // Don't fall back to a mock user. If we couldn't fetch the user, we should be logged out.
-      return null;
     } finally {
       setIsLoading(false);
     }
+    return null;
   };
 
   const loginWithGoogle = async (role: UserRole, idToken: string): Promise<UserProfile | null> => {
