@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { ShieldAlert, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -57,12 +56,12 @@ export default function AdminGate() {
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-zinc-300">Clearance Key</label>
-            <Input
+            <input
               type="password"
               value={secretKey}
-              onChange={(e) => setSecretKey(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSecretKey(e.target.value)}
               placeholder="••••••••••••"
-              className="bg-zinc-950 border-zinc-800 text-zinc-100"
+              className="bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-md p-2 w-full"
             />
           </div>
 
