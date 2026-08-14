@@ -3,7 +3,6 @@ import logging
 from typing import List, Dict, Any
 import httpx
 import fitz  # PyMuPDF
-import pdfplumber
 from pymongo.database import Database
 from services.embedding_service import EmbeddingService
 
