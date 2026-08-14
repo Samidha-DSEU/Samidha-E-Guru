@@ -103,8 +103,8 @@ export default function SuperAdminDashboardPage() {
   });
 
   const jobs = jobsData?.data || [];
-  const isAnyJobRunning = jobs.some(job => job.status === "running");
-  const isGlobalLoading = triggerScraperMutation.isPending || isAnyJobRunning;
+  const isAnyJobRunning = jobs.some(job => job.status === "running" || job.status === "pending");
+  const isGlobalLoading = triggerScraperMutation.isPending;
   const contract = contractData?.data;
 
   const handleTriggerSubmit = (e: React.FormEvent) => {
@@ -227,10 +227,14 @@ export default function SuperAdminDashboardPage() {
                         external_scraper_url: "https://ncert.nic.in"
                       });
                     }}
-                    isLoading={isGlobalLoading}
-                    className="bg-sky-600 hover:bg-sky-500 text-white text-xs"
+                    disabled={isGlobalLoading || jobs.some(j => (j.status === "running" || j.status === "pending") && j.class_code === "ALL")}
+                    className="bg-sky-600 hover:bg-sky-500 text-white text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Play className="h-3.5 w-3.5 mr-1" /> Scrape All Classes (1-12)
+                    {isGlobalLoading || jobs.some(j => (j.status === "running" || j.status === "pending") && j.class_code === "ALL") ? (
+                      <RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" />
+                    ) : (
+                      <Play className="h-3.5 w-3.5 mr-1" />
+                    )} Scrape All Classes (1-12)
                   </Button>
 
                   <Button
@@ -244,29 +248,36 @@ export default function SuperAdminDashboardPage() {
 
               {/* Class 1 to 12 Grid Buttons */}
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2 pt-2">
-                {Array.from({ length: 12 }, (_, i) => (i + 1).toString()).map((cNum) => (
-                  <button
-                    key={cNum}
-                    onClick={() => {
-                      triggerScraperMutation.mutate({
-                        source_name: "NCERT Official Metadata Scraper",
-                        target_class: cNum,
-                        subject_name: "All Subjects",
-                        max_items: 100,
-                        external_scraper_url: "https://ncert.nic.in"
-                      });
-                    }}
-                    disabled={isGlobalLoading}
-                    className={`py-3 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-1 ${
-                      isGlobalLoading
-                        ? "opacity-50 cursor-not-allowed bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-zinc-400"
-                        : "bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30"
-                    }`}
-                  >
-                    {isGlobalLoading ? <RefreshCw className="h-4 w-4 text-emerald-500 animate-spin" /> : <Code className="h-4 w-4 text-emerald-500" />}
-                    <span>Class {cNum}</span>
-                  </button>
-                ))}
+                {Array.from({ length: 12 }, (_, i) => (i + 1).toString()).map((cNum) => {
+                  const isThisClassActive = jobs.some(j => (j.status === "running" || j.status === "pending") && j.class_code === cNum);
+                  const isButtonDisabled = isGlobalLoading || isThisClassActive;
+                  
+                  return (
+                    <button
+                      key={cNum}
+                      onClick={() => {
+                        triggerScraperMutation.mutate({
+                          source_name: "NCERT Official Metadata Scraper",
+                          target_class: cNum,
+                          subject_name: "All Subjects",
+                          max_items: 100,
+                          external_scraper_url: "https://ncert.nic.in"
+                        });
+                      }}
+                      disabled={isButtonDisabled}
+                      className={`py-3 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-1 ${
+                        isThisClassActive
+                          ? "opacity-80 cursor-not-allowed bg-emerald-500 text-white border-emerald-600 ring-2 ring-emerald-300"
+                          : isGlobalLoading
+                          ? "opacity-50 cursor-not-allowed bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-zinc-400"
+                          : "bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30"
+                      }`}
+                    >
+                      {isThisClassActive ? <RefreshCw className="h-4 w-4 text-white animate-spin" /> : <Code className="h-4 w-4 text-emerald-500" />}
+                      <span>Class {cNum}</span>
+                    </button>
+                  );
+                })}
               </div>
             </Card>
 

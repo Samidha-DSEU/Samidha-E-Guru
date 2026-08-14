@@ -22,6 +22,7 @@ from app.models.resources import Resource
 router = APIRouter()
 
 scraper_log_queue = queue.Queue()
+scraper_lock = asyncio.Lock()
 
 class QueueLogHandler(logging.Handler):
     def emit(self, record):
@@ -113,6 +114,25 @@ def run_ncert_scraper_job(job_id: UUID, target_class: str):
         db.close()
 
 
+async def run_ncert_scraper_job_queued(job_id: UUID, target_class: str):
+    """Wrapper to queue scraper jobs sequentially using a global lock to prevent OOM on low-RAM servers."""
+    async with scraper_lock:
+        from app.db.session import SessionLocal
+        db = SessionLocal()
+        try:
+            job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
+            if job and job.status == "pending":
+                job.status = "running"
+                db.commit()
+            elif not job:
+                return
+        except Exception:
+            pass
+        finally:
+            db.close()
+            
+        await asyncio.to_thread(run_ncert_scraper_job, job_id, target_class)
+
 @router.post("/trigger", response_model=StandardResponse[dict])
 def trigger_external_scraper(
     req: TriggerScraperRequest,
@@ -120,6 +140,15 @@ def trigger_external_scraper(
     current_user: User = Depends(require_roles(["super_admin", "admin"])),
     db: Session = Depends(get_db)
 ):
+    # Prevent duplicate running or pending jobs for the same class
+    active_job = db.query(ScraperJob).filter(
+        ScraperJob.status.in_(["running", "pending"]),
+        ScraperJob.class_code == req.target_class
+    ).first()
+
+    if active_job:
+        raise HTTPException(status_code=400, detail=f"A scraper job is already {active_job.status} for Class {req.target_class}.")
+
     # Find or create ScraperSource
     source = db.query(ScraperSource).filter(ScraperSource.source_name == req.source_name).first()
     if not source:
@@ -135,7 +164,7 @@ def trigger_external_scraper(
     # Create ScraperJob record
     job = ScraperJob(
         source_id=source.id,
-        status="running",
+        status="pending",
         class_code=req.target_class,
         resources_found=0,
         resources_added=0
@@ -156,8 +185,8 @@ def trigger_external_scraper(
     db.add(log)
     db.commit()
 
-    # Always launch scraper execution job in background
-    background_tasks.add_task(run_ncert_scraper_job, job.id, req.target_class)
+    # Launch scraper execution job in the sequential queue
+    background_tasks.add_task(run_ncert_scraper_job_queued, job.id, req.target_class)
 
     request_payload = {
         "job_id": str(job.id),
@@ -171,7 +200,7 @@ def trigger_external_scraper(
     return StandardResponse.success_response(
         data={
             "job_id": str(job.id),
-            "status": "RUNNING",
+            "status": "PENDING",
             "source_name": req.source_name,
             "target_class": req.target_class,
             "subject_name": req.subject_name,

@@ -215,29 +215,32 @@ export default function ScraperManagerPage() {
           <Button
             size="sm"
             onClick={() => handleTriggerScrape("ALL")}
-            disabled={scrapingClass !== null}
-            className="bg-sky-600 hover:bg-sky-700 text-white text-xs"
+            disabled={scrapingClass !== null || jobs.some(j => (j.status === "running" || j.status === "pending") && j.class_code === "ALL")}
+            className="bg-sky-600 hover:bg-sky-700 text-white text-xs disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {scrapingClass === "ALL" ? (
+            {scrapingClass === "ALL" || jobs.some(j => (j.status === "running" || j.status === "pending") && j.class_code === "ALL") ? (
               <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" />
             ) : (
               <Play className="h-3.5 w-3.5 mr-1.5" />
             )}
+
             Scrape All Classes (1-12)
           </Button>
         </div>
 
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2 pt-2">
           {classesList.map(cNum => {
-            const isScrapingThis = scrapingClass === cNum;
+            const isScrapingThis = scrapingClass === cNum || jobs.some(j => (j.status === "running" || j.status === "pending") && j.class_code === cNum);
             return (
               <button
                 key={cNum}
                 onClick={() => handleTriggerScrape(cNum)}
-                disabled={scrapingClass !== null}
+                disabled={scrapingClass !== null || isScrapingThis}
                 className={`py-3 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-1 ${
                   isScrapingThis
-                    ? "bg-sky-500 text-white border-sky-600 ring-2 ring-sky-300"
+                    ? "opacity-80 cursor-not-allowed bg-sky-500 text-white border-sky-600 ring-2 ring-sky-300"
+                    : scrapingClass !== null
+                    ? "opacity-50 cursor-not-allowed bg-zinc-50 dark:bg-zinc-900 text-zinc-400 border-zinc-200 dark:border-zinc-800"
                     : "bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:border-sky-500 hover:bg-sky-50/50 dark:hover:bg-sky-950/30"
                 }`}
               >
@@ -250,6 +253,7 @@ export default function ScraperManagerPage() {
               </button>
             );
           })}
+
         </div>
       </Card>
 
