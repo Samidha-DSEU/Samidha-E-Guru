@@ -325,7 +325,7 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
               <input
                 name="phone"
                 type="tel"
-                placeholder="e.g. 9876543210"
+                placeholder="Enter 10-digit mobile number"
                 value={formData.profile.phone}
                 onChange={handleProfileChange}
                 className="w-full px-3.5 py-2 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"

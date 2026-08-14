@@ -344,7 +344,7 @@ export function Navbar() {
                     <input
                       type="tel"
                       required
-                      placeholder="e.g. 9876543210"
+                      placeholder="Enter 10-digit mobile number"
                       value={studentForm.mobile}
                       onChange={(e) => setStudentForm({ ...studentForm, mobile: e.target.value })}
                       className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
