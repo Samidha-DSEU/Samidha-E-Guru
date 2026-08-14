@@ -133,8 +133,6 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-[85vh] flex items-center justify-center py-10 px-4 selection:bg-sky-500 selection:text-white">
-      <CursorDotsCanvas />
-
       <div className="w-full max-w-md space-y-6 relative z-10">
         {/* Header Title with Blur-Fade Reveal */}
         <ScrollReveal direction="down" delay={0}>
