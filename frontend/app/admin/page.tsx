@@ -136,9 +136,7 @@ export default function AdminDashboardPage() {
 
   // MODALS STATE
   const [isHealthModalOpen, setIsHealthModalOpen] = useState(false);
-  const [viewingActivityUser, setViewingActivityUser] = useState<UserItem | null>(null);
   const [deletingUser, setDeletingUser] = useState<UserItem | null>(null);
-  const [promotingUser, setPromotingUser] = useState<UserItem | null>(null);
   const [assigningDesignationUser, setAssigningDesignationUser] = useState<UserItem | null>(null);
   const [assignedDesignation, setAssignedDesignation] = useState("Operational & Volunteer Head");
   const [assignedYear, setAssignedYear] = useState("3rd Year");
@@ -220,30 +218,6 @@ export default function AdminDashboardPage() {
       return res.data;
     },
     enabled: isHealthModalOpen
-  });
-
-  // USER ACTIVITY LOGS QUERY
-  const { data: userLogsData, isLoading: userLogsLoading } = useQuery({
-    queryKey: ["userActivityLogs", viewingActivityUser?.id],
-    queryFn: async () => {
-      if (!viewingActivityUser) return null;
-      const res = await apiClient.get<StandardResponse<UserActivityLog[]>>(`/admin/users/${viewingActivityUser.id}/activity-logs`);
-      return res.data;
-    },
-    enabled: !!viewingActivityUser
-  });
-
-  // MUTATIONS
-  const promoteAdminMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      const res = await apiClient.post(`/admin/users/${userId}/promote-admin`);
-      return res.data;
-    },
-    onSuccess: () => {
-      setPromotingUser(null);
-      refetchUsers();
-      queryClient.invalidateQueries({ queryKey: ["adminMetrics"] });
-    }
   });
 
   const deleteUserMutation = useMutation({
@@ -360,8 +334,6 @@ export default function AdminDashboardPage() {
   const pendingDeletions = deletionsData?.data || [];
   const pendingEvents = eventsData?.data || [];
   const health = healthData?.data;
-  const userLogs = userLogsData?.data || [];
-
   return (
     <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
       <div className="relative z-10">
@@ -608,22 +580,8 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="px-4 py-3 text-xs text-zinc-400">{new Date(u.created_at).toLocaleDateString()}</td>
                         <td className="px-4 py-3 text-right space-x-1.5">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setViewingActivityUser(u)}
-                            className="text-xs h-7 px-2 text-sky-600 border-sky-200"
-                          >
-                            <Eye className="h-3 w-3 mr-1" /> Activity Trail
-                          </Button>
-
-                          {u.role === "volunteer" && (
-                            <div className="flex items-center justify-end gap-2">
-                              {u.volunteer_profile?.assigned_role && (
-                                <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                                  {u.volunteer_profile.assigned_role}
-                                </span>
-                              )}
+                          <div className="flex items-center gap-2">
+                            {u.role === "volunteer" && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -635,20 +593,8 @@ export default function AdminDashboardPage() {
                               >
                                 <ShieldCheck className="h-3 w-3 mr-1" /> {u.volunteer_profile?.assigned_role ? "Edit Role" : "Assign Role"}
                               </Button>
-                            </div>
-                          )}
-
-                          {u.role !== "admin" && u.role !== "super_admin" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setPromotingUser(u)}
-                              className="text-xs h-7 px-2 text-purple-600 border-purple-200"
-                            >
-                              <UserPlus className="h-3 w-3 mr-1" /> Promote Admin
-                            </Button>
-                          )}
-
+                            )}
+                          </div>
                           <Button
                             size="sm"
                             variant="outline"
@@ -1063,83 +1009,6 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
               ) : null}
-            </div>
-          </div>
-        )}
-
-        {/* 👁️ USER ACTIVITY AUDIT TRAIL MODAL */}
-        {viewingActivityUser && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl relative max-h-[85vh] overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
-                <div>
-                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                    <Eye className="h-5 w-5 text-sky-500" /> User Activity Audit Trail
-                  </h3>
-                  <div className="text-xs text-zinc-500">{viewingActivityUser.full_name} ({viewingActivityUser.email})</div>
-                </div>
-                <button onClick={() => setViewingActivityUser(null)} className="text-zinc-500 hover:text-zinc-700">
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {userLogsLoading ? (
-                  <div className="py-8 text-center text-xs text-zinc-500">Fetching user activity logs...</div>
-                ) : userLogs.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-zinc-500">No activity logs recorded yet for this user.</div>
-                ) : (
-                  userLogs.map((log) => (
-                    <div key={log.id} className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 text-xs space-y-1">
-                      <div className="flex items-center justify-between font-bold text-zinc-900 dark:text-zinc-100">
-                        <span className="px-2 py-0.5 bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 text-[10px] rounded uppercase font-bold">
-                          {log.action}
-                        </span>
-                        <span className="text-zinc-400 font-normal">{new Date(log.created_at).toLocaleString()}</span>
-                      </div>
-                      {log.details && (
-                        <div className="text-zinc-600 dark:text-zinc-400 font-mono text-[11px] overflow-x-auto p-1.5 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-800 mt-1">
-                          {JSON.stringify(log.details)}
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <Button variant="outline" size="sm" onClick={() => setViewingActivityUser(null)}>
-                  Close Audit Trail
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 👑 PROMOTE TO ADMIN CONFIRMATION MODAL */}
-        {promotingUser && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-              <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-purple-500" /> Promote User to Admin Role
-              </h3>
-              <p className="text-xs text-zinc-500 leading-relaxed">
-                Are you sure you want to promote <strong>{promotingUser.full_name}</strong> ({promotingUser.email}) to <strong>Admin</strong> role? This will grant them full administrative moderation access.
-              </p>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => setPromotingUser(null)}>
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  isLoading={promoteAdminMutation.isPending}
-                  onClick={() => promoteAdminMutation.mutate(promotingUser.id)}
-                  className="bg-purple-600 hover:bg-purple-500 text-white"
-                >
-                  Confirm Admin Promotion
-                </Button>
-              </div>
             </div>
           </div>
         )}
