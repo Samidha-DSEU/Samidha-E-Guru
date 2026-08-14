@@ -1,11 +1,17 @@
 import axios from "axios";
 
+const BACKEND_URLS = [
+  "https://samidha-e-guru.onrender.com/api/v1",
+  "https://samidha-e-guru-4px4.onrender.com/api/v1"
+];
+
 const getBaseUrl = (): string => {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
-  // Default to Production Backend URL if no env variable is provided
-  return "https://samidha-e-guru.onrender.com/api/v1";
+  // Client-Side Load Balancing (Random Robin Selection)
+  const randomIndex = Math.floor(Math.random() * BACKEND_URLS.length);
+  return BACKEND_URLS[randomIndex];
 };
 
 export const apiClient = axios.create({
