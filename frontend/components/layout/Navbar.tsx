@@ -19,6 +19,7 @@ interface VolunteerHeadItem {
   subjects?: string;
   email: string;
   whatsapp_number?: string;
+  avatar_url?: string;
   avatar_initials?: string;
 }
 
@@ -269,9 +270,17 @@ export function Navbar() {
                 ) : (
                   volunteerHeads.map((vol) => (
                     <div key={vol.id} className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/60 flex items-start gap-4 hover:border-sky-500/40 transition-all">
-                      <div className="h-12 w-12 rounded-2xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold text-sm border border-amber-300/40 shrink-0">
-                        {vol.avatar_initials || vol.full_name?.split(' ').map(n=>n[0]).join('') || "VH"}
-                      </div>
+                      {vol.avatar_url ? (
+                        <img
+                          src={vol.avatar_url}
+                          alt={vol.full_name}
+                          className="h-12 w-12 rounded-2xl object-cover border border-zinc-200 dark:border-zinc-800 shrink-0"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-2xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold text-sm border border-amber-300/40 shrink-0">
+                          {vol.avatar_initials || vol.full_name?.split(' ').map(n=>n[0]).join('') || "VH"}
+                        </div>
+                      )}
                       <div className="flex-1 space-y-1.5">
                         <div className="flex flex-wrap items-center justify-between gap-1">
                           <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{vol.full_name}</h4>
@@ -300,8 +309,12 @@ export function Navbar() {
               <form onSubmit={handleInquirySubmit} className="space-y-4">
                 <div className="p-3 bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 rounded-2xl flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-xs">
-                      {selectedVolunteer.avatar_initials || "VH"}
+                    <div className="h-8 w-8 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
+                      {selectedVolunteer.avatar_url ? (
+                        <img src={selectedVolunteer.avatar_url} alt={selectedVolunteer.full_name} className="h-full w-full object-cover" />
+                      ) : (
+                        selectedVolunteer.avatar_initials || "VH"
+                      )}
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">{selectedVolunteer.full_name}</h4>
