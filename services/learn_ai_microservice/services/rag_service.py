@@ -240,7 +240,11 @@ Return valid JSON:
     def grade_quiz(cls, db: Database, resource_id: str, user_id: str, answers: Dict[str, str]) -> Dict[str, Any]:
         """Grades student quiz submission and updates student_progress in MongoDB."""
         workspace = cls.get_or_generate_workspace(db, resource_id, "Chapter Quiz")
-        question_bank = workspace.get("question_bank", [])
+        question_bank = workspace.get("question_bank")
+        
+        if not question_bank:
+            section_data = cls.generate_workspace_section(db, resource_id, "quiz", "Chapter Quiz")
+            question_bank = section_data.get("question_bank") or []
 
         total = len(question_bank)
         score = 0

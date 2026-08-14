@@ -92,7 +92,8 @@ class PDFIngestionService:
 
         # 4. pdfplumber Markdown Table Extraction
         try:
-            with pdfplumber.open(fitz.open(stream=pdf_bytes, filetype="pdf")) as plumber_pdf:
+            import io
+            with pdfplumber.open(io.BytesIO(pdf_bytes)) as plumber_pdf:
                 for idx, page in enumerate(plumber_pdf.pages):
                     tables = page.extract_tables()
                     if tables:

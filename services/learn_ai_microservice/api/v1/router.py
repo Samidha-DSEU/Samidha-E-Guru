@@ -1,21 +1,25 @@
+import os
+import logging
 from typing import Dict, Any, Optional, List
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
-from pydantic import BaseModel
 from pymongo.database import Database
 from db.mongo import get_mongo_db
 from services.rag_service import RAGService
 from services.pdf_service import PDFIngestionService
+from services.chatpdf_service import chatpdf_service
+from schemas.learn_ai import (
+    RagQueryRequest, 
+    QuizSubmitRequest,
+    RagQueryResponse,
+    SourceCitation,
+    QuizSubmitResponse,
+    AIWorkspacePayload
+)
+from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/learn-ai", tags=["Learn AI Microservice"])
-
-class RagQueryRequest(BaseModel):
-    resource_id: str
-    question: str
-
-class QuizSubmitRequest(BaseModel):
-    resource_id: str
-    user_id: Optional[str] = "student-guest"
-    answers: Dict[str, str]
 
 class IngestPdfRequest(BaseModel):
     resource_id: str
@@ -61,16 +65,53 @@ def get_workspace_section(
         raise HTTPException(status_code=500, detail=f"LLM Section Generation Error: {str(exc)}")
 
 @router.post("/query")
-def solve_doubt(
+async def solve_doubt(
     request: RagQueryRequest,
     db: Database = Depends(get_mongo_db)
 ):
-    """RAG Doubt Solver using MongoDB vector search."""
+    """RAG Doubt Solver using ChatPDF (primary) and MongoDB vector search (fallback)."""
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
     
+    resource_title = request.resource_title or "Study Chapter"
+    pdf_url = request.pdf_url or "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
+
+    # 1. Try ChatPDF
+    if chatpdf_service.is_configured():
+        try:
+            source_id = await chatpdf_service.add_pdf_by_url(pdf_url)
+            if source_id:
+                chat_res = await chatpdf_service.query_document(source_id, request.question)
+                if chat_res.get("rate_limited"):
+                    raise HTTPException(
+                        status_code=429,
+                        detail=chat_res.get("answer", "⚡ ChatPDF request quota limit reached. Please wait 60s.")
+                    )
+                if chat_res.get("status") == "success":
+                    raw_refs = chat_res.get("references", [])
+                    sources = [
+                        {"page_number": ref.get("pageNumber", 1), "content_snippet": ref.get("text", f"Page {ref.get('pageNumber', 1)}")}
+                        for ref in raw_refs
+                    ] or [{"page_number": 1, "content_snippet": f"Document context from {resource_title}"}]
+
+                    return {
+                        "success": True,
+                        "message": "Doubt solved via ChatPDF API.",
+                        "data": {
+                            "answer": chat_res.get("answer"),
+                            "sources": sources,
+                            "provider": "ChatPDF API"
+                        }
+                    }
+        except HTTPException as http_exc:
+            raise http_exc
+        except Exception as chatpdf_err:
+            logger.warning(f"ChatPDF service query error, falling back: {chatpdf_err}")
+
+    # 2. Fallback to Microservice MongoDB RAG
     try:
         result = RAGService.solve_doubt(db, request.resource_id, request.question)
+        result["provider"] = "Groq LLM (MongoDB RAG)"
         return {
             "success": True,
             "message": "Doubt query solved successfully.",
@@ -89,7 +130,8 @@ def submit_quiz(
     db: Database = Depends(get_mongo_db)
 ):
     """Grade quiz and log progress in MongoDB."""
-    result = RAGService.grade_quiz(db, request.resource_id, request.user_id, request.answers)
+    user_id = "student-guest" # Can be updated when microservice implements proper auth
+    result = RAGService.grade_quiz(db, request.resource_id, user_id, request.answers)
     return {
         "success": True,
         "message": "Quiz submitted and progress logged in MongoDB.",

@@ -32,9 +32,7 @@ class Settings(BaseSettings):
     RESEND_API_KEY: Optional[str] = None
     FROM_EMAIL: str = "SAMIDHA E-GURU <onboarding@resend.dev>"
 
-    # Learn AI & ChatPDF Configuration
-    CHATPDF_API_KEY: Optional[str] = None
-    AI_PROVIDER_CHOICE: str = "hybrid" # hybrid, chatpdf, groq_rag
+    # (Learn AI Microservice has its own configs now)
 
     # CORS
     CORS_ORIGINS: List[str] = [

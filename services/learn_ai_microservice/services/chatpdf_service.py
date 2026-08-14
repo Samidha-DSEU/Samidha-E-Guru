@@ -7,7 +7,6 @@ logger = logging.getLogger(__name__)
 
 CHATPDF_API_URL = "https://api.chatpdf.com/v1"
 
-
 class ChatPdfService:
     """Production-grade service wrapper for ChatPDF REST API (https://api.chatpdf.com/v1)."""
 
@@ -18,10 +17,6 @@ class ChatPdfService:
         return bool(self.api_key and self.api_key.strip() and not self.api_key.startswith("sec_your_"))
 
     async def add_pdf_by_url(self, pdf_url: str) -> Optional[str]:
-        """
-        Uploads a public PDF URL to ChatPDF API and returns a sourceId.
-        Endpoints: POST https://api.chatpdf.com/v1/sources/add-url
-        """
         if not self.is_configured():
             logger.info("ChatPDF API key not configured. Skipping ChatPDF source registration.")
             return None
@@ -61,10 +56,6 @@ class ChatPdfService:
         question: str,
         history: Optional[List[Dict[str, str]]] = None
     ) -> Dict[str, Any]:
-        """
-        Sends a user question to a registered ChatPDF sourceId.
-        Endpoint: POST https://api.chatpdf.com/v1/chats/message
-        """
         if not self.is_configured():
             return {
                 "answer": "ChatPDF API key is not configured.",
@@ -80,10 +71,9 @@ class ChatPdfService:
             "Content-Type": "application/json"
         }
 
-        # Build message history array
         messages = []
         if history:
-            for msg in history[-6:]: # Keep last 6 exchanges for context window
+            for msg in history[-6:]:
                 messages.append({
                     "role": msg.get("role", "user"),
                     "content": msg.get("content", "")
@@ -152,6 +142,5 @@ class ChatPdfService:
                 "retry_after_seconds": 0,
                 "status": "connection_error"
             }
-
 
 chatpdf_service = ChatPdfService()

@@ -11,5 +11,8 @@ class Settings:
     # Groq LLM Key
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    
+    # ChatPDF API Key
+    CHATPDF_API_KEY: str = os.getenv("CHATPDF_API_KEY", "")
 
 settings = Settings()

@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field
 class RagQueryRequest(BaseModel):
     resource_id: str = Field(..., description="ID of the resource document")
     question: str = Field(..., description="Student's doubt or question regarding the chapter")
+    pdf_url: Optional[str] = Field(None, description="PDF URL directly from frontend")
+    resource_title: Optional[str] = Field(None, description="Resource title directly from frontend")
 
 
 class SourceCitation(BaseModel):
