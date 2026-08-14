@@ -43,7 +43,8 @@ class KVSIngestionService:
                 ["node", scraper_script, "--live", "--stdout"],
                 capture_output=True,
                 text=True,
-                check=False
+                check=False,
+                shell=os.name == 'nt' # Use shell on Windows to resolve 'node' from PATH
             )
             
             if process.returncode != 0:
