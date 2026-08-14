@@ -23,20 +23,27 @@ router = APIRouter(prefix="/api/v1/learn-ai", tags=["Learn AI Microservice"])
 
 MAIN_BACKEND_URL = os.getenv("MAIN_BACKEND_URL", "https://samidha-e-guru.onrender.com/api/v1")
 
-def fetch_resource_details(resource_id: str) -> Tuple[str, str]:
-    """Securely fetches verified resource metadata from the main PostgreSQL backend."""
+def fetch_resource_details_sync(resource_id: str) -> Tuple[str, str]:
+    """Securely fetches verified resource metadata synchronously."""
     try:
         response = httpx.get(f"{MAIN_BACKEND_URL}/resources/{resource_id}", timeout=10.0)
         if response.status_code == 200:
             data = response.json().get("data", {})
-            title = data.get("title", "Study Material")
-            pdf_url = data.get("external_url", "")
-            return title, pdf_url
-        else:
-            logger.warning(f"Failed to fetch resource {resource_id} from main backend: {response.status_code}")
+            return data.get("title", "Study Material"), data.get("external_url", "")
     except Exception as e:
-        logger.error(f"Error fetching resource details from main backend: {e}")
-    
+        logger.error(f"Error fetching resource details sync: {e}")
+    return "Study Material", "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
+
+async def fetch_resource_details_async(resource_id: str) -> Tuple[str, str]:
+    """Securely fetches verified resource metadata asynchronously."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{MAIN_BACKEND_URL}/resources/{resource_id}", timeout=10.0)
+            if response.status_code == 200:
+                data = response.json().get("data", {})
+                return data.get("title", "Study Material"), data.get("external_url", "")
+    except Exception as e:
+        logger.error(f"Error fetching resource details async: {e}")
     return "Study Material", "https://ncert.nic.in/textbook/pdf/jemh101.pdf"
 
 @router.get("/workspace/{resource_id}")
@@ -45,7 +52,7 @@ def get_workspace(
     db: Database = Depends(get_mongo_db)
 ):
     """Retrieve base workspace metadata from MongoDB Atlas."""
-    title, pdf_url = fetch_resource_details(resource_id)
+    title, pdf_url = fetch_resource_details_sync(resource_id)
     workspace = RAGService.get_or_generate_workspace(db, resource_id, title, pdf_url)
     return {
         "success": True,
@@ -61,7 +68,7 @@ def get_workspace_section(
 ):
     """On-demand section workspace generation via Groq LLM."""
     try:
-        title, pdf_url = fetch_resource_details(resource_id)
+        title, pdf_url = fetch_resource_details_sync(resource_id)
         data = RAGService.generate_workspace_section(db, resource_id, section_name, title, pdf_url)
         return {
             "success": True,
@@ -84,7 +91,7 @@ async def solve_doubt(
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
     
-    resource_title, pdf_url = fetch_resource_details(request.resource_id)
+    resource_title, pdf_url = await fetch_resource_details_async(request.resource_id)
 
     # 1. Try ChatPDF
     if chatpdf_service.is_configured() and pdf_url:
@@ -155,7 +162,7 @@ async def trigger_ingestion(
     db: Database = Depends(get_mongo_db)
 ):
     """Triggers background PDF parsing and MongoDB vector storage."""
-    title, pdf_url = fetch_resource_details(resource_id)
+    title, pdf_url = await fetch_resource_details_async(resource_id)
     if not pdf_url:
         raise HTTPException(status_code=400, detail="Resource does not have a valid PDF URL.")
 
