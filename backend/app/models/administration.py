@@ -7,6 +7,20 @@ from sqlalchemy.sql import func
 from app.db.session import Base
 
 
+from app.db.session import Base
+
+
+class SystemSetting(Base):
+    __tablename__ = "system_settings"
+
+    key: Mapped[str] = mapped_column(String(100), primary_key=True)
+    value: Mapped[Any] = mapped_column(JSON, nullable=False)
+    setting_type: Mapped[str] = mapped_column(String(50), default="boolean") # boolean, string, json, int
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_by: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+
 class ScraperSource(Base):
     __tablename__ = "scraper_sources"
 

@@ -54,7 +54,7 @@ export default function SuperAdminDashboardPage() {
     }
   }, [user, params, router]);
 
-  const [activeTab, setActiveTab] = useState<"scrapers" | "payloads" | "users">("scrapers");
+  const [activeTab, setActiveTab] = useState<"scrapers" | "payloads" | "users" | "settings">("scrapers");
 
   // SCRAPER FORM STATE
   const [isTriggerModalOpen, setIsTriggerModalOpen] = useState(false);
@@ -98,6 +98,25 @@ export default function SuperAdminDashboardPage() {
     }
   });
   const capabilities = capsData?.data || [];
+
+  const { data: settingsData, refetch: refetchSettings } = useQuery({
+    queryKey: ["systemSettings"],
+    queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<any[]>>("/settings");
+      return res.data;
+    }
+  });
+  const systemSettings = settingsData?.data || [];
+
+  const updateSettingMutation = useMutation({
+    mutationFn: async (args: { key: string; value: any }) => {
+      const res = await apiClient.patch(`/settings/${args.key}`, { value: args.value });
+      return res.data;
+    },
+    onSuccess: () => {
+      refetchSettings();
+    }
+  });
 
   // MUTATION TO TRIGGER EXTERNAL SCRAPER
   const triggerScraperMutation = useMutation({
@@ -207,6 +226,15 @@ export default function SuperAdminDashboardPage() {
             }`}
           >
             📜 Payload Contracts & Webhook Spec
+          </button>
+
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeTab === "settings" ? "bg-rose-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600"
+            }`}
+          >
+            🔒 System Settings
           </button>
         </div>
 
@@ -523,6 +551,57 @@ export default function SuperAdminDashboardPage() {
             </div>
           </div>
         )}
+        {/* TAB 3: SYSTEM SETTINGS */}
+        {activeTab === "settings" && (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                <Settings className="w-5 h-5 text-rose-500" /> System Configurations
+              </h2>
+              <p className="text-zinc-500 text-sm">
+                Manage global application settings, verification toggles, and security overrides.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="p-6 border-zinc-200 dark:border-zinc-800">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="space-y-1">
+                    <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <UserPlus className="w-4 h-4 text-emerald-500" />
+                      Strict Volunteer Verification
+                    </h3>
+                    <p className="text-sm text-zinc-500">
+                      If disabled, newly registered Volunteers/Alumni will be automatically approved and their uploaded resources bypass manual admin review.
+                    </p>
+                  </div>
+                  <div>
+                    {(() => {
+                      const strictVerifySetting = systemSettings.find(s => s.key === "require_volunteer_verification");
+                      const isStrict = strictVerifySetting ? strictVerifySetting.value === true : true;
+                      
+                      return (
+                        <div className="flex items-center">
+                           <button
+                             onClick={() => updateSettingMutation.mutate({ key: "require_volunteer_verification", value: !isStrict })}
+                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isStrict ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                           >
+                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isStrict ? 'translate-x-6' : 'translate-x-1'}`} />
+                           </button>
+                        </div>
+                      )
+                    })()}
+                  </div>
+                </div>
+                <div className="text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg flex items-center gap-2 border border-zinc-100 dark:border-zinc-800">
+                   <ShieldAlert className="w-4 h-4 text-amber-500" />
+                   Disabling this reduces onboarding friction but increases spam risk.
+                </div>
+              </Card>
+            </div>
+          </div>
+        )}
+
       </div>
     </ProtectedRoute>
   );

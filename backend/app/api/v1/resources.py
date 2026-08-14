@@ -10,6 +10,7 @@ from app.schemas.common import StandardResponse, MetaSchema
 from app.models.resources import Resource, ResourceRating
 from app.middlewares.auth_middleware import get_current_user, require_approved_volunteer
 from app.models.auth import User
+from app.services.settings_service import SettingsService
 
 router = APIRouter()
 
@@ -217,6 +218,17 @@ def request_resource_deletion(
     if not resource:
         raise HTTPException(status_code=404, detail="Resource not found or unauthorized")
 
+    require_verification = SettingsService.get_setting(db, "require_volunteer_verification", default=True)
+    if not require_verification:
+        # Bypass admin review for deletion
+        resource.is_deleted = True
+        resource.deletion_reason = req.reason.strip()
+        db.commit()
+        return StandardResponse.success_response(
+            data={"id": str(id), "is_deleted": True},
+            message="Resource deleted successfully (Verification disabled)."
+        )
+
     resource.verification_status = "deletion_pending"
     resource.deletion_reason = req.reason.strip()
     db.commit()
@@ -233,6 +245,8 @@ def create_resource(
     current_user: User = Depends(require_approved_volunteer),
     db: Session = Depends(get_db)
 ):
+    require_verification = SettingsService.get_setting(db, "require_volunteer_verification", default=True)
+
     resource = Resource(
         title=req.title.strip(),
         description=req.description.strip() if req.description else None,
@@ -243,7 +257,9 @@ def create_resource(
         source_type="samidha",
         thumbnail_url=req.thumbnail_url,
         uploader_id=current_user.id,
-        verification_status="pending"
+        verification_status="pending" if require_verification else "approved",
+        approved_by=None,
+        approval_reason="verification_disabled" if not require_verification else None
     )
     db.add(resource)
     db.commit()

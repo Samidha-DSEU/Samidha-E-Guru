@@ -7,6 +7,7 @@ from pydantic import BaseModel, EmailStr
 class GoogleAuthRequest(BaseModel):
     id_token: str
     role_name: Optional[str] = "student"  # student, volunteer, alumni
+    admin_secret: Optional[str] = None
 
 
 class UserRegisterRequest(BaseModel):
@@ -14,6 +15,7 @@ class UserRegisterRequest(BaseModel):
     email: EmailStr
     password: str
     role_name: Optional[str] = "student"
+    admin_secret: Optional[str] = None
 
 
 class UserLoginRequest(BaseModel):
