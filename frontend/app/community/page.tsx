@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MessageSquare, ThumbsUp, MessageCircle, Share2, Award, Plus, X, Loader2, User } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +31,11 @@ export default function CommunityPage() {
   const [commentInput, setCommentInput] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    commentsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [postComments]);
 
   const [newPost, setNewPost] = useState({
     title: "",
@@ -305,6 +310,7 @@ export default function CommunityPage() {
                                 </div>
                               ))
                             )}
+                            <div ref={commentsEndRef} />
                           </div>
                         )}
                         <form onSubmit={(e) => handleCreateComment(e, post.id)} className="flex gap-2 pt-2">

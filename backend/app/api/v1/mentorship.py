@@ -54,6 +54,31 @@ def get_all_alumni_mentors(
     return StandardResponse.success_response(data=data, message="Alumni mentors directory retrieved.")
 
 
+@router.get("/volunteer-heads", response_model=StandardResponse[List[dict]])
+def get_volunteer_heads(db: Session = Depends(get_db)):
+    volunteer_role = db.query(Role).filter(Role.name == "volunteer").first()
+    if not volunteer_role:
+        return StandardResponse.success_response(data=[], message="No volunteers found.")
+
+    users = db.query(User).filter(User.role_id == volunteer_role.id, User.is_active == True).all()
+    data = []
+    for u in users:
+        vp = u.volunteer_profile
+        if vp and vp.is_approved and vp.assigned_role:
+            data.append({
+                "id": str(u.id),
+                "full_name": u.profile.full_name if u.profile else "Volunteer Head",
+                "academic_year": vp.academic_year or "Senior",
+                "samidha_designation": vp.assigned_role,
+                "subjects": vp.expertise_areas if isinstance(vp.expertise_areas, list) else (vp.expertise_areas or "General Mentorship"),
+                "email": u.email,
+                "whatsapp_number": vp.whatsapp_number,
+                "avatar_url": u.profile.avatar_url if u.profile else None,
+                "avatar_initials": u.profile.full_name[:2].upper() if u.profile and u.profile.full_name else "VH"
+            })
+    return StandardResponse.success_response(data=data, message="Volunteer heads retrieved.")
+
+
 @router.post("/request", response_model=StandardResponse[dict])
 def request_mentorship(
     req: CreateMentorshipRequestSchema,
