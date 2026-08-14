@@ -124,14 +124,14 @@ def run_kvs_scraper_job(job_id: UUID, target_class: str):
     from app.services.kvs_ingestion_service import KVSIngestionService
     db = SessionLocal()
     try:
-        result = KVSIngestionService.sync_kvs_metadata(db)
+        result = KVSIngestionService.sync_kvs_metadata(db, target_class_filter=target_class)
         telemetry = result.get("telemetry", {})
         scraped_sheet = result.get("scraped_sheet", [])
         
         job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
         if job:
             job.status = "completed"
-            job.class_code = "ALL"
+            job.class_code = target_class or "ALL"
             job.total_subjects_found = 0
             job.total_chapters_found = telemetry.get("total_processed", 0)
             job.scraped_success_count = telemetry.get("imported", 0) + telemetry.get("updated", 0)
