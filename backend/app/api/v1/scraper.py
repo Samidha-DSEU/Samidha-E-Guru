@@ -161,7 +161,7 @@ SCRAPER_REGISTRY = {
     ScraperType.kvs: {
         "runner": run_kvs_scraper_job,
         "display_name": "KVS Knowledge Hub Scraper",
-        "supports_class_filter": False,
+        "supports_class_filter": True,
     },
 }
 
