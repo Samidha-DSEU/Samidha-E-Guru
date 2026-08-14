@@ -4,7 +4,7 @@ import { StandardResponse, CommunityPostItem } from "@/types/api";
 export interface CreatePostPayload {
   title: string;
   content: string;
-  post_type?: "general" | "mentorship" | "career_guidance" | "article";
+  post_type?: string;
 }
 
 export const communityService = {
