@@ -41,7 +41,13 @@ def get_resource_folders(
             Resource.source_type == source_type,
             Resource.target_class.isnot(None)
         ).distinct().all()
-        data = [{"class": c[0]} for c in classes]
+        import re
+        def extract_number(s):
+            m = re.search(r'\d+', s)
+            return int(m.group()) if m else 999
+
+        sorted_classes = sorted([c[0] for c in classes], key=extract_number)
+        data = [{"class": c} for c in sorted_classes]
     else:
         # Return distinct subjects for that class
         subjects = db.query(Resource.subject_name).filter(
@@ -49,7 +55,8 @@ def get_resource_folders(
             Resource.target_class == target_class,
             Resource.subject_name.isnot(None)
         ).distinct().all()
-        data = [{"subject": s[0]} for s in subjects]
+        sorted_subjects = sorted([s[0] for s in subjects])
+        data = [{"subject": s} for s in sorted_subjects]
 
     return StandardResponse.success_response(data=data, message="Folders retrieved")
 
