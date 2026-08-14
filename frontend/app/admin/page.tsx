@@ -257,6 +257,21 @@ export default function AdminDashboardPage() {
     }
   });
 
+  const assignRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const res = await apiClient.post(`/admin/volunteers/${userId}/assign-role`, {
+        assigned_role: role
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminMetrics"] });
+      queryClient.invalidateQueries({ queryKey: ["allUsers"] });
+      refetchUsers();
+      setAssigningDesignationUser(null);
+    }
+  });
+
   const approveResourceMutation = useMutation({
     mutationFn: async (resourceId: string) => {
       const res = await apiClient.post(`/admin/resources/${resourceId}/approve`);
@@ -1209,13 +1224,17 @@ export default function AdminDashboardPage() {
                 </Button>
                 <Button
                   size="sm"
+                  isLoading={assignRoleMutation.isPending}
                   onClick={() => {
+                    if (!assigningDesignationUser) return;
                     if (assignedDesignation === "Operational & Volunteer Head" && (assignedYear === "1st Year" || assignedYear === "2nd Year")) {
                       setDesignationError("Academic Year Constraint Violation: Operational & Volunteer Head designation can only be distributed to 3rd Year or 4th Year students.");
                       return;
                     }
-                    alert(`Successfully assigned "${assignedDesignation}" (${assignedYear}) to ${assigningDesignationUser.full_name}.`);
-                    setAssigningDesignationUser(null);
+                    assignRoleMutation.mutate({
+                      userId: assigningDesignationUser.id,
+                      role: assignedDesignation
+                    });
                   }}
                   className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs"
                 >
