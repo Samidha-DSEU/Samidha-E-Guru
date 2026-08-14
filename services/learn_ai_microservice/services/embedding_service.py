@@ -111,13 +111,14 @@ class EmbeddingService:
         scored_chunks = []
         
         # Stream chunks one by one to avoid memory spikes
-        for chunk in cursor:
+        for idx, chunk in enumerate(cursor):
             emb = chunk.get("embedding", [])
             if emb and len(emb) == len(query_vector):
                 score = cls._cosine_similarity(query_vector, emb)
                 
                 # Maintain top_k using a min-heap to save memory
-                item = (score, {
+                # Use idx to break ties and prevent dict comparison errors
+                item = (score, idx, {
                     "page_number": chunk.get("page_number", 1),
                     "section_heading": chunk.get("section_heading", "General"),
                     "content": chunk.get("content", ""),
@@ -130,7 +131,7 @@ class EmbeddingService:
                     heapq.heappushpop(scored_chunks, item)
 
         # Extract top_k items from heap and sort descending
-        scored_chunks = [item[1] for item in sorted(scored_chunks, key=lambda x: x[0], reverse=True)]
+        scored_chunks = [item[2] for item in sorted(scored_chunks, key=lambda x: x[0], reverse=True)]
         return scored_chunks[:top_k]
 
     @staticmethod

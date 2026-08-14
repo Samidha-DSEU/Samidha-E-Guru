@@ -11,8 +11,18 @@ logger = logging.getLogger("learn_ai_pdf")
 class PDFIngestionService:
 
     @staticmethod
-    async def download_pdf(url: str) -> bytes:
+    def _normalize_url(url: str) -> str:
+        """Converts Google Drive viewer URLs to direct download URLs."""
+        import re
+        match = re.search(r'drive\.google\.com/file/d/([^/]+)', url)
+        if match:
+            return f"https://drive.google.com/uc?export=download&id={match.group(1)}"
+        return url
+
+    @classmethod
+    async def download_pdf(cls, url: str) -> bytes:
         """Downloads PDF with desktop browser headers and NCERT referral headers."""
+        url = cls._normalize_url(url)
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
             "Accept": "application/pdf,text/html,application/xhtml+xml,application/xml;q=0.9,*/*",
@@ -133,6 +143,7 @@ class PDFIngestionService:
             gc.collect()
 
         # Free the PyMuPDF document and the bytes from memory
+        total_pages = len(doc)
         del doc
         del pdf_bytes
         gc.collect()
@@ -143,9 +154,10 @@ class PDFIngestionService:
             {
                 "$set": {
                     "resource_id": resource_id,
+                    "pdf_url": pdf_url,
                     "title": title,
                     "file_hash": file_hash,
-                    "total_pages": len(doc),
+                    "total_pages": total_pages,
                     "status": "ready"
                 }
             },

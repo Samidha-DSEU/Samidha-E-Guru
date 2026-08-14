@@ -16,10 +16,20 @@ class ChatPdfService:
     def is_configured(self) -> bool:
         return bool(self.api_key and self.api_key.strip() and not self.api_key.startswith("sec_your_"))
 
+    @staticmethod
+    def _normalize_url(url: str) -> str:
+        """Converts Google Drive viewer URLs to direct download URLs."""
+        match = re.search(r'drive\.google\.com/file/d/([^/]+)', url)
+        if match:
+            return f"https://drive.google.com/uc?export=download&id={match.group(1)}"
+        return url
+
     async def add_pdf_by_url(self, pdf_url: str) -> Optional[str]:
         if not self.is_configured():
             logger.info("ChatPDF API key not configured. Skipping ChatPDF source registration.")
             return None
+
+        pdf_url = self._normalize_url(pdf_url)
 
         headers = {
             "x-api-key": self.api_key,

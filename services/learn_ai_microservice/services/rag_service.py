@@ -204,7 +204,7 @@ Return valid JSON:
 
         prompt = prompts.get(section, prompts["summaries"])
 
-        # 5. Invoke Groq API
+        # 5. Invoke Groq
         try:
             resp = client.chat.completions.create(
                 model=settings.GROQ_MODEL,
