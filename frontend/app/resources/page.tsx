@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
-import { Search, BookOpen, ExternalLink, Star, Folder, ChevronRight, User, Calendar, X, Sparkles, Loader2 } from "lucide-react";
+import { Search, BookOpen, ExternalLink, Star, Folder, ChevronRight, User, Calendar, X, Sparkles, Loader2, Bot } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
 import { StandardResponse } from "@/types/api";
 import { Button } from "@/components/ui/Button";
@@ -206,6 +206,36 @@ function ResourcesPageContent() {
           />
         </div>
       </ScrollReveal>
+
+      {/* TALK SAMIDHA ACTION CARD */}
+      <a 
+        href={process.env.NEXT_PUBLIC_TALK_SAMIDHA_URL || "https://lingua-learn-silk.vercel.app/"}
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="block w-full p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-sky-500/5 to-indigo-500/5 dark:from-sky-950/30 dark:to-indigo-950/30 border border-sky-200/50 dark:border-sky-800/50 hover:border-sky-400 dark:hover:border-sky-600 transition-colors group cursor-pointer"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl group-hover:scale-110 transition-transform">
+              <Bot className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                Talk Samidha
+                <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/20">
+                  AI Powered
+                </span>
+              </h3>
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mt-0.5">
+                Master new languages with interactive voice exercises and real-time pronunciation feedback.
+              </p>
+            </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-sky-600 dark:text-sky-400 shrink-0">
+            Open App <ExternalLink className="h-3.5 w-3.5" />
+          </div>
+        </div>
+      </a>
 
       {/* SOURCE TABS */}
       <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800/80 pb-3 overflow-x-auto scrollbar-none snap-x sm:flex-wrap">
