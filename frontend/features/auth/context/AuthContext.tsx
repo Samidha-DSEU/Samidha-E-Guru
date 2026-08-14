@@ -17,32 +17,32 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const createFallbackUser = (role: UserRole = "student", email: string = "user@samidha.org", name: string = "SAMIDHA Learner"): UserProfile => {
-  return {
-    id: "user-" + Math.floor(Math.random() * 100000),
-    email: email,
-    is_active: true,
-    is_verified: true,
-    role: { id: "role-" + role, name: role },
-    profile: {
-      full_name: name,
-      bio: "SAMIDHA E-GURU Dedicated Member",
-      avatar_url: ""
-    },
-    learner_profile: {
-      institution_name: "Delhi Skill and Entrepreneurship University",
-      class_or_degree: "Class 10"
-    },
-    volunteer_profile: role === "volunteer" ? {
-      approval_status: "APPROVED",
-      organization: "Operational & Volunteer Head"
-    } : undefined,
-    alumni_profile: role === "alumni" ? {
-      current_company: "Tech Lead @ SAMIDHA",
-      designation: "Alumni Mentor"
-    } : undefined
-  };
-};
+// const createFallbackUser = (role: UserRole = "student", email: string = "user@samidha.org", name: string = "SAMIDHA Learner"): UserProfile => {
+//   return {
+//     id: "user-" + Math.floor(Math.random() * 100000),
+//     email: email,
+//     is_active: true,
+//     is_verified: true,
+//     role: { id: "role-" + role, name: role },
+//     profile: {
+//       full_name: name,
+//       bio: "SAMIDHA E-GURU Dedicated Member",
+//       avatar_url: ""
+//     },
+//     learner_profile: {
+//       institution_name: "Delhi Skill and Entrepreneurship University",
+//       class_or_degree: "Class 10"
+//     },
+//     volunteer_profile: role === "volunteer" ? {
+//       approval_status: "APPROVED",
+//       organization: "Operational & Volunteer Head"
+//     } : undefined,
+//     alumni_profile: role === "alumni" ? {
+//       current_company: "Tech Lead @ SAMIDHA",
+//       designation: "Alumni Mentor"
+//     } : undefined
+//   };
+// };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUserState] = useState<UserProfile | null>(null);
@@ -117,14 +117,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return parsed;
         } catch {}
       }
+      // Don't fall back to a mock user. If we couldn't fetch the user, we should be logged out.
+      return null;
     } finally {
       setIsLoading(false);
     }
-
-    const fallbackRole = tokenRole || defaultRole;
-    const fallback = createFallbackUser(fallbackRole, defaultEmail);
-    setUser(fallback);
-    return fallback;
   };
 
   const loginWithGoogle = async (role: UserRole, idToken: string): Promise<UserProfile | null> => {
@@ -171,7 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(dbUser);
         return dbUser;
       }
-      return await fetchCurrentUser(newToken, role, googleEmail);
+      throw new Error("No user data returned from authentication");
     } catch (err) {
       throw err;
     } finally {
@@ -194,7 +191,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(dbUser);
         return dbUser;
       }
-      return await fetchCurrentUser(newToken, data.role_name || "student", data.email);
+      throw new Error("No user data returned from authentication");
     } catch (err) {
       throw err;
     } finally {
@@ -217,7 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(dbUser);
         return dbUser;
       }
-      return await fetchCurrentUser(newToken, data.role_name || "student", data.email);
+      throw new Error("No user data returned from registration");
     } catch (err) {
       throw err;
     } finally {
