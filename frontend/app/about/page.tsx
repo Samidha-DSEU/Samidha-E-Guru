@@ -161,7 +161,8 @@ export default function AboutPage() {
               branch: "CSE 4th Year",
               rank: 1,
               badge: "👑 Operational & Volunteer Head",
-              color: "from-amber-500/20 via-sky-500/10 to-indigo-500/20 border-amber-500/40 text-amber-500"
+              color: "from-amber-500/20 via-sky-500/10 to-indigo-500/20 border-amber-500/40 text-amber-500",
+              contributions: "Core Platform Architecture, Database & System Design, Operations & UI Redesign"
             },
             {
               name: "HIMANSHU BANSAL",
@@ -169,7 +170,8 @@ export default function AboutPage() {
               branch: "CSE 4th Year",
               rank: 2,
               badge: "👑 Operational & Volunteer Head",
-              color: "from-sky-500/20 via-indigo-500/10 to-purple-500/20 border-sky-500/40 text-sky-500"
+              color: "from-sky-500/20 via-indigo-500/10 to-purple-500/20 border-sky-500/40 text-sky-500",
+              contributions: "AI Workspace Engine & System Integration Testing"
             },
             {
               name: "ADARSH",
@@ -177,7 +179,8 @@ export default function AboutPage() {
               branch: "CSE 4th Year",
               rank: 3,
               badge: "⭐ Senior Volunteer",
-              color: "from-purple-500/20 via-pink-500/10 to-rose-500/20 border-purple-500/40 text-purple-500"
+              color: "from-purple-500/20 via-pink-500/10 to-rose-500/20 border-purple-500/40 text-purple-500",
+              contributions: "Talk Samidha Feature Module"
             },
             {
               name: "RAHUL ARYAN",
@@ -185,7 +188,8 @@ export default function AboutPage() {
               branch: "CSE 2nd Year",
               rank: 4,
               badge: "🚀 Volunteer",
-              color: "from-emerald-500/20 via-teal-500/10 to-cyan-500/20 border-emerald-500/40 text-emerald-500"
+              color: "from-emerald-500/20 via-teal-500/10 to-cyan-500/20 border-emerald-500/40 text-emerald-500",
+              contributions: "NCERT Educational Resource Scrapers"
             },
             {
               name: "AMAN KUSHWAHA",
@@ -193,7 +197,8 @@ export default function AboutPage() {
               branch: "CSE 2nd Year",
               rank: 5,
               badge: "🚀 Volunteer",
-              color: "from-indigo-500/20 via-blue-500/10 to-sky-500/20 border-indigo-500/40 text-indigo-500"
+              color: "from-indigo-500/20 via-blue-500/10 to-sky-500/20 border-indigo-500/40 text-indigo-500",
+              contributions: "NCERT Educational Resource Scrapers"
             }
           ].map((member, idx) => (
             <ScrollReveal key={idx} direction="up" delay={idx * 100}>
@@ -213,6 +218,15 @@ export default function AboutPage() {
                       </h3>
                       <p className="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wide mt-0.5">
                         {member.role}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-zinc-200/50 dark:border-zinc-800/50 space-y-1">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">
+                        Key Contributions
+                      </span>
+                      <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 leading-snug">
+                        {member.contributions}
                       </p>
                     </div>
 
