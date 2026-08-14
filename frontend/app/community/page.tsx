@@ -31,10 +31,12 @@ export default function CommunityPage() {
   const [commentInput, setCommentInput] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
-  const commentsEndRef = useRef<HTMLDivElement>(null);
+  const commentsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    commentsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (commentsContainerRef.current) {
+      commentsContainerRef.current.scrollTop = commentsContainerRef.current.scrollHeight;
+    }
   }, [postComments]);
 
   const [newPost, setNewPost] = useState({
@@ -293,7 +295,7 @@ export default function CommunityPage() {
                         {commentsLoading ? (
                           <div className="text-center py-4 text-zinc-500 text-xs">Loading comments...</div>
                         ) : (
-                          <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                          <div ref={commentsContainerRef} className="space-y-3 max-h-60 overflow-y-auto pr-2 scroll-smooth">
                             {postComments.length === 0 ? (
                               <div className="text-center text-xs text-zinc-500">No comments yet. Be the first!</div>
                             ) : (
@@ -310,7 +312,6 @@ export default function CommunityPage() {
                                 </div>
                               ))
                             )}
-                            <div ref={commentsEndRef} />
                           </div>
                         )}
                         <form onSubmit={(e) => handleCreateComment(e, post.id)} className="flex gap-2 pt-2">
