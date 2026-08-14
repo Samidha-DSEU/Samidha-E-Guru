@@ -82,40 +82,25 @@ class PDFIngestionService:
             return {"status": "skipped", "reason": "hash_matched", "chunks_created": 0}
 
         # 3. PyMuPDF Page Text Extraction
+        import gc
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-        pages_content: List[Dict[str, Any]] = []
-
-        for page_idx in range(len(doc)):
-            page = doc[page_idx]
-            text = page.get_text("text").strip()
-            pages_content.append({"page_number": page_idx + 1, "text": text})
-
-        # 4. pdfplumber Markdown Table Extraction
-        try:
-            import io
-            with pdfplumber.open(io.BytesIO(pdf_bytes)) as plumber_pdf:
-                for idx, page in enumerate(plumber_pdf.pages):
-                    tables = page.extract_tables()
-                    if tables:
-                        table_markdown = ""
-                        for tbl in tables:
-                            table_markdown += "\n| " + " | ".join([str(c or "").strip() for c in tbl[0]]) + " |\n"
-                            table_markdown += "| " + " | ".join(["---"] * len(tbl[0])) + " |\n"
-                            for row in tbl[1:]:
-                                table_markdown += "| " + " | ".join([str(c or "").strip() for c in row]) + " |\n"
-                        if idx < len(pages_content):
-                            pages_content[idx]["text"] += f"\n\n[Extracted Table Data]:\n{table_markdown}"
-        except Exception as e:
-            logger.warning(f"pdfplumber table extraction skipped: {e}")
-
-        # 5. Chunking & SentenceTransformer Embeddings
+        
+        # Clear any prior chunks for this resource before we start batch inserting
         chunks_coll = db["ai_chunks"]
-        # Clear any prior chunks for this resource
         chunks_coll.delete_many({"resource_id": resource_id})
 
-        chunks_to_insert = []
-        for page_data in pages_content:
-            raw_text = page_data["text"]
+        total_chunks_created = 0
+        chunks_batch = []
+        BATCH_SIZE = 50
+
+        # Process each page sequentially to keep memory low
+        for page_idx in range(len(doc)):
+            page = doc[page_idx]
+            raw_text = page.get_text("text").strip()
+            
+            # Help PyMuPDF release memory for this page
+            del page
+            
             if not raw_text:
                 continue
 
@@ -126,18 +111,34 @@ class PDFIngestionService:
 
             for p_idx, para in enumerate(paragraphs):
                 embedding_vec = EmbeddingService.generate_embedding(para)
-                chunks_to_insert.append({
+                chunks_batch.append({
                     "resource_id": resource_id,
-                    "page_number": page_data["page_number"],
-                    "section_heading": f"Page {page_data['page_number']} - Part {p_idx + 1}",
+                    "page_number": page_idx + 1,
+                    "section_heading": f"Page {page_idx + 1} - Part {p_idx + 1}",
                     "content": para,
                     "embedding": embedding_vec
                 })
 
-        if chunks_to_insert:
-            chunks_coll.insert_many(chunks_to_insert)
+                # Insert in batches of BATCH_SIZE
+                if len(chunks_batch) >= BATCH_SIZE:
+                    chunks_coll.insert_many(chunks_batch)
+                    total_chunks_created += len(chunks_batch)
+                    chunks_batch = []  # Clear the list from memory
+                    gc.collect()       # Explicitly force garbage collection
 
-        # 6. Record Document in MongoDB
+        # Insert any remaining chunks
+        if chunks_batch:
+            chunks_coll.insert_many(chunks_batch)
+            total_chunks_created += len(chunks_batch)
+            chunks_batch = []
+            gc.collect()
+
+        # Free the PyMuPDF document and the bytes from memory
+        del doc
+        del pdf_bytes
+        gc.collect()
+
+        # 4. Record Document in MongoDB
         doc_coll.update_one(
             {"resource_id": resource_id},
             {
@@ -152,4 +153,4 @@ class PDFIngestionService:
             upsert=True
         )
 
-        return {"status": "success", "chunks_created": len(chunks_to_insert)}
+        return {"status": "success", "chunks_created": total_chunks_created}

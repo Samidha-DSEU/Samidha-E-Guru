@@ -31,7 +31,9 @@ class EmbeddingService:
         model = cls.get_model()
         if model:
             try:
-                return model.encode(text, convert_to_numpy=True).tolist()
+                import torch
+                with torch.no_grad():
+                    return model.encode(text, convert_to_numpy=True).tolist()
             except Exception as e:
                 logger.warning(f"SentenceTransformer encoding error ({e}). Using fallback vectorizer.")
 
