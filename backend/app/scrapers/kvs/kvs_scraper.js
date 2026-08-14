@@ -131,10 +131,17 @@ function parse(html, sourceUrl) {
 
 async function main() {
   const source = process.argv[2] ?? null;
+  const isStdout = process.argv.includes('--stdout');
   const { html, sourceUrl } = await loadHtml(source);
   const data = parse(html, sourceUrl);
-  await writeFile(OUTPUT_PATH, JSON.stringify(data, null, 2) + "\n", "utf-8");
-  console.log(`Wrote ${data.count} records to ${OUTPUT_PATH}`);
+  
+  if (isStdout) {
+    // Only print JSON to stdout for python to parse
+    console.log(JSON.stringify(data.materials));
+  } else {
+    await writeFile(OUTPUT_PATH, JSON.stringify(data, null, 2) + "\n", "utf-8");
+    console.log(`Wrote ${data.count} records to ${OUTPUT_PATH}`);
+  }
 }
 
 main().catch((err) => {

@@ -18,6 +18,11 @@ from app.middlewares.auth_middleware import require_roles
 from app.models.auth import User
 from app.models.administration import ScraperSource, ScraperJob, ActivityLog
 from app.models.resources import Resource
+import enum
+
+class ScraperType(str, enum.Enum):
+    ncert = "ncert"
+    kvs = "kvs"
 
 router = APIRouter()
 
@@ -58,7 +63,7 @@ async def stream_scraper_logs():
 
 
 class TriggerScraperRequest(BaseModel):
-    source_name: str
+    scraper_type: ScraperType
     target_class: str
     subject_name: str
     max_items: Optional[int] = 50
@@ -114,7 +119,53 @@ def run_ncert_scraper_job(job_id: UUID, target_class: str):
         db.close()
 
 
-async def run_ncert_scraper_job_queued(job_id: UUID, target_class: str):
+def run_kvs_scraper_job(job_id: UUID, target_class: str):
+    from app.db.session import SessionLocal
+    from app.services.kvs_ingestion_service import KVSIngestionService
+    db = SessionLocal()
+    try:
+        result = KVSIngestionService.sync_kvs_metadata(db)
+        telemetry = result.get("telemetry", {})
+        scraped_sheet = result.get("scraped_sheet", [])
+        
+        job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
+        if job:
+            job.status = "completed"
+            job.class_code = "ALL"
+            job.total_subjects_found = 0
+            job.total_chapters_found = telemetry.get("total_processed", 0)
+            job.scraped_success_count = telemetry.get("imported", 0) + telemetry.get("updated", 0)
+            job.scraped_failed_count = telemetry.get("failed", 0)
+            job.resources_found = telemetry.get("total_processed", 0)
+            job.resources_added = telemetry.get("imported", 0)
+            job.duration_seconds = telemetry.get("duration_seconds", 0.0)
+            job.telemetry_details = telemetry
+            job.scraped_sheet = scraped_sheet
+            db.commit()
+    except Exception as err:
+        job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
+        if job:
+            job.status = "failed"
+            job.error_log = str(err)
+            db.commit()
+    finally:
+        db.close()
+
+
+SCRAPER_REGISTRY = {
+    ScraperType.ncert: {
+        "runner": run_ncert_scraper_job,
+        "display_name": "NCERT Official Metadata Scraper",
+        "supports_class_filter": True,
+    },
+    ScraperType.kvs: {
+        "runner": run_kvs_scraper_job,
+        "display_name": "KVS Knowledge Hub Scraper",
+        "supports_class_filter": False,
+    },
+}
+
+async def run_scraper_job_queued(job_id: UUID, target_class: str, scraper_type: ScraperType):
     """Wrapper to queue scraper jobs sequentially using a global lock to prevent OOM on low-RAM servers."""
     async with scraper_lock:
         from app.db.session import SessionLocal
@@ -131,7 +182,9 @@ async def run_ncert_scraper_job_queued(job_id: UUID, target_class: str):
         finally:
             db.close()
             
-        await asyncio.to_thread(run_ncert_scraper_job, job_id, target_class)
+        runner = SCRAPER_REGISTRY.get(scraper_type, {}).get("runner")
+        if runner:
+            await asyncio.to_thread(runner, job_id, target_class)
 
 @router.post("/trigger", response_model=StandardResponse[dict])
 def trigger_external_scraper(
@@ -140,20 +193,29 @@ def trigger_external_scraper(
     current_user: User = Depends(require_roles(["super_admin", "admin"])),
     db: Session = Depends(get_db)
 ):
-    # Prevent duplicate running or pending jobs for the same class
-    active_job = db.query(ScraperJob).filter(
-        ScraperJob.status.in_(["running", "pending"]),
-        ScraperJob.class_code == req.target_class
-    ).first()
+    # Prevent duplicate running or pending jobs for the same class (only if it supports class filter)
+    # If it doesn't support class filter, prevent ANY duplicate running job for that source
+    registry_meta = SCRAPER_REGISTRY.get(req.scraper_type)
+    if not registry_meta:
+        raise HTTPException(status_code=400, detail="Invalid scraper type.")
+        
+    query = db.query(ScraperJob).filter(ScraperJob.status.in_(["running", "pending"]))
+    if registry_meta["supports_class_filter"]:
+        query = query.filter(ScraperJob.class_code == req.target_class)
+    else:
+        query = query.filter(ScraperJob.source_id == db.query(ScraperSource.id).filter(ScraperSource.source_name == registry_meta["display_name"]).scalar_subquery())
+        
+    active_job = query.first()
 
     if active_job:
-        raise HTTPException(status_code=400, detail=f"A scraper job is already {active_job.status} for Class {req.target_class}.")
+        raise HTTPException(status_code=400, detail=f"A scraper job is already {active_job.status} for this configuration.")
 
+    source_display_name = registry_meta["display_name"]
     # Find or create ScraperSource
-    source = db.query(ScraperSource).filter(ScraperSource.source_name == req.source_name).first()
+    source = db.query(ScraperSource).filter(ScraperSource.source_name == source_display_name).first()
     if not source:
         source = ScraperSource(
-            source_name=req.source_name,
+            source_name=source_display_name,
             base_url=req.external_scraper_url or "https://ncert.nic.in"
         )
         db.add(source)
@@ -176,7 +238,7 @@ def trigger_external_scraper(
         action="SCRAPER_TRIGGER",
         details={
             "job_id": str(job.id),
-            "source_name": req.source_name,
+            "scraper_type": req.scraper_type.value,
             "target_class": req.target_class,
             "subject": req.subject_name,
             "max_items": req.max_items
@@ -186,11 +248,11 @@ def trigger_external_scraper(
     db.commit()
 
     # Launch scraper execution job in the sequential queue
-    background_tasks.add_task(run_ncert_scraper_job_queued, job.id, req.target_class)
+    background_tasks.add_task(run_scraper_job_queued, job.id, req.target_class, req.scraper_type)
 
     request_payload = {
         "job_id": str(job.id),
-        "source_name": req.source_name,
+        "scraper_type": req.scraper_type.value,
         "target_class": req.target_class,
         "subject_name": req.subject_name,
         "max_items": req.max_items,
@@ -201,13 +263,26 @@ def trigger_external_scraper(
         data={
             "job_id": str(job.id),
             "status": "PENDING",
-            "source_name": req.source_name,
+            "scraper_type": req.scraper_type.value,
+            "source_name": source_display_name,
             "target_class": req.target_class,
             "subject_name": req.subject_name,
             "request_payload": request_payload
         },
-        message=f"Scraper Job #{str(job.id)[:8]} launched for Class {req.target_class}!"
+        message=f"{source_display_name} Job #{str(job.id)[:8]} launched!"
     )
+
+
+@router.get("/capabilities", response_model=StandardResponse[List[dict]])
+def get_scraper_capabilities(current_user: User = Depends(require_roles(["super_admin", "admin"]))):
+    capabilities = []
+    for s_type, meta in SCRAPER_REGISTRY.items():
+        capabilities.append({
+            "type": s_type.value,
+            "display_name": meta["display_name"],
+            "supports_class_filter": meta["supports_class_filter"]
+        })
+    return StandardResponse.success_response(data=capabilities, message="Capabilities retrieved")
 
 
 @router.delete("/purge-ncert", response_model=StandardResponse[dict])

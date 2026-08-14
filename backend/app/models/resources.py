@@ -49,6 +49,7 @@ class ResourceSource(Base):
 class Resource(Base):
     __tablename__ = "resources"
     __table_args__ = (
+        UniqueConstraint("source_type", "external_url", name="uq_source_type_external_url"),
         Index("idx_resource_filter", "target_class", "subject_name", "resource_category"),
         Index("idx_resource_source", "verification_status", "created_at"),
         Index("idx_source_class", "source_type", "target_class"),

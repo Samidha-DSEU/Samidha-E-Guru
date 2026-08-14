@@ -90,6 +90,15 @@ export default function SuperAdminDashboardPage() {
     }
   });
 
+  const { data: capsData } = useQuery({
+    queryKey: ["scraperCapabilities"],
+    queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<any[]>>("/scraper/capabilities");
+      return res.data;
+    }
+  });
+  const capabilities = capsData?.data || [];
+
   // MUTATION TO TRIGGER EXTERNAL SCRAPER
   const triggerScraperMutation = useMutation({
     mutationFn: async (data: typeof scraperForm) => {
@@ -204,82 +213,93 @@ export default function SuperAdminDashboardPage() {
         {/* TAB 1: EXTERNAL SCRAPER ENGINE & TRIGGER */}
         {activeTab === "scrapers" && (
           <div className="space-y-6">
-            {/* Class-wise Quick Scraper Launcher Grid (Class 1 to Class 12) */}
-            <Card className="p-5 space-y-4 border-zinc-200 dark:border-zinc-800 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                    <Cpu className="h-5 w-5 text-emerald-500" /> Educational Web Scraper Control Center
-                  </h2>
-                  <p className="text-xs text-zinc-500">
-                    Click any Class button below to launch parallel Playwright/Async crawling for Class 1 to 12 (NCERT & CBSE).
-                  </p>
-                </div>
+            {/* Capability-driven Scraper Engine Cards */}
+            <div className="space-y-4">
+              {capabilities.map(cap => {
+                const isEngineRunning = jobs.some(j => (j.status === "running" || j.status === "pending") && j.source_name === cap.display_name);
+                const anyEngineRunning = jobs.some(j => j.status === "running" || j.status === "pending");
+                
+                return (
+                  <Card key={cap.type} className="p-5 space-y-4 border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden">
+                    {/* Background Overlay if another engine is running to show the queue dependency visually */}
+                    {anyEngineRunning && !isEngineRunning && (
+                       <div className="absolute inset-0 bg-zinc-50/50 dark:bg-zinc-900/50 z-10 flex items-center justify-center backdrop-blur-[1px]">
+                         <span className="bg-zinc-800 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">Queue Locked (Other Engine Active)</span>
+                       </div>
+                    )}
+                    
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                          <Cpu className="h-5 w-5 text-emerald-500" /> {cap.display_name}
+                        </h2>
+                        <p className="text-xs text-zinc-500">
+                          {cap.supports_class_filter ? "Parallel crawling for Classes 1 to 12." : "Scrapes all available hub resources simultaneously."}
+                        </p>
+                      </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    onClick={() => {
-                      triggerScraperMutation.mutate({
-                        source_name: "NCERT Official Metadata Scraper",
-                        target_class: "ALL",
-                        subject_name: "All Subjects",
-                        max_items: 200,
-                        external_scraper_url: "https://ncert.nic.in"
-                      });
-                    }}
-                    disabled={isGlobalLoading || jobs.some(j => (j.status === "running" || j.status === "pending") && j.class_code === "ALL")}
-                    className="bg-sky-600 hover:bg-sky-500 text-white text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isGlobalLoading || jobs.some(j => (j.status === "running" || j.status === "pending") && j.class_code === "ALL") ? (
-                      <RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" />
-                    ) : (
-                      <Play className="h-3.5 w-3.5 mr-1" />
-                    )} Scrape All Classes (1-12)
-                  </Button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          onClick={() => {
+                            triggerScraperMutation.mutate({
+                              scraper_type: cap.type,
+                              target_class: "ALL",
+                              subject_name: "All Subjects",
+                              max_items: cap.supports_class_filter ? 200 : 5000,
+                              external_scraper_url: ""
+                            });
+                          }}
+                          disabled={isGlobalLoading || anyEngineRunning}
+                          className="bg-sky-600 hover:bg-sky-500 text-white text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isGlobalLoading || isEngineRunning ? (
+                            <RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" />
+                          ) : (
+                            <Play className="h-3.5 w-3.5 mr-1" />
+                          )} {cap.supports_class_filter ? "Scrape All Classes (1-12)" : "Scrape Full Hub"}
+                        </Button>
+                      </div>
+                    </div>
 
-                  <Button
-                    onClick={() => setIsTriggerModalOpen(true)}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs"
-                  >
-                    <Play className="h-3.5 w-3.5 mr-1" /> Custom Trigger
-                  </Button>
-                </div>
-              </div>
-
-              {/* Class 1 to 12 Grid Buttons */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2 pt-2">
-                {Array.from({ length: 12 }, (_, i) => (i + 1).toString()).map((cNum) => {
-                  const isThisClassActive = jobs.some(j => (j.status === "running" || j.status === "pending") && j.class_code === cNum);
-                  const isButtonDisabled = isGlobalLoading || isThisClassActive;
-                  
-                  return (
-                    <button
-                      key={cNum}
-                      onClick={() => {
-                        triggerScraperMutation.mutate({
-                          source_name: "NCERT Official Metadata Scraper",
-                          target_class: cNum,
-                          subject_name: "All Subjects",
-                          max_items: 100,
-                          external_scraper_url: "https://ncert.nic.in"
-                        });
-                      }}
-                      disabled={isButtonDisabled}
-                      className={`py-3 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-1 ${
-                        isThisClassActive
-                          ? "opacity-80 cursor-not-allowed bg-emerald-500 text-white border-emerald-600 ring-2 ring-emerald-300"
-                          : isGlobalLoading
-                          ? "opacity-50 cursor-not-allowed bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-zinc-400"
-                          : "bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30"
-                      }`}
-                    >
-                      {isThisClassActive ? <RefreshCw className="h-4 w-4 text-white animate-spin" /> : <Code className="h-4 w-4 text-emerald-500" />}
-                      <span>Class {cNum}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </Card>
+                    {/* Class 1 to 12 Grid Buttons (Only if supported) */}
+                    {cap.supports_class_filter && (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2 pt-2">
+                        {Array.from({ length: 12 }, (_, i) => (i + 1).toString()).map((cNum) => {
+                          const isThisClassActive = jobs.some(j => (j.status === "running" || j.status === "pending") && j.class_code === cNum && j.source_name === cap.display_name);
+                          const isButtonDisabled = isGlobalLoading || anyEngineRunning;
+                          
+                          return (
+                            <button
+                              key={cNum}
+                              onClick={() => {
+                                triggerScraperMutation.mutate({
+                                  scraper_type: cap.type,
+                                  target_class: cNum,
+                                  subject_name: "All Subjects",
+                                  max_items: 100,
+                                  external_scraper_url: ""
+                                });
+                              }}
+                              disabled={isButtonDisabled && !isThisClassActive}
+                              className={`py-3 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-1 ${
+                                isThisClassActive
+                                  ? "opacity-100 cursor-not-allowed bg-emerald-500 text-white border-emerald-600 ring-2 ring-emerald-300"
+                                  : isButtonDisabled
+                                  ? "opacity-50 cursor-not-allowed bg-zinc-100 dark:bg-zinc-800 border-zinc-200 text-zinc-400"
+                                  : "bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30"
+                              }`}
+                            >
+                              {isThisClassActive ? <RefreshCw className="h-4 w-4 text-white animate-spin" /> : <Code className="h-4 w-4 text-emerald-500" />}
+                              <span>Class {cNum}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
 
             {/* SCRAPER JOBS TABLE */}
             <Card className="space-y-4 border-zinc-200 dark:border-zinc-800">
