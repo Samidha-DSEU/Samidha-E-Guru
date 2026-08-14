@@ -1,12 +1,30 @@
 import React from "react";
+import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
 import { AppProviders } from "@/components/providers/AppProviders";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { PWAInstaller } from "@/components/PWAInstaller";
 
-export const metadata = {
-  title: "SAMIDHA E-GURU",
+export const viewport: Viewport = {
+  themeColor: "#0284c7",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
+export const metadata: Metadata = {
+  title: "SAMIDHA E-GURU | Educational Platform",
   description: "Providing free educational resources, mentoring, guidance, and academic community for school & college students.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "SAMIDHA E-GURU",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({
@@ -23,6 +41,7 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
+          <PWAInstaller />
         </AppProviders>
       </body>
     </html>

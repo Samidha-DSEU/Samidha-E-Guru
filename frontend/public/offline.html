@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline | SAMIDHA E-GURU</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: #09090b;
+      color: #f4f4f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+    .icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: #38bdf8;
+    }
+    p {
+      color: #a1a1aa;
+      max-width: 400px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    button {
+      margin-top: 24px;
+      padding: 12px 24px;
+      background-color: #0284c7;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="icon">⚡</div>
+  <h1>You are currently Offline</h1>
+  <p>SAMIDHA E-GURU requires an active internet connection to sync your educational resources and community discussions.</p>
+  <button onclick="window.location.reload()">Retry Connection</button>
+</body>
+</html>
