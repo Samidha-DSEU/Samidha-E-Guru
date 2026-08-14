@@ -108,7 +108,7 @@ export default function CommunityPage() {
       if (res.data) {
         // Correct with actual count
         setPosts((prev) =>
-          prev.map((p) => (p.id === postId ? { ...p, likes_count: res.data.likes_count } : p))
+          prev.map((p) => (p.id === postId ? { ...p, likes_count: res.data?.likes_count ?? p.likes_count } : p))
         );
       }
     } catch {
