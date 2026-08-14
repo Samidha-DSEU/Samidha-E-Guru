@@ -209,7 +209,7 @@ function ResourcesPageContent() {
 
       {/* TALK SAMIDHA ACTION CARD */}
       <a 
-        href={process.env.NEXT_PUBLIC_TALK_SAMIDHA_URL || "https://lingua-learn-silk.vercel.app/"}
+        href={process.env.NEXT_PUBLIC_TALK_SAMIDHA_URL || "https://talksamidha.vercel.app/"}
         target="_blank" 
         rel="noopener noreferrer"
         className="block w-full p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-sky-500/5 to-indigo-500/5 dark:from-sky-950/30 dark:to-indigo-950/30 border border-sky-200/50 dark:border-sky-800/50 hover:border-sky-400 dark:hover:border-sky-600 transition-colors group cursor-pointer"
