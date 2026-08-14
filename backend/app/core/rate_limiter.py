@@ -5,8 +5,8 @@ from fastapi import HTTPException, status, Request
 class RateLimiter:
     # Structure: { ip_address: (attempt_count, first_attempt_timestamp) }
     _limits: Dict[str, Tuple[int, float]] = {}
-    MAX_ATTEMPTS = 5
-    WINDOW_SECONDS = 15 * 60  # 15 minutes
+    MAX_ATTEMPTS = 50
+    WINDOW_SECONDS = 60  # 1 minute
 
     @classmethod
     def check_rate_limit(cls, request: Request):
