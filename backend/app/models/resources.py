@@ -51,6 +51,9 @@ class Resource(Base):
     __table_args__ = (
         Index("idx_resource_filter", "target_class", "subject_name", "resource_category"),
         Index("idx_resource_source", "verification_status", "created_at"),
+        Index("idx_source_class", "source_type", "target_class"),
+        Index("idx_source_class_subject", "source_type", "target_class", "subject_name"),
+        Index("idx_created_at", "created_at"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)

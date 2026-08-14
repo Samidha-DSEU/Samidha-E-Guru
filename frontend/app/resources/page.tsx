@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Filter, BookOpen, ExternalLink, Bookmark, Eye, Star, Folder, ChevronRight, User, Calendar, X, Sparkles } from "lucide-react";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInView } from "react-intersection-observer";
+import { Search, BookOpen, ExternalLink, Star, Folder, ChevronRight, User, Calendar, X, Sparkles, Loader2 } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
 import { StandardResponse } from "@/types/api";
 import { Button } from "@/components/ui/Button";
@@ -14,7 +15,6 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { CursorDotsCanvas } from "@/components/ui/CursorDotsCanvas";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { AnimatedText } from "@/components/ui/AnimatedText";
-import { TiltCard } from "@/components/ui/TiltCard";
 import { TypewriterText } from "@/components/ui/TypewriterText";
 
 interface ResourceLibraryItem {
@@ -36,16 +36,19 @@ interface ResourceLibraryItem {
   created_at: string;
 }
 
-const CLASSES = [
-  "Class 1", "Class 2", "Class 3", "Class 4", "Class 5",
-  "Class 6", "Class 7", "Class 8", "Class 9", "Class 10",
-  "Class 11", "Class 12", "Undergraduate"
-];
-const SUBJECTS = [
-  "Mathematics", "Science", "Environmental Studies", "Physics", "Chemistry",
-  "Biology", "English", "Hindi", "Social Science", "Computer Science"
-];
-const CATEGORIES = ["Notes", "Question Paper / PYQ", "Sample Paper", "Worksheet"];
+interface ResourcesPaginated {
+  data: ResourceLibraryItem[];
+  meta: {
+    page?: number;
+    limit?: number;
+    total_items?: number;
+    total_pages?: number;
+    has_next?: boolean;
+  };
+}
+
+interface FolderClass { class: string; }
+interface FolderSubject { subject: string; }
 
 function ResourcesPageContent() {
   const queryClient = useQueryClient();
@@ -56,14 +59,14 @@ function ResourcesPageContent() {
   const paramSubject = searchParams.get("subject");
   const paramCategory = searchParams.get("category");
 
-  const [activeSource, setActiveSource] = useState<string>(paramSource); // all, ncert, samidha, kvs, diksha
+  const [activeSource, setActiveSource] = useState<string>(paramSource);
   const [selectedClass, setSelectedClass] = useState<string | null>(paramClass);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(paramSubject);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(paramCategory);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<string>("latest"); // latest, top_rated, most_viewed
+  const [sortBy, setSortBy] = useState<string>("latest");
 
-  // Sync state to URL query parameters so back button and page refresh preserve exact folder state
+  // Sync state to URL
   useEffect(() => {
     const params = new URLSearchParams();
     if (activeSource !== "all") params.set("source", activeSource);
@@ -76,15 +79,53 @@ function ResourcesPageContent() {
     window.history.replaceState(null, "", newUrl);
   }, [activeSource, selectedClass, selectedSubject, selectedCategory]);
 
-  // RATING MODAL STATE
+  // RATING MODAL
   const [ratingResourceId, setRatingResourceId] = useState<string | null>(null);
   const [stars, setStars] = useState<number>(5);
   const [feedback, setFeedback] = useState<string>("");
   const [ratingError, setRatingError] = useState<string | null>(null);
 
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["resources", activeSource, selectedClass, selectedSubject, selectedCategory, searchTerm, sortBy],
+  // 1. Independent Query for Folders (Classes)
+  const { data: classesData, isLoading: isLoadingClasses } = useQuery({
+    queryKey: ["folders", activeSource],
     queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<FolderClass[]>>("/resources/folders", {
+        params: { source_type: activeSource }
+      });
+      return res.data.data || [];
+    },
+    enabled: activeSource !== "all" && !selectedClass,
+    staleTime: 30 * 60 * 1000 // 30 minutes
+  });
+
+  // 2. Independent Query for Folders (Subjects)
+  const { data: subjectsData, isLoading: isLoadingSubjects } = useQuery({
+    queryKey: ["folders", activeSource, selectedClass],
+    queryFn: async () => {
+      const res = await apiClient.get<StandardResponse<FolderSubject[]>>("/resources/folders", {
+        params: { source_type: activeSource, target_class: selectedClass }
+      });
+      return res.data.data || [];
+    },
+    enabled: !!selectedClass && !selectedSubject,
+    staleTime: 30 * 60 * 1000 // 30 minutes
+  });
+
+  // 3. Infinite Query for Resources (PDFs)
+  // Only fetch if "all" is active, OR if search is active, OR if specific folders are selected
+  const shouldFetchResources = activeSource === "all" || searchTerm.length > 0 || (activeSource === "ncert" && !!selectedClass && !!selectedSubject) || (activeSource !== "all" && activeSource !== "ncert" && !!selectedClass && !!selectedSubject && !!selectedCategory);
+
+  const {
+    data: resourcesData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingResources,
+    isError,
+    refetch
+  } = useInfiniteQuery<ResourcesPaginated>({
+    queryKey: ["resources", activeSource, selectedClass, selectedSubject, selectedCategory, searchTerm, sortBy],
+    queryFn: async ({ pageParam = 1 }) => {
       const sourceTypeParam = activeSource === "all" ? undefined : activeSource;
       const res = await apiClient.get<StandardResponse<ResourceLibraryItem[]>>("/resources", {
         params: {
@@ -94,12 +135,33 @@ function ResourcesPageContent() {
           resource_category: selectedCategory || undefined,
           search: searchTerm || undefined,
           sort_by: sortBy,
-          limit: 100
+          page: pageParam,
+          limit: 20
         }
       });
-      return res.data;
-    }
+      return { data: res.data.data || [], meta: res.data.meta! };
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.meta?.has_next && lastPage.meta?.page ? lastPage.meta.page + 1 : undefined,
+    enabled: shouldFetchResources,
+    staleTime: 5 * 60 * 1000 // 5 minutes
   });
+
+  const resources = useMemo(() => {
+    if (!resourcesData) return [];
+    return resourcesData.pages.flatMap((page) => page.data);
+  }, [resourcesData]);
+
+  // Intersection Observer for Infinite Scroll
+  const { ref: loadMoreRef, inView } = useInView({
+    rootMargin: '200px',
+  });
+
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const rateMutation = useMutation({
     mutationFn: async ({ resourceId, stars, feedback }: { resourceId: string; stars: number; feedback?: string }) => {
@@ -116,48 +178,6 @@ function ResourcesPageContent() {
       setRatingError(err.response?.data?.detail || err.response?.data?.message || "Failed to submit rating.");
     }
   });
-
-  const resources = useMemo(() => data?.data || [], [data]);
-
-  const classList = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const r of resources) {
-      if (r.target_class) {
-        map.set(r.target_class, (map.get(r.target_class) || 0) + 1);
-      }
-    }
-    return Array.from(map.entries())
-      .sort(([a], [b]) => {
-        const numA = parseInt(a.match(/\d+/)?.[0] || "999");
-        const numB = parseInt(b.match(/\d+/)?.[0] || "999");
-        return numA - numB;
-      })
-      .map(([cls, count]) => ({ cls, count }));
-  }, [resources]);
-
-  const subjectList = useMemo(() => {
-    if (!selectedClass) return [];
-    const map = new Map<string, number>();
-    for (const r of resources) {
-      if (r.target_class === selectedClass && r.subject_name) {
-        map.set(r.subject_name, (map.get(r.subject_name) || 0) + 1);
-      }
-    }
-    return Array.from(map.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([sub, count]) => ({ sub, count }));
-  }, [resources, selectedClass]);
-
-  const categoryList = useMemo(() => {
-    if (!selectedClass || !selectedSubject) return [];
-    const set = new Set<string>();
-    for (const r of resources) {
-      if (r.target_class === selectedClass && r.subject_name === selectedSubject && r.resource_category) {
-        set.add(r.resource_category);
-      }
-    }
-    return Array.from(set).sort();
-  }, [resources, selectedClass, selectedSubject]);
 
   const handleResetFolders = () => {
     setSelectedClass(null);
@@ -187,7 +207,7 @@ function ResourcesPageContent() {
         </div>
       </ScrollReveal>
 
-      {/* SOURCE TABS (HORIZONTAL SWIPE BAR ON MOBILE, FLEX WRAP ON DESKTOP) */}
+      {/* SOURCE TABS */}
       <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800/80 pb-3 overflow-x-auto scrollbar-none snap-x sm:flex-wrap">
         <button
           onClick={() => { setActiveSource("all"); handleResetFolders(); }}
@@ -282,37 +302,44 @@ function ResourcesPageContent() {
       </div>
 
       {/* FOLDER SYSTEM EXPLORER */}
-      {/* For NCERT Official: Class -> Subject -> Chapters */}
-      {/* For SAMIDHA & Others: Class -> Subject -> Category -> Files */}
       {activeSource !== "all" && ((activeSource === "ncert" && !selectedSubject) || (activeSource !== "ncert" && !selectedCategory)) && (
         <div className="space-y-4">
           {!selectedClass ? (
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Step 1: Select Class Folder</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {classList.map(({ cls, count }) => (
-                  <button
-                    key={cls}
-                    onClick={() => setSelectedClass(cls)}
-                    className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:border-sky-500 dark:hover:border-sky-500 hover:shadow-md flex items-center justify-between transition-transform duration-200 text-left group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5 sm:gap-3">
-                      <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-sky-500 group-hover:scale-110 transition-transform shrink-0" />
-                      <div>
-                        <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{cls}</h4>
-                        <span className="text-[10px] text-zinc-500 block">
-                          {count > 0 ? `${count} Resources` : "Empty Folder"}
-                        </span>
-                      </div>
+              
+              {isLoadingClasses ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center gap-2.5">
+                      <Skeleton className="h-6 w-6 sm:h-8 sm:w-8 rounded" />
+                      <Skeleton className="h-4 w-16 rounded" />
                     </div>
-                    {count > 0 && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800">
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : classesData?.length === 0 ? (
+                <EmptyState
+                  title="No classes available"
+                  description="No folders found for this source."
+                />
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                  {classesData?.map(({ class: cls }) => (
+                    <button
+                      key={cls}
+                      onClick={() => setSelectedClass(cls)}
+                      className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:border-sky-500 dark:hover:border-sky-500 hover:shadow-md flex items-center justify-between transition-transform duration-200 text-left group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5 sm:gap-3">
+                        <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-sky-500 group-hover:scale-110 transition-transform shrink-0" />
+                        <div>
+                          <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{cls}</h4>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           ) : !selectedSubject ? (
             <div className="space-y-3">
@@ -322,30 +349,39 @@ function ResourcesPageContent() {
                   ← Back to Classes
                 </button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {subjectList.map(({ sub, count }) => (
-                  <button
-                    key={sub}
-                    onClick={() => setSelectedSubject(sub)}
-                    className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-md flex items-center justify-between transition-transform duration-200 text-left group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5 sm:gap-3">
-                      <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-500 group-hover:scale-110 transition-transform shrink-0" />
-                      <div>
-                        <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{sub}</h4>
-                        <span className="text-[10px] text-zinc-500 block">
-                          {count > 0 ? `${count} Resources` : "Empty Folder"}
-                        </span>
-                      </div>
+
+              {isLoadingSubjects ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center gap-2.5">
+                      <Skeleton className="h-6 w-6 sm:h-8 sm:w-8 rounded" />
+                      <Skeleton className="h-4 w-20 rounded" />
                     </div>
-                    {count > 0 && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : subjectsData?.length === 0 ? (
+                <EmptyState
+                  title="No subjects available"
+                  description="No folders found for this class."
+                />
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                  {subjectsData?.map(({ subject: sub }) => (
+                    <button
+                      key={sub}
+                      onClick={() => setSelectedSubject(sub)}
+                      className="p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-md flex items-center justify-between transition-transform duration-200 text-left group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5 sm:gap-3">
+                        <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-500 group-hover:scale-110 transition-transform shrink-0" />
+                        <div>
+                          <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{sub}</h4>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           ) : activeSource !== "ncert" ? (
             <div className="space-y-3">
@@ -356,7 +392,7 @@ function ResourcesPageContent() {
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {categoryList.map((cat) => (
+                {["Notes", "Question Paper / PYQ", "Sample Paper", "Worksheet"].map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
@@ -409,9 +445,9 @@ function ResourcesPageContent() {
       </div>
 
       {/* RESOURCE CARDS GRID */}
-      {(searchTerm.length > 0 || activeSource === "all" || (activeSource === "ncert" && selectedClass && selectedSubject) || (activeSource !== "all" && activeSource !== "ncert" && selectedClass && selectedSubject && selectedCategory)) && (
+      {shouldFetchResources && (
         <>
-          {isLoading ? (
+          {isLoadingResources ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
                 <Card key={i} className="space-y-4">
@@ -422,104 +458,119 @@ function ResourcesPageContent() {
               ))}
             </div>
           ) : isError ? (
-            <ErrorState onRetry={refetch} />
+            <ErrorState onRetry={() => refetch()} />
           ) : resources.length === 0 ? (
             <EmptyState
-              title="No educational resources found in this category"
-              description="Try selecting a different tab or clearing search terms."
+              title="No PDFs available for this folder"
+              description="Check back later or try selecting a different folder."
               actionText="View All Materials"
               onAction={() => { setActiveSource("all"); handleResetFolders(); }}
             />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {resources.map((res) => (
-                  <Card key={res.id} className="flex flex-col justify-between space-y-4 group">
-                  <div className="space-y-3">
-                    {/* CLASSIFICATION BADGES */}
-                    <div className="flex flex-wrap items-center justify-between gap-1.5">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {res.target_class && (
-                          <span className="px-2 py-0.5 bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 text-[10px] font-bold rounded border border-sky-200 dark:border-sky-800">
-                            {res.target_class}
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {resources.map((res) => (
+                    <Card key={res.id} className="flex flex-col justify-between space-y-4 group">
+                    <div className="space-y-3">
+                      {/* CLASSIFICATION BADGES */}
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {res.target_class && (
+                            <span className="px-2 py-0.5 bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 text-[10px] font-bold rounded border border-sky-200 dark:border-sky-800">
+                              {res.target_class}
+                            </span>
+                          )}
+                          {res.subject_name && (
+                            <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded border border-emerald-200 dark:border-emerald-800">
+                              {res.subject_name.replace(/\s*\((Hindi|English)\)/i, "")}
+                            </span>
+                          )}
+                          <span className="px-2 py-0.5 bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 text-[10px] font-bold rounded border border-violet-200 dark:border-violet-800">
+                            {`${res.title} ${res.subject_name || ''} ${res.description || ''}`.toLowerCase().includes("hindi") ? "Hindi" : "English"}
                           </span>
-                        )}
-                        {res.subject_name && (
-                          <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded border border-emerald-200 dark:border-emerald-800">
-                            {res.subject_name.replace(/\s*\((Hindi|English)\)/i, "")}
+                          {res.resource_category && (
+                            <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded border border-indigo-200 dark:border-indigo-800">
+                              {res.resource_category}
+                            </span>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => setRatingResourceId(res.id)}
+                          className="flex items-center gap-1 text-amber-500 hover:scale-105 transition-transform text-[11px]"
+                        >
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                          <span className="font-bold text-zinc-800 dark:text-zinc-200">
+                            {res.rating_avg > 0 ? res.rating_avg.toFixed(1) : "New"}
                           </span>
-                        )}
-                        <span className="px-2 py-0.5 bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 text-[10px] font-bold rounded border border-violet-200 dark:border-violet-800">
-                          {`${res.title} ${res.subject_name || ''} ${res.description || ''}`.toLowerCase().includes("hindi") ? "Hindi" : "English"}
-                        </span>
-                        {res.resource_category && (
-                          <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded border border-indigo-200 dark:border-indigo-800">
-                            {res.resource_category}
-                          </span>
-                        )}
+                        </button>
                       </div>
 
-                      <button
-                        onClick={() => setRatingResourceId(res.id)}
-                        className="flex items-center gap-1 text-amber-500 hover:scale-105 transition-transform text-[11px]"
-                      >
-                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                        <span className="font-bold text-zinc-800 dark:text-zinc-200">
-                          {res.rating_avg > 0 ? res.rating_avg.toFixed(1) : "New"}
-                        </span>
-                      </button>
-                    </div>
-
-                    <Link href={`/resources/${res.id}?fromSource=${activeSource}${selectedClass ? `&fromClass=${encodeURIComponent(selectedClass)}` : ''}${selectedSubject ? `&fromSubject=${encodeURIComponent(selectedSubject)}` : ''}${selectedCategory ? `&fromCategory=${encodeURIComponent(selectedCategory)}` : ''}`}>
-                      <h3 className="font-semibold text-base text-zinc-900 dark:text-zinc-100 line-clamp-2 hover:text-sky-600 transition-colors cursor-pointer pt-1">
-                        {res.title}
-                      </h3>
-                    </Link>
-                    <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed">
-                      {res.description || "Structured study material verified for student preparation."}
-                    </p>
-
-                    {/* CREDIT & DATE FOOTER */}
-                    <div className="space-y-1 pt-1 text-[11px] text-zinc-500">
-                      <div className="flex items-center gap-1.5 font-medium text-zinc-700 dark:text-zinc-300">
-                        <User className="h-3.5 w-3.5 text-sky-500" />
-                        <span>Uploaded by {res.uploader_name}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5 text-zinc-400" />
-                        <span>Date: {new Date(res.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ACTION BUTTONS */}
-                  <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link href={`/resources/${res.id}?fromSource=${activeSource}${selectedClass ? `&fromClass=${encodeURIComponent(selectedClass)}` : ''}${selectedSubject ? `&fromSubject=${encodeURIComponent(selectedSubject)}` : ''}${selectedCategory ? `&fromCategory=${encodeURIComponent(selectedCategory)}` : ''}`} className="flex-1 min-w-[100px]">
-                        <Button variant="outline" size="sm" className="w-full text-xs font-semibold bg-zinc-50 dark:bg-zinc-800/60 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700">
-                          <BookOpen className="h-3 w-3 mr-1 text-zinc-500" /> PDF Preview
-                        </Button>
+                      <Link href={`/resources/${res.id}?fromSource=${activeSource}${selectedClass ? `&fromClass=${encodeURIComponent(selectedClass)}` : ''}${selectedSubject ? `&fromSubject=${encodeURIComponent(selectedSubject)}` : ''}${selectedCategory ? `&fromCategory=${encodeURIComponent(selectedCategory)}` : ''}`}>
+                        <h3 className="font-semibold text-base text-zinc-900 dark:text-zinc-100 line-clamp-2 hover:text-sky-600 transition-colors cursor-pointer pt-1">
+                          {res.title}
+                        </h3>
                       </Link>
+                      <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed">
+                        {res.description || "Structured study material verified for student preparation."}
+                      </p>
 
-                      <Link href={`/resources/${res.id}/learn-ai?fromSource=${activeSource}${selectedClass ? `&fromClass=${encodeURIComponent(selectedClass)}` : ''}${selectedSubject ? `&fromSubject=${encodeURIComponent(selectedSubject)}` : ''}${selectedCategory ? `&fromCategory=${encodeURIComponent(selectedCategory)}` : ''}`} className="flex-1 min-w-[120px]">
-                        <Button variant="primary" size="sm" className="w-full text-xs font-semibold bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white shadow-sm">
-                          <Sparkles className="h-3 w-3 mr-1 text-amber-300" /> Learn With AI
-                        </Button>
-                      </Link>
-
-                      <a
-                        href={res.external_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full sm:w-auto"
-                      >
-                        <Button variant="ghost" size="sm" className="w-full text-xs text-zinc-500 hover:text-sky-600 px-2">
-                          Direct Open <ExternalLink className="h-3 w-3 ml-1" />
-                        </Button>
-                      </a>
+                      {/* CREDIT & DATE FOOTER */}
+                      <div className="space-y-1 pt-1 text-[11px] text-zinc-500">
+                        <div className="flex items-center gap-1.5 font-medium text-zinc-700 dark:text-zinc-300">
+                          <User className="h-3.5 w-3.5 text-sky-500" />
+                          <span>Uploaded by {res.uploader_name}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5 text-zinc-400" />
+                          <span>Date: {new Date(res.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* ACTION BUTTONS */}
+                    <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link href={`/resources/${res.id}?fromSource=${activeSource}${selectedClass ? `&fromClass=${encodeURIComponent(selectedClass)}` : ''}${selectedSubject ? `&fromSubject=${encodeURIComponent(selectedSubject)}` : ''}${selectedCategory ? `&fromCategory=${encodeURIComponent(selectedCategory)}` : ''}`} className="flex-1 min-w-[100px]">
+                          <Button variant="outline" size="sm" className="w-full text-xs font-semibold bg-zinc-50 dark:bg-zinc-800/60 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700">
+                            <BookOpen className="h-3 w-3 mr-1 text-zinc-500" /> PDF Preview
+                          </Button>
+                        </Link>
+
+                        <Link href={`/resources/${res.id}/learn-ai?fromSource=${activeSource}${selectedClass ? `&fromClass=${encodeURIComponent(selectedClass)}` : ''}${selectedSubject ? `&fromSubject=${encodeURIComponent(selectedSubject)}` : ''}${selectedCategory ? `&fromCategory=${encodeURIComponent(selectedCategory)}` : ''}`} className="flex-1 min-w-[120px]">
+                          <Button variant="primary" size="sm" className="w-full text-xs font-semibold bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white shadow-sm">
+                            <Sparkles className="h-3 w-3 mr-1 text-amber-300" /> Learn With AI
+                          </Button>
+                        </Link>
+
+                        <a
+                          href={res.external_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full sm:w-auto"
+                        >
+                          <Button variant="ghost" size="sm" className="w-full text-xs text-zinc-500 hover:text-sky-600 px-2">
+                            Direct Open <ExternalLink className="h-3 w-3 ml-1" />
+                          </Button>
+                        </a>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              
+              {/* Intersection Observer Sentinel for Infinite Scroll */}
+              <div ref={loadMoreRef} className="py-6 flex justify-center w-full">
+                {isFetchingNextPage ? (
+                  <div className="flex items-center gap-2 text-zinc-500 text-sm font-medium">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Loading more resources...
                   </div>
-                </Card>
-              ))}
+                ) : hasNextPage ? (
+                  <div className="text-zinc-400 text-xs">Scroll for more</div>
+                ) : (
+                  <div className="text-zinc-400 text-sm font-medium pt-4 pb-12">You've reached the end!</div>
+                )}
+              </div>
             </div>
           )}
         </>

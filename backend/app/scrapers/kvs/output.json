@@ -1,0 +1,975 @@
+{
+  "source_url": "https://kvsangathan.nic.in/en/knowledge-hub/",
+  "scraped_at": "2026-06-12T12:39:22.361Z",
+  "count": 82,
+  "materials": [
+    {
+      "sl_no": 1,
+      "title": "Geography English",
+      "subject": "Geography",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112867.pdf"
+    },
+    {
+      "sl_no": 2,
+      "title": "Geography Hindi",
+      "subject": "Geography",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "Hindi",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112833.pdf"
+    },
+    {
+      "sl_no": 3,
+      "title": "History (Hindi)",
+      "subject": "History",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "Hindi",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112973.pdf"
+    },
+    {
+      "sl_no": 4,
+      "title": "Sociology",
+      "subject": "Sociology",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112876.pdf"
+    },
+    {
+      "sl_no": 5,
+      "title": "Accountancy",
+      "subject": "Accountancy",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112873.pdf"
+    },
+    {
+      "sl_no": 6,
+      "title": "Business Studies",
+      "subject": "Business Studies",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112865.pdf"
+    },
+    {
+      "sl_no": 7,
+      "title": "Chemistry",
+      "subject": "Chemistry",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112848.pdf"
+    },
+    {
+      "sl_no": 8,
+      "title": "Maths",
+      "subject": "Maths",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112820.pdf"
+    },
+    {
+      "sl_no": 9,
+      "title": "Physical Education",
+      "subject": "Physical Education",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112841.pdf"
+    },
+    {
+      "sl_no": 10,
+      "title": "English",
+      "subject": "English",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112920.pdf"
+    },
+    {
+      "sl_no": 11,
+      "title": "Economics",
+      "subject": "Economics",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112841-1.pdf"
+    },
+    {
+      "sl_no": 12,
+      "title": "Biology",
+      "subject": "Biology",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112813.pdf"
+    },
+    {
+      "sl_no": 13,
+      "title": "Bio Tech",
+      "subject": "Bio Tech",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112885.pdf"
+    },
+    {
+      "sl_no": 14,
+      "title": "Computer Science",
+      "subject": "Computer Science",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112821.pdf"
+    },
+    {
+      "sl_no": 15,
+      "title": "IP",
+      "subject": "IP",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112854.pdf"
+    },
+    {
+      "sl_no": 16,
+      "title": "Class 11 History(Hindi)",
+      "subject": "History",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "Hindi",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112857.pdf"
+    },
+    {
+      "sl_no": 17,
+      "title": "Class 11 History(Eng)",
+      "subject": "History",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112851.pdf"
+    },
+    {
+      "sl_no": 18,
+      "title": "Class 11 Geo (hindi)",
+      "subject": "Geo",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "Hindi",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112845.pdf"
+    },
+    {
+      "sl_no": 19,
+      "title": "Class 11 English",
+      "subject": "English",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112855.pdf"
+    },
+    {
+      "sl_no": 20,
+      "title": "Class 11 Accountancy",
+      "subject": "Accountancy",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112854-1.pdf"
+    },
+    {
+      "sl_no": 21,
+      "title": "Class 11 Sociology",
+      "subject": "Sociology",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112891.pdf"
+    },
+    {
+      "sl_no": 22,
+      "title": "Class 11 Chemistry",
+      "subject": "Chemistry",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112886.pdf"
+    },
+    {
+      "sl_no": 23,
+      "title": "Class 11 Phy Edu.",
+      "subject": "Phy Edu.",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112859.pdf"
+    },
+    {
+      "sl_no": 24,
+      "title": "Class 11 Physics",
+      "subject": "Physics",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112897.pdf"
+    },
+    {
+      "sl_no": 25,
+      "title": "Class 11 Economics",
+      "subject": "Economics",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112878.pdf"
+    },
+    {
+      "sl_no": 26,
+      "title": "Class 11 Business Studies",
+      "subject": "Business Studies",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112811.pdf"
+    },
+    {
+      "sl_no": 27,
+      "title": "Class 11 IP",
+      "subject": "IP",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112892-1.pdf"
+    },
+    {
+      "sl_no": 28,
+      "title": "Class 11 Mathematics",
+      "subject": "Mathematics",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112933.pdf"
+    },
+    {
+      "sl_no": 29,
+      "title": "Class 11 Computer Science",
+      "subject": "Computer Science",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112947.pdf"
+    },
+    {
+      "sl_no": 30,
+      "title": "Class 11 Hindi",
+      "subject": "Hindi",
+      "classes": [
+        "11"
+      ],
+      "class_group": "XI/XII",
+      "language": "Hindi",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112978.pdf"
+    },
+    {
+      "sl_no": 31,
+      "title": "Class 10 Sanskrit",
+      "subject": "Sanskrit",
+      "classes": [
+        "10"
+      ],
+      "class_group": "IX/X",
+      "language": "Sanskrit",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112943.pdf"
+    },
+    {
+      "sl_no": 32,
+      "title": "Class 10 Artificial Intelligence",
+      "subject": "Artificial Intelligence",
+      "classes": [
+        "10"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112991.pdf"
+    },
+    {
+      "sl_no": 33,
+      "title": "Class 10 Social Science(Hindi)",
+      "subject": "Social Science",
+      "classes": [
+        "10"
+      ],
+      "class_group": "IX/X",
+      "language": "Hindi",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112897-1.pdf"
+    },
+    {
+      "sl_no": 34,
+      "title": "Class 10 Social Science (English)",
+      "subject": "Social Science",
+      "classes": [
+        "10"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112878-1.pdf"
+    },
+    {
+      "sl_no": 35,
+      "title": "Class 10 English Communicative",
+      "subject": "Communicative",
+      "classes": [
+        "10"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112819.pdf"
+    },
+    {
+      "sl_no": 36,
+      "title": "Class 10 English",
+      "subject": "English",
+      "classes": [
+        "10"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112883.pdf"
+    },
+    {
+      "sl_no": 37,
+      "title": "Class 10 Hindi",
+      "subject": "Hindi",
+      "classes": [
+        "10"
+      ],
+      "class_group": "IX/X",
+      "language": "Hindi",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112821-1.pdf"
+    },
+    {
+      "sl_no": 38,
+      "title": "Class 9 Sanskrit",
+      "subject": "Sanskrit",
+      "classes": [
+        "9"
+      ],
+      "class_group": "IX/X",
+      "language": "Sanskrit",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112877.pdf"
+    },
+    {
+      "sl_no": 39,
+      "title": "Class 9 Hindi",
+      "subject": "Hindi",
+      "classes": [
+        "9"
+      ],
+      "class_group": "IX/X",
+      "language": "Hindi",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112847.pdf"
+    },
+    {
+      "sl_no": 40,
+      "title": "Class 9 Mathematics",
+      "subject": "Mathematics",
+      "classes": [
+        "9"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112832.pdf"
+    },
+    {
+      "sl_no": 41,
+      "title": "Class 9 Support Material",
+      "subject": "Support Material",
+      "classes": [
+        "9"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112879.pdf"
+    },
+    {
+      "sl_no": 42,
+      "title": "Class 9 English Communicative",
+      "subject": "Communicative",
+      "classes": [
+        "9"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112835.pdf"
+    },
+    {
+      "sl_no": 43,
+      "title": "Class 9 English",
+      "subject": "English",
+      "classes": [
+        "9"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112815.pdf"
+    },
+    {
+      "sl_no": 44,
+      "title": "Class 9 artificial Intelligence",
+      "subject": "artificial Intelligence",
+      "classes": [
+        "9"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112883-1.pdf"
+    },
+    {
+      "sl_no": 45,
+      "title": "Class 9 Science",
+      "subject": "Science",
+      "classes": [
+        "9"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112821-2.pdf"
+    },
+    {
+      "sl_no": 46,
+      "title": "Class 9 Social Science (English",
+      "subject": "Social Science",
+      "classes": [
+        "9"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112858.pdf"
+    },
+    {
+      "sl_no": 47,
+      "title": "Class 9 Social Science (Hindi)",
+      "subject": "Social Science",
+      "classes": [
+        "9"
+      ],
+      "class_group": "IX/X",
+      "language": "Hindi",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2024/11/2024112896-1.pdf"
+    },
+    {
+      "sl_no": 48,
+      "title": "Science Exemplar",
+      "subject": "Science Exemplar",
+      "classes": [
+        "9",
+        "10"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/12/2023120843.pdf"
+    },
+    {
+      "sl_no": 49,
+      "title": "Mathematics Exemplar",
+      "subject": "Mathematics Exemplar",
+      "classes": [
+        "9",
+        "10"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/12/2023120863.pdf"
+    },
+    {
+      "sl_no": 50,
+      "title": "History Study Material",
+      "subject": "History Study Material",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/12/2023120892.pdf"
+    },
+    {
+      "sl_no": 51,
+      "title": "Physics Question Bank",
+      "subject": "Physics Question Bank",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/12/2023120816.pdf"
+    },
+    {
+      "sl_no": 52,
+      "title": "Physics Final Capsule 30",
+      "subject": "Physics Final Capsule 30",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/12/2023120830.pdf"
+    },
+    {
+      "sl_no": 53,
+      "title": "Physics Question Bank",
+      "subject": "Physics Question Bank",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/12/2023120763.pdf"
+    },
+    {
+      "sl_no": 54,
+      "title": "Economics Sample Question Paper",
+      "subject": "Economics Sample Question Paper",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/12/2023120880.pdf"
+    },
+    {
+      "sl_no": 55,
+      "title": "Economics Study Material",
+      "subject": "Economics Study Material",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/12/2023120884.pdf"
+    },
+    {
+      "sl_no": 56,
+      "title": "Business studies Study Material (2022-2023)",
+      "subject": "Business studies Study Material (2022-2023",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/12/2023120881.pdf"
+    },
+    {
+      "sl_no": 57,
+      "title": "Accountancy Study Material (2022-23)",
+      "subject": "Accountancy Study Material (2022-23",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/12/2023120833.pdf"
+    },
+    {
+      "sl_no": 58,
+      "title": "Physics Exemplar Problem",
+      "subject": "Physics Exemplar Problem",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/12/2023120763.pdf"
+    },
+    {
+      "sl_no": 59,
+      "title": "Mathematics Exemplar Problem",
+      "subject": "Mathematics Exemplar Problem",
+      "classes": [
+        "11",
+        "12"
+      ],
+      "class_group": "XI/XII",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/12/2023120727.pdf"
+    },
+    {
+      "sl_no": 60,
+      "title": "Competency Focused Practice Questions_SST10",
+      "subject": "Competency Focused Practice Questions_SST10",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/09/2023091818.pdf"
+    },
+    {
+      "sl_no": 61,
+      "title": "E-BOOK ON MULTIDISCIPLINARY PROJECT",
+      "subject": "E-BOOK ON MULTIDISCIPLINARY PROJECT",
+      "classes": [
+        "9",
+        "10"
+      ],
+      "class_group": "IX/X",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/09/2023091974.pdf"
+    },
+    {
+      "sl_no": 62,
+      "title": "Learning Outcomes at Elementary Stage || English",
+      "subject": "Learning Outcomes at Elementary Stage ||",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/09/2023091585.pdf"
+    },
+    {
+      "sl_no": 63,
+      "title": "Learning Outcomes at Elementary Stage II Hindi",
+      "subject": "Learning Outcomes at Elementary Stage II",
+      "classes": [],
+      "class_group": "General",
+      "language": "Hindi",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/09/2023091587.pdf"
+    },
+    {
+      "sl_no": 64,
+      "title": "India – Unity in Cultural Diversity",
+      "subject": "India – Unity in Cultural Diversity",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/09/2023092156.pdf"
+    },
+    {
+      "sl_no": 65,
+      "title": "Guidelines for parent participation in Home- Based learning during school closure and beyond",
+      "subject": "Guidelines for parent participation in Home- Based learning during school closure and beyond",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/09/2023092123.pdf"
+    },
+    {
+      "sl_no": 66,
+      "title": "Alternatives to Homework for Classes VI to VIII",
+      "subject": "Alternatives to Homework for Classes VI to VIII",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/09/2023092119.pdf"
+    },
+    {
+      "sl_no": 67,
+      "title": "National Education Policy 2020",
+      "subject": "National Education Policy 2020",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/09/2023092167.pdf"
+    },
+    {
+      "sl_no": 68,
+      "title": "HANDBOOK OF JOYFUL LEARNING",
+      "subject": "HANDBOOK OF JOYFUL LEARNING",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/09/2023092128.pdf"
+    },
+    {
+      "sl_no": 69,
+      "title": "Pedagogical Leadership: A Handbook for Leading Learning in Schools",
+      "subject": "Pedagogical Leadership: A Handbook for Leading Learning in Schools",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/09/2023092151.pdf"
+    },
+    {
+      "sl_no": 70,
+      "title": "Art Integration – Towards Experiential Learning",
+      "subject": "Art Integration – Towards Experiential Learning",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "pdf",
+      "url": "https://cdnbbsr.s3waas.gov.in/s32d2ca7eedf739ef4c3800713ec482e1a/uploads/2023/09/2023092099.pdf"
+    },
+    {
+      "sl_no": 71,
+      "title": "Question Bank of Math & Science for classes III-IX.",
+      "subject": "Question Bank of Math & Science for classes III-IX.",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "google_drive",
+      "url": "https://drive.google.com/drive/folders/15L5IIM5KXMsg2FKO1pIwPzcjWAjC71ZN"
+    },
+    {
+      "sl_no": 72,
+      "title": "CCT Practice Items in Reading Literacy, Mathematical Literacy & Scientific Literacy:",
+      "subject": "CCT Practice Items in Reading Literacy, Mathematical Literacy & Scientific Literacy:",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "google_drive",
+      "url": "https://drive.google.com/drive/folders/1yFF7pnAHEI8dJwd-SqSMoxw-rydrnibi"
+    },
+    {
+      "sl_no": 73,
+      "title": "Innovation doesn’t stop you to work in this pandemic – Kendriya Vidyalaya AFS BAKSHI KA TALAB – Flip book version of e-magazine.",
+      "subject": "Innovation doesn’t stop you to work in this pandemic – Kendriya Vidyalaya AFS BAKSHI KA TALAB – Flip book version of e-magazine.",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "flipbook",
+      "url": "https://online.fliphtml5.com/sjlhv/ateo/#p=1"
+    },
+    {
+      "sl_no": 74,
+      "title": "Kendriya Vidyalaya AFS BAKSHI KA TALAB – Video Animation Version of Vatsaly.",
+      "subject": "Kendriya Vidyalaya AFS BAKSHI KA TALAB – Video Animation Version of Vatsaly.",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "youtube",
+      "url": "https://www.youtube.com/watch?v=CBgyJrEyvBo"
+    },
+    {
+      "sl_no": 75,
+      "title": "CCT Practice Items – Scientific Literacy – Classes VII-X.",
+      "subject": "CCT Practice Items – Scientific Literacy – Classes VII-X.",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "google_drive",
+      "url": "https://drive.google.com/drive/folders/1slPwUlJrBn66l-q3Ar2vOHSbUpRb0Eni"
+    },
+    {
+      "sl_no": 76,
+      "title": "CCT Practice Items – Reading Literacy.",
+      "subject": "CCT Practice Items – Reading Literacy.",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "google_drive",
+      "url": "https://drive.google.com/drive/folders/1uy-QQbZZoePYMdHtiRqc6R8wizyAGTC6"
+    },
+    {
+      "sl_no": 77,
+      "title": "CCT Practice Items – Mathematical Literacy – Classes VII-X.",
+      "subject": "CCT Practice Items – Mathematical Literacy – Classes VII-X.",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "google_drive",
+      "url": "https://drive.google.com/drive/folders/1cC996tRK1X88JCTRne7HugZezTCWMfZh"
+    },
+    {
+      "sl_no": 78,
+      "title": "MCQ tests/quiz-click E-learning on ZIET Chandigarh website for link given to google quiz.",
+      "subject": "MCQ tests/quiz-click E-learning on ZIET Chandigarh website for link given to google quiz.",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "web",
+      "url": "https://zietchandigarh.kvs.gov.in/e-learning"
+    },
+    {
+      "sl_no": 79,
+      "title": "Digital learning content-Go to ZIET library blog which is available on ZIET Chandigarh website at footer bar(ZIET library).",
+      "subject": "Digital learning content-Go to ZIET library blog which is available on ZIET Chandigarh website at footer bar(ZIET library).",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "web",
+      "url": "https://libraryzietchd.blogspot.com/p/digital-learning-content-class-2-10.html"
+    },
+    {
+      "sl_no": 80,
+      "title": "Compiled table of links for class XII-Phy, Chem, Maths, Bio-ZIET Chandigarh website-click knowledge portal.",
+      "subject": "Compiled table of links for class XII-Phy, Chem, Maths, Bio-ZIET Chandigarh website-click knowledge portal.",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "web",
+      "url": "https://zietchandigarh.kvs.gov.in/knowledge-portal"
+    },
+    {
+      "sl_no": 81,
+      "title": "Activities/experiments – Go to ZIET Chandigarh library blog in menu tab-activities-science and maths for classes VI to XII.",
+      "subject": "Activities/experiments – Go to ZIET Chandigarh library blog in menu tab-activities-science and maths for classes VI to XII.",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "web",
+      "url": "https://zietchandigarh.kvs.gov.in/knowledge-portal"
+    },
+    {
+      "sl_no": 82,
+      "title": "Student Support Material for year 2019-20.",
+      "subject": "Student Support Material for year 2019-20.",
+      "classes": [],
+      "class_group": "General",
+      "language": "English",
+      "resource_type": "web",
+      "url": "https://libraryzietchd.blogspot.com/p/digital-learning-content-class-2-10.html"
+    }
+  ]
+}

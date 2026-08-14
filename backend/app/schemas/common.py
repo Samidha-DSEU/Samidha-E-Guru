@@ -9,6 +9,7 @@ class MetaSchema(BaseModel):
     limit: Optional[int] = None
     total_items: Optional[int] = None
     total_pages: Optional[int] = None
+    has_next: Optional[bool] = None
 
 
 class ErrorDetail(BaseModel):

@@ -3,6 +3,7 @@ export interface MetaSchema {
   limit?: number;
   total_items?: number;
   total_pages?: number;
+  has_next?: boolean;
 }
 
 export interface ErrorDetail {

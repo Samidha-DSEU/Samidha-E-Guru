@@ -29,6 +29,31 @@ class RateResourceRequest(BaseModel):
     feedback: Optional[str] = None
 
 
+@router.get("/folders", response_model=StandardResponse[List[dict]])
+def get_resource_folders(
+    source_type: str = Query(...),
+    target_class: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    if not target_class:
+        # Return distinct classes
+        classes = db.query(Resource.target_class).filter(
+            Resource.source_type == source_type,
+            Resource.target_class.isnot(None)
+        ).distinct().all()
+        data = [{"class": c[0]} for c in classes]
+    else:
+        # Return distinct subjects for that class
+        subjects = db.query(Resource.subject_name).filter(
+            Resource.source_type == source_type,
+            Resource.target_class == target_class,
+            Resource.subject_name.isnot(None)
+        ).distinct().all()
+        data = [{"subject": s[0]} for s in subjects]
+
+    return StandardResponse.success_response(data=data, message="Folders retrieved")
+
+
 @router.get("", response_model=StandardResponse[List[dict]])
 def get_resources(
     source_type: Optional[str] = Query(None),
@@ -41,6 +66,25 @@ def get_resources(
     limit: int = Query(20, ge=1, le=5000),
     db: Session = Depends(get_db)
 ):
+    query = db.query(
+        Resource.id,
+        Resource.title,
+        Resource.description,
+        Resource.thumbnail_url,
+        Resource.external_url,
+        Resource.target_class,
+        Resource.subject_name,
+        Resource.resource_category,
+        Resource.source_type,
+        Resource.rating_avg,
+        Resource.rating_count,
+        Resource.views_count,
+        Resource.bookmarks_count,
+        Resource.created_at,
+        User.id.label("uploader_id") # dummy join representation if needed, but wait we need uploader info
+    ).outerjoin(User, Resource.uploader_id == User.id)
+
+    # We will do a full object query for now since relationship joins are complex with with_entities, but let's just query the model to keep it simple and safe for existing code, or just use `db.query(Resource)` because lazy loading is fast enough for 20 items.
     query = db.query(Resource).filter(Resource.verification_status == "approved")
 
     if source_type:
@@ -67,6 +111,7 @@ def get_resources(
     resources = query.offset(offset).limit(limit).all()
 
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 0
+    has_next = page < total_pages
 
     data = [
         {
@@ -93,7 +138,8 @@ def get_resources(
         page=page,
         limit=limit,
         total_items=total_items,
-        total_pages=total_pages
+        total_pages=total_pages,
+        has_next=has_next
     )
 
     return StandardResponse.success_response(
