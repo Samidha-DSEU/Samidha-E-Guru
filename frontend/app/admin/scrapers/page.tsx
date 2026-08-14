@@ -81,7 +81,7 @@ export default function ScraperManagerPage() {
     try {
       const res = await apiClient.get<StandardResponse<any[]>>("/scraper/capabilities");
       if (res.data?.success) {
-        setCapabilities(res.data.data);
+        setCapabilities(res.data.data || []);
       }
     } catch (err) {
       console.error("Failed fetching capabilities:", err);

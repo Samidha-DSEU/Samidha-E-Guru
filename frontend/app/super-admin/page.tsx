@@ -60,7 +60,7 @@ export default function SuperAdminDashboardPage() {
   // SCRAPER FORM STATE
   const [isTriggerModalOpen, setIsTriggerModalOpen] = useState(false);
   const [scraperForm, setScraperForm] = useState({
-    source_name: "NCERT & CBSE Question Bank",
+    scraper_type: "ncert",
     target_class: "Class 10",
     subject_name: "Mathematics",
     max_items: 50,
@@ -467,13 +467,13 @@ export default function SuperAdminDashboardPage() {
 
               <form onSubmit={handleTriggerSubmit} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Scraper Source Name *</label>
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Scraper Type *</label>
                   <input
                     type="text"
                     required
-                    placeholder="E.g., NCERT & CBSE Official Question Bank"
-                    value={scraperForm.source_name}
-                    onChange={(e) => setScraperForm({ ...scraperForm, source_name: e.target.value })}
+                    placeholder="E.g., ncert or kvs"
+                    value={scraperForm.scraper_type}
+                    onChange={(e) => setScraperForm({ ...scraperForm, scraper_type: e.target.value })}
                     className="w-full p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
