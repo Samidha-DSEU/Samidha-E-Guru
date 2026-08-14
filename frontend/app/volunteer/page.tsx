@@ -16,9 +16,9 @@ import { AnimatedText } from "@/components/ui/AnimatedText";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 
-const CLASSES = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "Undergraduate"];
-const SUBJECTS = ["Mathematics", "Science", "Physics", "Chemistry", "Biology", "English", "Social Science", "Computer Science"];
-const CATEGORIES = ["Notes", "Question Paper / PYQ", "Sample Paper", "Worksheet"];
+const CLASSES = ["Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "Undergraduate", "Other"];
+const SUBJECTS = ["Mathematics", "Science", "Physics", "Chemistry", "Biology", "English", "Social Science", "Computer Science", "Other"];
+const CATEGORIES = ["Notes", "Question Paper / PYQ", "Sample Paper", "Worksheet", "Other"];
 
 interface MyUploadItem {
   id: string;
@@ -116,12 +116,15 @@ export default function VolunteerDashboardPage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [resourceData, setResourceData] = useState({
     title: "",
-    target_class: "Class 9",
-    subject_name: "Science",
-    resource_category: "Notes",
     external_url: "",
-    description: ""
+    description: "",
+    target_class: CLASSES[0],
+    subject_name: SUBJECTS[0],
+    resource_category: CATEGORIES[0]
   });
+  const [customClass, setCustomClass] = useState("");
+  const [customSubject, setCustomSubject] = useState("");
+  const [customCategory, setCustomCategory] = useState("");
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   // RESOURCE DELETION REQUEST MODAL STATE
@@ -341,7 +344,13 @@ export default function VolunteerDashboardPage() {
       setUploadError("Please provide a title and document link.");
       return;
     }
-    uploadResourceMutation.mutate(resourceData);
+    
+    const finalData = { ...resourceData };
+    if (finalData.target_class === "Other" && customClass) finalData.target_class = customClass;
+    if (finalData.subject_name === "Other" && customSubject) finalData.subject_name = customSubject;
+    if (finalData.resource_category === "Other" && customCategory) finalData.resource_category = customCategory;
+
+    uploadResourceMutation.mutate(finalData);
   };
 
   const handleEventSubmit = (e: React.FormEvent) => {
@@ -821,6 +830,16 @@ export default function VolunteerDashboardPage() {
                         <option key={cls} value={cls}>{cls}</option>
                       ))}
                     </select>
+                    {resourceData.target_class === "Other" && (
+                      <input
+                        type="text"
+                        placeholder="Enter custom class"
+                        value={customClass}
+                        onChange={(e) => setCustomClass(e.target.value)}
+                        className="w-full p-2 mt-2 border border-sky-300 dark:border-sky-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        required
+                      />
+                    )}
                   </div>
 
                   <div className="space-y-1">
@@ -834,6 +853,16 @@ export default function VolunteerDashboardPage() {
                         <option key={sub} value={sub}>{sub}</option>
                       ))}
                     </select>
+                    {resourceData.subject_name === "Other" && (
+                      <input
+                        type="text"
+                        placeholder="Enter custom subject"
+                        value={customSubject}
+                        onChange={(e) => setCustomSubject(e.target.value)}
+                        className="w-full p-2 mt-2 border border-sky-300 dark:border-sky-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        required
+                      />
+                    )}
                   </div>
 
                   <div className="space-y-1">
@@ -847,6 +876,16 @@ export default function VolunteerDashboardPage() {
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
                     </select>
+                    {resourceData.resource_category === "Other" && (
+                      <input
+                        type="text"
+                        placeholder="Enter custom category"
+                        value={customCategory}
+                        onChange={(e) => setCustomCategory(e.target.value)}
+                        className="w-full p-2 mt-2 border border-sky-300 dark:border-sky-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        required
+                      />
+                    )}
                   </div>
                 </div>
 

@@ -22,6 +22,15 @@ export default function CommunityPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [customPostType, setCustomPostType] = useState("");
+  const [likingPosts, setLikingPosts] = useState<Set<string>>(new Set());
+
+  // Comments State
+  const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
+  const [postComments, setPostComments] = useState<any[]>([]);
+  const [commentInput, setCommentInput] = useState("");
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   const [newPost, setNewPost] = useState({
     title: "",
@@ -56,11 +65,11 @@ export default function CommunityPage() {
     try {
       setSubmitting(true);
       setError(null);
-      const res = await communityService.createPost({
-        title: newPost.title,
-        content: newPost.content,
-        post_type: newPost.post_type as any
-      });
+      const finalPostData = {
+        ...newPost,
+        post_type: newPost.post_type === "other" && customPostType.trim() !== "" ? customPostType : newPost.post_type
+      };
+      const res = await communityService.createPost(finalPostData);
 
       if (res.data) {
         setPosts((prev) => [res.data as CommunityPostItem, ...prev]);
@@ -83,6 +92,7 @@ export default function CommunityPage() {
       }
 
       setNewPost({ title: "", content: "", post_type: "general" });
+      setCustomPostType("");
       setIsModalOpen(false);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to create post. Please try again.");
@@ -92,28 +102,66 @@ export default function CommunityPage() {
   };
 
   const handleLike = async (postId: string) => {
-    // Optimistic update
-    const previousPosts = [...posts];
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          // Simplistic optimistic toggle (assumes we toggle, but backend will correct)
-          return { ...p, likes_count: p.likes_count + 1 };
-        }
-        return p;
-      })
-    );
+    if (likingPosts.has(postId)) return;
+    
+    setLikingPosts((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(postId);
+      return newSet;
+    });
+
     try {
       const res = await communityService.likePost(postId);
       if (res.data) {
-        // Correct with actual count
         setPosts((prev) =>
           prev.map((p) => (p.id === postId ? { ...p, likes_count: res.data?.likes_count ?? p.likes_count } : p))
         );
       }
     } catch {
-      // Revert on error
-      setPosts(previousPosts);
+      // Silently fail or show toast
+    } finally {
+      setLikingPosts((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
+    }
+  };
+
+  const loadComments = async (postId: string) => {
+    if (activeCommentPostId === postId) {
+      setActiveCommentPostId(null);
+      return;
+    }
+    setActiveCommentPostId(postId);
+    setCommentsLoading(true);
+    try {
+      const res = await communityService.getComments(postId);
+      if (res.data) setPostComments(res.data);
+    } catch {
+      import("react-hot-toast").then((toast) => toast.default.error("Failed to load comments"));
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  const handleCreateComment = async (e: React.FormEvent, postId: string) => {
+    e.preventDefault();
+    if (!commentInput.trim()) return;
+    setSubmittingComment(true);
+    try {
+      const res = await communityService.createComment(postId, commentInput);
+      if (res.data) {
+        setPostComments((prev) => [...prev, res.data]);
+        setCommentInput("");
+        setPosts((prev) =>
+          prev.map((p) => (p.id === postId ? { ...p, comments_count: p.comments_count + 1 } : p))
+        );
+      }
+    } catch {
+      import("react-hot-toast").then((toast) => toast.default.error("Failed to post comment"));
+    } finally {
+      setSubmittingComment(false);
     }
   };
 
@@ -130,7 +178,7 @@ export default function CommunityPage() {
       }
     } else {
       navigator.clipboard.writeText(url);
-      alert("Link copied to clipboard!");
+      import("react-hot-toast").then((toast) => toast.default.success("Link copied to clipboard!"));
     }
   };
 
@@ -208,17 +256,57 @@ export default function CommunityPage() {
                   <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-6 text-xs text-zinc-500 font-medium">
                     <button
                       onClick={() => handleLike(post.id)}
-                      className="flex items-center gap-1.5 hover:text-sky-600 transition-colors"
+                      disabled={likingPosts.has(post.id)}
+                      className={`flex items-center gap-1.5 transition-colors ${likingPosts.has(post.id) ? "opacity-50 cursor-not-allowed text-sky-600" : "hover:text-sky-600"}`}
                     >
-                      <ThumbsUp className="h-4 w-4" /> {post.likes_count} Likes
+                      <ThumbsUp className={`h-4 w-4 ${likingPosts.has(post.id) ? "animate-pulse" : ""}`} /> {post.likes_count} Likes
                     </button>
-                    <button onClick={() => alert("Comments feature is under development.")} className="flex items-center gap-1.5 hover:text-sky-600 transition-colors">
+                    <button onClick={() => loadComments(post.id)} className="flex items-center gap-1.5 hover:text-sky-600 transition-colors">
                       <MessageCircle className="h-4 w-4" /> {post.comments_count} Comments
                     </button>
                     <button onClick={() => handleShare(post.title, post.id)} className="flex items-center gap-1.5 hover:text-sky-600 transition-colors">
                       <Share2 className="h-4 w-4" /> Share
                     </button>
                   </div>
+
+                  {activeCommentPostId === post.id && (
+                    <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
+                      {commentsLoading ? (
+                        <div className="text-center py-4 text-zinc-500 text-xs">Loading comments...</div>
+                      ) : (
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                          {postComments.length === 0 ? (
+                            <div className="text-center text-xs text-zinc-500">No comments yet. Be the first!</div>
+                          ) : (
+                            postComments.map((c: any) => (
+                              <div key={c.id} className="bg-zinc-50 dark:bg-zinc-900/50 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <div className="h-6 w-6 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center font-bold text-[10px] overflow-hidden">
+                                    {c.author_avatar ? <img src={c.author_avatar} alt="Avatar" className="w-full h-full object-cover" /> : c.author_name.slice(0, 2).toUpperCase()}
+                                  </div>
+                                  <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100">{c.author_name}</span>
+                                  <span className="text-[9px] text-zinc-400">{new Date(c.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <p className="text-xs text-zinc-600 dark:text-zinc-400 pl-8">{c.content}</p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                      <form onSubmit={(e) => handleCreateComment(e, post.id)} className="flex gap-2 pt-2">
+                        <input
+                          type="text"
+                          placeholder="Write a comment..."
+                          value={commentInput}
+                          onChange={(e) => setCommentInput(e.target.value)}
+                          className="flex-1 px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-700 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        />
+                        <Button type="submit" isLoading={submittingComment} disabled={!commentInput.trim()} size="sm" className="bg-sky-600 hover:bg-sky-500 text-white px-3">
+                          Post
+                        </Button>
+                      </form>
+                    </div>
+                  )}
                 </Card>
               </TiltCard>
             </ScrollReveal>
@@ -266,7 +354,18 @@ export default function CommunityPage() {
                     <option value="career_guidance">Career Guidance</option>
                     <option value="mentorship">Mentorship Request</option>
                     <option value="article">Educational Article</option>
+                    <option value="other">Other (Custom)</option>
                   </select>
+                  {newPost.post_type === "other" && (
+                    <input
+                      type="text"
+                      placeholder="Enter custom post tag (e.g., Event Update)"
+                      value={customPostType}
+                      onChange={(e) => setCustomPostType(e.target.value)}
+                      className="w-full mt-2 px-3 py-2 border border-sky-300 dark:border-sky-700 rounded-lg bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      required
+                    />
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
