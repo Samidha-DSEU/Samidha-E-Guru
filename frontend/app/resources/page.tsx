@@ -199,8 +199,8 @@ function ResourcesPageContent() {
             className="text-3xl sm:text-5xl font-extrabold tracking-tight justify-start"
           />
           <TypewriterText
-            text="Browse verified NCERT, DIKSHA, SWAYAM, NPTEL, and SAMIDHA Shiksha Library materials 100% free."
-            highlightWords={["NCERT", "SAMIDHA", "free"]}
+            text="Browse verified NCERT, KVS, and SAMIDHA Shiksha Library materials 100% free."
+            highlightWords={["NCERT", "KVS", "SAMIDHA", "free"]}
             speedMs={15}
             className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400"
           />
@@ -253,17 +253,7 @@ function ResourcesPageContent() {
           🏫 KVS / Kendriya Vidyalaya
         </button>
 
-        <button
-          onClick={() => { setActiveSource("diksha"); handleResetFolders(); }}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all shrink-0 whitespace-nowrap snap-start cursor-pointer ${
-            activeSource === "diksha"
-              ? "bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md shadow-sky-500/25 ring-2 ring-sky-400/30"
-              : "bg-zinc-100 dark:bg-zinc-900/80 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800"
-          }`}
-        >
-          🌐 DIKSHA / SWAYAM / NPTEL
-        </button>
-      </div>
+
 
       {/* BREADCRUMB NAVIGATION */}
       <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md p-3.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-sm flex-wrap">
@@ -319,8 +309,8 @@ function ResourcesPageContent() {
                 </div>
               ) : classesData?.length === 0 ? (
                 <EmptyState
-                  title="No classes available"
-                  description="No folders found for this source."
+                  title="Resources Coming Soon 🚀"
+                  description="We are actively indexing premium materials for this section. Check back shortly!"
                 />
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -361,8 +351,8 @@ function ResourcesPageContent() {
                 </div>
               ) : subjectsData?.length === 0 ? (
                 <EmptyState
-                  title="No subjects available"
-                  description="No folders found for this class."
+                  title="Resources Coming Soon 🚀"
+                  description="We are actively preparing high-quality educational materials for this class. Check back shortly!"
                 />
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -461,9 +451,9 @@ function ResourcesPageContent() {
             <ErrorState onRetry={() => refetch()} />
           ) : resources.length === 0 ? (
             <EmptyState
-              title="No PDFs available for this folder"
-              description="Check back later or try selecting a different folder."
-              actionText="View All Materials"
+              title="Resources Coming Soon 🚀"
+              description="We are continuously adding new study materials. The resources for this folder will be available shortly!"
+              actionText="Browse Available Materials"
               onAction={() => { setActiveSource("all"); handleResetFolders(); }}
             />
           ) : (
