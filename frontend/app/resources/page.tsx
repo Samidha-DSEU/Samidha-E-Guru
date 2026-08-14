@@ -252,6 +252,7 @@ function ResourcesPageContent() {
         >
           🏫 KVS / Kendriya Vidyalaya
         </button>
+      </div>
 
 
 
