@@ -15,7 +15,7 @@ class SettingUpdateRequest(BaseModel):
     value: Any
     description: Optional[str] = None
 
-@router.get("/", response_model=StandardResponse)
+@router.get("", response_model=StandardResponse)
 def get_all_settings(db: Session = Depends(get_db), current_user: User = Depends(require_roles(["super_admin"]))):
     settings = SettingsService.get_all_settings(db)
     data = [{"key": s.key, "value": s.value, "setting_type": s.setting_type, "description": s.description} for s in settings]

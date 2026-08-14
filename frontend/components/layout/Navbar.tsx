@@ -19,6 +19,7 @@ interface VolunteerHeadItem {
   subjects?: string;
   email: string;
   whatsapp_number?: string;
+  avatar_url?: string;
   avatar_initials?: string;
 }
 
@@ -269,9 +270,17 @@ export function Navbar() {
                 ) : (
                   volunteerHeads.map((vol) => (
                     <div key={vol.id} className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/60 flex items-start gap-4 hover:border-sky-500/40 transition-all">
-                      <div className="h-12 w-12 rounded-2xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold text-sm border border-amber-300/40 shrink-0">
-                        {vol.avatar_initials || vol.full_name?.split(' ').map(n=>n[0]).join('') || "VH"}
-                      </div>
+                      {vol.avatar_url ? (
+                        <img
+                          src={vol.avatar_url}
+                          alt={vol.full_name}
+                          className="h-12 w-12 rounded-2xl object-cover border border-zinc-200 dark:border-zinc-800 shrink-0"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-2xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold text-sm border border-amber-300/40 shrink-0">
+                          {vol.avatar_initials || vol.full_name?.split(' ').map(n=>n[0]).join('') || "VH"}
+                        </div>
+                      )}
                       <div className="flex-1 space-y-1.5">
                         <div className="flex flex-wrap items-center justify-between gap-1">
                           <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{vol.full_name}</h4>
@@ -300,8 +309,12 @@ export function Navbar() {
               <form onSubmit={handleInquirySubmit} className="space-y-4">
                 <div className="p-3 bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 rounded-2xl flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-xs">
-                      {selectedVolunteer.avatar_initials || "VH"}
+                    <div className="h-8 w-8 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
+                      {selectedVolunteer.avatar_url ? (
+                        <img src={selectedVolunteer.avatar_url} alt={selectedVolunteer.full_name} className="h-full w-full object-cover" />
+                      ) : (
+                        selectedVolunteer.avatar_initials || "VH"
+                      )}
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">{selectedVolunteer.full_name}</h4>
@@ -327,11 +340,11 @@ export function Navbar() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">WhatsApp Mobile Number *</label>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Mobile Number *</label>
                     <input
                       type="tel"
                       required
-                      placeholder="+91 9876543210"
+                      placeholder="Enter 10-digit mobile number"
                       value={studentForm.mobile}
                       onChange={(e) => setStudentForm({ ...studentForm, mobile: e.target.value })}
                       className="w-full p-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -400,16 +413,22 @@ export function Navbar() {
                     💬 Connect Live on WhatsApp Now
                   </span>
                   
-                  <a
-                    href={`https://wa.me/${selectedVolunteer.whatsapp_number || "919876543210"}?text=${encodeURIComponent(
-                      `Hi ${selectedVolunteer.full_name}, I am ${studentForm.full_name} (Mobile: ${studentForm.mobile}). I am seeking guidance for ${studentForm.needed_subject} on SAMIDHA E-GURU.`
-                    )}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-transform active:scale-95"
-                  >
-                    <MessageSquare className="h-4 w-4" /> Open WhatsApp Chat with {selectedVolunteer.full_name}
-                  </a>
+                  {selectedVolunteer.whatsapp_number ? (
+                    <a
+                      href={`https://wa.me/${selectedVolunteer.whatsapp_number.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                        `Hi ${selectedVolunteer.full_name}, I am ${studentForm.full_name} (Mobile: ${studentForm.mobile}). I am seeking guidance for ${studentForm.needed_subject} on SAMIDHA E-GURU.`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-transform active:scale-95"
+                    >
+                      <MessageSquare className="h-4 w-4" /> Open WhatsApp Chat with {selectedVolunteer.full_name}
+                    </a>
+                  ) : (
+                    <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-100/60 dark:bg-amber-950/60 p-2.5 rounded-xl border border-amber-200 dark:border-amber-800 font-medium">
+                      ⚠️ Volunteer has not provided a mobile number. Please send a direct email below.
+                    </p>
+                  )}
 
                   <a
                     href={`mailto:${selectedVolunteer.email}?subject=${encodeURIComponent(`Mentorship Inquiry from Student ${studentForm.full_name}`)}&body=${encodeURIComponent(`Hi ${selectedVolunteer.full_name},\n\nStudent Name: ${studentForm.full_name}\nMobile: ${studentForm.mobile}\nSubject: ${studentForm.needed_subject}\n\nNote:\n${studentForm.message}`)}`}

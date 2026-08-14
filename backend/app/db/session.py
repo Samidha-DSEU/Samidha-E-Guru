@@ -94,8 +94,8 @@ def get_engine():
             PRIMARY_DATABASE_URL,
             connect_args={"connect_timeout": 3},
             pool_pre_ping=True,
-            pool_size=10,
-            max_overflow=20,
+            pool_size=2,
+            max_overflow=3,
         )
         # Test connection
         with engine.connect() as conn:

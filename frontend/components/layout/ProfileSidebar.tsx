@@ -33,7 +33,9 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
       class_or_degree: ""
     },
     volunteer_profile: {
-      organization: ""
+      organization: "",
+      academic_year: "",
+      whatsapp_number: ""
     },
     alumni_profile: {
       current_company: "",
@@ -47,19 +49,22 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
 
   useEffect(() => {
     if (user) {
+      const initialPhone = user.profile?.phone || user.volunteer_profile?.whatsapp_number || "";
       setFormData({
         profile: {
           full_name: user.profile?.full_name || "",
           avatar_url: user.profile?.avatar_url || "",
           bio: user.profile?.bio || "",
-          phone: user.profile?.phone || ""
+          phone: initialPhone
         },
         learner_profile: {
           institution_name: user.learner_profile?.institution_name || "",
           class_or_degree: user.learner_profile?.class_or_degree || ""
         },
         volunteer_profile: {
-          organization: user.volunteer_profile?.organization || ""
+          organization: user.volunteer_profile?.organization || "",
+          academic_year: user.volunteer_profile?.academic_year || "3rd Year",
+          whatsapp_number: initialPhone
         },
         alumni_profile: {
           current_company: user.alumni_profile?.current_company || "",
@@ -95,22 +100,38 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
   };
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      profile: { ...formData.profile, [e.target.name]: e.target.value }
-    });
+    const { name, value } = e.target;
+    if (name === "phone") {
+      setFormData((prev) => ({
+        ...prev,
+        profile: { ...prev.profile, phone: value },
+        volunteer_profile: { ...prev.volunteer_profile, whatsapp_number: value }
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        profile: { ...prev.profile, [name]: value }
+      }));
+    }
   };
 
   const handleRoleChange = (roleKey: string, e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [roleKey]: { ...((formData as any)[roleKey]), [e.target.name]: e.target.value }
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [roleKey]: { ...((prev as any)[roleKey]), [name]: value }
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateProfile(formData);
+    await updateProfile({
+      ...formData,
+      volunteer_profile: {
+        ...formData.volunteer_profile,
+        whatsapp_number: formData.profile.phone
+      }
+    });
     onClose();
   };
 
@@ -147,7 +168,7 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
               <User className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-50">Profile & LMS Sidebar</h2>
+              <h2 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-50">Profile</h2>
               <p className="text-[11px] text-zinc-500 font-medium">Manage your portal preferences & account</p>
             </div>
           </div>
@@ -300,9 +321,11 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Phone</label>
+              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Mobile Number</label>
               <input
                 name="phone"
+                type="tel"
+                placeholder="Enter 10-digit mobile number"
                 value={formData.profile.phone}
                 onChange={handleProfileChange}
                 className="w-full px-3.5 py-2 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -336,18 +359,6 @@ export function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
                     <option value="3rd Year">3rd Year</option>
                     <option value="4th Year">4th Year</option>
                   </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">WhatsApp Mobile Number</label>
-                  <input
-                    name="whatsapp_number"
-                    type="tel"
-                    placeholder="+91 9876543210"
-                    value={(formData.volunteer_profile as any).whatsapp_number || ""}
-                    onChange={(e) => handleRoleChange("volunteer_profile", e)}
-                    className="w-full px-3.5 py-2 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  />
                 </div>
               </div>
             )}

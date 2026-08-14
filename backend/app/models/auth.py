@@ -89,7 +89,7 @@ class VolunteerProfile(Base):
     
     academic_year: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     whatsapp_number: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
-    assigned_role: Mapped[Optional[str]] = mapped_column(String(255), default="Operational & Volunteer Head", nullable=True)
+    assigned_role: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     is_featured_mentor: Mapped[bool] = mapped_column(Boolean, default=False)
     
     # Approval Lifecycle & Purge Fields

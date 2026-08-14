@@ -128,7 +128,7 @@ export default function AdminDashboardPage() {
   }, [user, params, router]);
 
   // ACTIVE TAB FILTER FROM METRIC CARDS
-  const [activeTab, setActiveTab] = useState<"users" | "volunteers" | "resources" | "events" | "deletions">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "volunteers" | "resources" | "events" | "deletions">("volunteers");
 
   // USER MANAGEMENT STATE
   const [userSearch, setUserSearch] = useState("");
@@ -254,6 +254,21 @@ export default function AdminDashboardPage() {
       setVolunteerRejectReason("");
       queryClient.invalidateQueries({ queryKey: ["adminMetrics"] });
       queryClient.invalidateQueries({ queryKey: ["pendingVolunteers"] });
+    }
+  });
+
+  const assignRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const res = await apiClient.post(`/admin/volunteers/${userId}/assign-role`, {
+        assigned_role: role
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminMetrics"] });
+      queryClient.invalidateQueries({ queryKey: ["allUsers"] });
+      refetchUsers();
+      setAssigningDesignationUser(null);
     }
   });
 
@@ -451,14 +466,16 @@ export default function AdminDashboardPage() {
 
         {/* NAVIGATION TABS HEADER */}
         <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3 flex-wrap">
-          <button
-            onClick={() => setActiveTab("users")}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
-              activeTab === "users" ? "bg-sky-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600"
-            }`}
-          >
-            👥 Platform Users Directory
-          </button>
+          {user?.role?.name === "super_admin" && (
+            <button
+              onClick={() => setActiveTab("users")}
+              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+                activeTab === "users" ? "bg-sky-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600"
+              }`}
+            >
+              👥 Platform Users Directory
+            </button>
+          )}
 
           <button
             onClick={() => setActiveTab("volunteers")}
@@ -498,7 +515,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* TAB 1: PLATFORM USER DIRECTORY & MANAGEMENT */}
-        {activeTab === "users" && (
+        {activeTab === "users" && user?.role?.name === "super_admin" && (
           <Card className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -1207,13 +1224,17 @@ export default function AdminDashboardPage() {
                 </Button>
                 <Button
                   size="sm"
+                  isLoading={assignRoleMutation.isPending}
                   onClick={() => {
+                    if (!assigningDesignationUser) return;
                     if (assignedDesignation === "Operational & Volunteer Head" && (assignedYear === "1st Year" || assignedYear === "2nd Year")) {
                       setDesignationError("Academic Year Constraint Violation: Operational & Volunteer Head designation can only be distributed to 3rd Year or 4th Year students.");
                       return;
                     }
-                    alert(`Successfully assigned "${assignedDesignation}" (${assignedYear}) to ${assigningDesignationUser.full_name}.`);
-                    setAssigningDesignationUser(null);
+                    assignRoleMutation.mutate({
+                      userId: assigningDesignationUser.id,
+                      role: assignedDesignation
+                    });
                   }}
                   className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs"
                 >
