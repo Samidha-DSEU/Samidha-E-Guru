@@ -8,20 +8,6 @@ export function getRoleFromUserOrToken(userObj?: any): string | null {
   if (userObj?.role?.name) {
     return userObj.role.name.toLowerCase();
   }
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("samidha_access_token");
-    if (token) {
-      try {
-        const parts = token.split(".");
-        if (parts.length === 3) {
-          const payload = JSON.parse(atob(parts[1]));
-          if (payload.role) {
-            return payload.role.toLowerCase();
-          }
-        }
-      } catch {}
-    }
-  }
   return null;
 }
 

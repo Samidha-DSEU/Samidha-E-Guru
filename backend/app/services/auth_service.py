@@ -58,12 +58,9 @@ class AuthService:
             user = db.query(User).filter(User.email == email).first()
             now = datetime.now(timezone.utc)
 
-            if req.admin_secret and req.admin_secret == settings.SUPER_ADMIN_SECRET_KEY:
-                target_role = "super_admin"
-            elif req.admin_secret and req.admin_secret == settings.ADMIN_SECRET_KEY:
-                target_role = "admin"
-            else:
-                target_role = req.role_name if req.role_name in ["student", "volunteer", "alumni"] else "student"
+            # STRICT SECURITY FREEZE: Public registration and Google OAuth can ONLY register student, volunteer, or alumni roles.
+            # Admin and Super Admin roles CANNOT be registered publicly under any circumstances.
+            target_role = req.role_name if req.role_name in ["student", "volunteer", "alumni"] else "student"
 
             if not user:
                 role = db.query(Role).filter(Role.name == target_role).first()
@@ -113,20 +110,7 @@ class AuthService:
                     if require_verification:
                         NotificationService.notify_admins_new_volunteer(db, user)
 
-            else:
-                # Auto-upgrade logic on email registration
-                if req.admin_secret == settings.SUPER_ADMIN_SECRET_KEY and user.role.name != "super_admin":
-                    role = db.query(Role).filter(Role.name == "super_admin").first()
-                    if role:
-                        user.role_id = role.id
-                        db.commit()
-                        db.refresh(user)
-                elif req.admin_secret == settings.ADMIN_SECRET_KEY and user.role.name not in ["admin", "super_admin"]:
-                    role = db.query(Role).filter(Role.name == "admin").first()
-                    if role:
-                        user.role_id = role.id
-                        db.commit()
-                        db.refresh(user)
+            # Keep existing user role intact as per database authority
 
             # Update login & activity timestamps
             user.last_login_at = now
@@ -155,12 +139,9 @@ class AuthService:
         if existing_user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
         
-        if req.admin_secret and req.admin_secret == settings.SUPER_ADMIN_SECRET_KEY:
-            target_role = "super_admin"
-        elif req.admin_secret and req.admin_secret == settings.ADMIN_SECRET_KEY:
-            target_role = "admin"
-        else:
-            target_role = req.role_name if req.role_name in ["student", "volunteer", "alumni"] else "student"
+        # STRICT SECURITY FREEZE: Public registration can ONLY register student, volunteer, or alumni roles.
+        # Admin and Super Admin roles CANNOT be registered publicly under any circumstances.
+        target_role = req.role_name if req.role_name in ["student", "volunteer", "alumni"] else "student"
 
         role = db.query(Role).filter(Role.name == target_role).first()
         if not role:
