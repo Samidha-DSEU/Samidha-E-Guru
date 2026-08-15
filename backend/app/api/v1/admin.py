@@ -539,6 +539,56 @@ def get_all_users_admin(
     return StandardResponse.success_response(data=data, message="User directory retrieved.")
 
 
+class ChangeRoleRequest(BaseModel):
+    new_role: str
+
+
+@router.post("/users/{id}/change-role", response_model=StandardResponse[dict])
+def change_user_role_super_admin(
+    id: UUID,
+    req: ChangeRoleRequest,
+    current_user: User = Depends(require_roles(["super_admin"])),
+    db: Session = Depends(get_db)
+):
+    if str(id) == str(current_user.id):
+        raise HTTPException(status_code=400, detail="You cannot demote or change your own Super Admin role!")
+
+    target_user = db.query(User).filter(User.id == id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    target_role_name = req.new_role.strip().lower()
+    if target_role_name not in ["student", "volunteer", "alumni", "admin", "super_admin"]:
+        raise HTTPException(status_code=400, detail="Invalid role specified")
+
+    role_obj = db.query(Role).filter(Role.name == target_role_name).first()
+    if not role_obj:
+        role_obj = Role(name=target_role_name, description=f"{target_role_name} role")
+        db.add(role_obj)
+        db.flush()
+
+    old_role_name = target_user.role.name if target_user.role else "unknown"
+    target_user.role_id = role_obj.id
+
+    log = ActivityLog(
+        user_id=current_user.id,
+        action="SUPER_ADMIN_CHANGE_ROLE",
+        details={
+            "target_user_id": str(id),
+            "email": target_user.email,
+            "old_role": old_role_name,
+            "new_role": target_role_name
+        }
+    )
+    db.add(log)
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={"id": str(id), "old_role": old_role_name, "new_role": target_role_name},
+        message=f"User {target_user.email} role successfully changed from '{old_role_name}' to '{target_role_name}'!"
+    )
+
+
 @router.post("/users/{id}/promote-admin", response_model=StandardResponse[dict])
 def promote_user_to_admin(
     id: UUID,

@@ -272,6 +272,20 @@ export default function AdminDashboardPage() {
     }
   });
 
+  const changeUserRoleMutation = useMutation({
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
+      const res = await apiClient.post(`/admin/users/${userId}/change-role`, {
+        new_role: newRole
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminMetrics"] });
+      queryClient.invalidateQueries({ queryKey: ["allUsers"] });
+      refetchUsers();
+    }
+  });
+
   const approveResourceMutation = useMutation({
     mutationFn: async (resourceId: string) => {
       const res = await apiClient.post(`/admin/resources/${resourceId}/approve`);
@@ -604,7 +618,26 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="px-4 py-3 text-xs text-zinc-400">{new Date(u.created_at).toLocaleDateString()}</td>
                         <td className="px-4 py-3 text-right space-x-1.5">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center justify-end gap-2">
+                            {user?.role?.name === "super_admin" && u.id !== user.id && (
+                              <select
+                                value={u.role}
+                                onChange={(e) => {
+                                  const newRole = e.target.value;
+                                  if (confirm(`Are you sure you want to change/demote ${u.full_name}'s role from '${u.role}' to '${newRole}'?`)) {
+                                    changeUserRoleMutation.mutate({ userId: u.id, newRole });
+                                  }
+                                }}
+                                className="text-xs h-7 px-2 bg-white dark:bg-zinc-900 border border-purple-300 dark:border-purple-800 rounded-lg text-purple-700 dark:text-purple-300 font-bold cursor-pointer hover:border-purple-500 transition-colors shadow-sm"
+                                title="Super Admin Role Management"
+                              >
+                                <option value="student">Student</option>
+                                <option value="volunteer">Volunteer</option>
+                                <option value="alumni">Alumni</option>
+                                <option value="admin">Admin</option>
+                                <option value="super_admin">Super Admin</option>
+                              </select>
+                            )}
                             {u.role === "volunteer" && (
                               <Button
                                 size="sm"
@@ -618,15 +651,15 @@ export default function AdminDashboardPage() {
                                 <ShieldCheck className="h-3 w-3 mr-1" /> {u.volunteer_profile?.assigned_role ? "Edit Role" : "Assign Role"}
                               </Button>
                             )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setDeletingUser(u)}
+                              className="text-xs h-7 px-2 text-rose-600 border-rose-200"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setDeletingUser(u)}
-                            className="text-xs h-7 px-2 text-rose-600 border-rose-200"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
                         </td>
                       </tr>
                     ))
