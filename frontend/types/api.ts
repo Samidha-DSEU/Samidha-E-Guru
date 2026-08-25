@@ -71,6 +71,10 @@ export interface ResourceItem {
   description?: string;
   thumbnail_url?: string;
   external_url: string;
+  target_class?: string;
+  subject_name?: string;
+  resource_category?: string;
+  source_type?: string;
   views_count: number;
   bookmarks_count: number;
   is_bookmarked?: boolean;

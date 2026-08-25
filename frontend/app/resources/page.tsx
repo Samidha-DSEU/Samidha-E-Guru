@@ -558,11 +558,13 @@ function ResourcesPageContent() {
                           </Button>
                         </Link>
 
-                        <Link href={`/resources/${res.id}/learn-ai?fromSource=${activeSource}${selectedClass ? `&fromClass=${encodeURIComponent(selectedClass)}` : ''}${selectedSubject ? `&fromSubject=${encodeURIComponent(selectedSubject)}` : ''}${selectedCategory ? `&fromCategory=${encodeURIComponent(selectedCategory)}` : ''}`} className="flex-1 min-w-[120px]">
-                          <Button variant="primary" size="sm" className="w-full text-xs font-semibold bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white shadow-sm">
-                            <Sparkles className="h-3 w-3 mr-1 text-amber-300" /> Learn With AI
-                          </Button>
-                        </Link>
+                        {res.source_type !== "ncert" && (
+                          <Link href={`/resources/${res.id}/learn-ai?fromSource=${activeSource}${selectedClass ? `&fromClass=${encodeURIComponent(selectedClass)}` : ''}${selectedSubject ? `&fromSubject=${encodeURIComponent(selectedSubject)}` : ''}${selectedCategory ? `&fromCategory=${encodeURIComponent(selectedCategory)}` : ''}`} className="flex-1 min-w-[120px]">
+                            <Button variant="primary" size="sm" className="w-full text-xs font-semibold bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white shadow-sm">
+                              <Sparkles className="h-3 w-3 mr-1 text-amber-300" /> Learn With AI
+                            </Button>
+                          </Link>
+                        )}
 
                         <a
                           href={res.external_url}
