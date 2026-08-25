@@ -101,7 +101,7 @@ function ResourceDetailsContent({ params }: { params: Promise<{ id: string }> })
               {isNcert ? "Verified NCERT Content" : `Verified ${resource.source_type?.toUpperCase() || "SAMIDHA"} Content`}
             </span>
 
-            {resource.external_url.includes("ncert.nic.in") ? (
+            {resource.external_url.includes("ncert.nic.in") || resource.external_url.includes("notopedia.com") ? (
               <div className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 flex items-center gap-1.5">
                 <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">
                   Learn with AI not available with this PDF/link

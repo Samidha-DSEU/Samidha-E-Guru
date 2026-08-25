@@ -150,7 +150,7 @@ function LearnAiWorkspaceContent({ params }: { params: Promise<{ id: string }> }
     );
   }
 
-  if (baseWorkspace.pdf_url?.includes("ncert.nic.in")) {
+  if (baseWorkspace.pdf_url?.includes("ncert.nic.in") || baseWorkspace.pdf_url?.includes("notopedia.com")) {
     return (
       <div className="max-w-5xl mx-auto py-12 px-4 text-center space-y-6">
         <Card className="p-8 space-y-4 max-w-xl mx-auto border-rose-100 dark:border-rose-950/60 bg-rose-50/50 dark:bg-rose-950/10">
@@ -161,7 +161,7 @@ function LearnAiWorkspaceContent({ params }: { params: Promise<{ id: string }> }
             Learn with AI Not Available
           </h2>
           <p className="text-sm text-rose-700/80 dark:text-rose-400/80 leading-relaxed">
-            Learn with AI is not available with this PDF/link because the NCERT website restricts external access to its document streams.
+            Learn with AI is not available with this PDF/link because this external site restricts direct document downloads.
           </p>
           <div className="pt-2">
             <Link href={previewHref}>

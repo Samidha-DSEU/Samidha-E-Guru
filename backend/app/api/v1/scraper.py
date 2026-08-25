@@ -23,6 +23,7 @@ import enum
 class ScraperType(str, enum.Enum):
     ncert = "ncert"
     kvs = "kvs"
+    notopedia = "notopedia"
 
 router = APIRouter()
 
@@ -152,6 +153,39 @@ def run_kvs_scraper_job(job_id: UUID, target_class: str):
         db.close()
 
 
+def run_notopedia_scraper_job(job_id: UUID, target_class: str):
+    from app.db.session import SessionLocal
+    from app.services.notopedia_ingestion_service import NotopediaIngestionService
+    db = SessionLocal()
+    try:
+        result = NotopediaIngestionService.sync_notopedia_metadata(db, target_class_filter=target_class)
+        telemetry = result.get("telemetry", {})
+        scraped_sheet = result.get("scraped_sheet", [])
+        
+        job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
+        if job:
+            job.status = "completed"
+            job.class_code = target_class or "ALL"
+            job.total_subjects_found = telemetry.get("total_subjects_found", 0)
+            job.total_chapters_found = telemetry.get("total_chapters_found", 0)
+            job.scraped_success_count = telemetry.get("scraped_success_count", 0)
+            job.scraped_failed_count = telemetry.get("scraped_failed_count", 0)
+            job.resources_found = telemetry.get("resources_found", 0)
+            job.resources_added = telemetry.get("resources_added", 0)
+            job.duration_seconds = telemetry.get("duration_seconds", 0.0)
+            job.telemetry_details = telemetry
+            job.scraped_sheet = scraped_sheet
+            db.commit()
+    except Exception as err:
+        job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
+        if job:
+            job.status = "failed"
+            job.error_log = str(err)
+            db.commit()
+    finally:
+        db.close()
+
+
 SCRAPER_REGISTRY = {
     ScraperType.ncert: {
         "runner": run_ncert_scraper_job,
@@ -161,6 +195,11 @@ SCRAPER_REGISTRY = {
     ScraperType.kvs: {
         "runner": run_kvs_scraper_job,
         "display_name": "KVS Knowledge Hub Scraper",
+        "supports_class_filter": True,
+    },
+    ScraperType.notopedia: {
+        "runner": run_notopedia_scraper_job,
+        "display_name": "Notopedia Study Resources Scraper",
         "supports_class_filter": True,
     },
 }

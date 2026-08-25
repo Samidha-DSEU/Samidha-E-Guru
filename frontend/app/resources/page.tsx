@@ -558,7 +558,7 @@ function ResourcesPageContent() {
                           </Button>
                         </Link>
 
-                        {res.external_url.includes("ncert.nic.in") ? (
+                        {res.external_url.includes("ncert.nic.in") || res.external_url.includes("notopedia.com") ? (
                           <div className="flex-1 min-w-[120px] flex items-center justify-center p-2 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50">
                             <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 text-center leading-tight">
                               Learn with AI not available with this PDF/link
