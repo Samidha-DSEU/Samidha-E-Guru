@@ -10,7 +10,7 @@ class Settings:
     
     # Groq LLM Key
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
-    GROQ_MODEL: str = "llama-3.1-8b-instant"
+    GROQ_MODEL: str = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
     
     # ChatPDF API Key
     CHATPDF_API_KEY: str = os.getenv("CHATPDF_API_KEY", "")

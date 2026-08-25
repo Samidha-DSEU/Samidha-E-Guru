@@ -84,8 +84,8 @@ export function DoubtSolverTab({ resourceId, title }: { resourceId: string; titl
         id: (Date.now() + 1).toString(),
         sender: "bot",
         text: isRateLimit
-          ? "⚡ **ChatPDF / LLM Request Quota Reached**: You have reached the maximum allowed questions per minute. Please try again after 60 seconds."
-          : `⚠️ **LLM Error**: ${realErrorText}`,
+          ? "⚡ **AI Tutor Request Quota Reached**: You have reached the maximum allowed questions per minute. Please try again after 60 seconds."
+          : "⚠️ **AI Tutor Service Offline**: The AI Tutor service is temporarily unavailable or sleeping. Please try again later.",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages((prev) => [...prev, errorMsg]);

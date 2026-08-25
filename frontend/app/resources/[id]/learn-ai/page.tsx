@@ -98,7 +98,10 @@ function LearnAiWorkspaceContent({ params }: { params: Promise<{ id: string }> }
           [tab]: "LLM Request Rate Limit Reached. Please wait for countdown timer to complete."
         }));
       } else {
-        setSectionError((prev) => ({ ...prev, [tab]: detail }));
+        setSectionError((prev) => ({
+          ...prev,
+          [tab]: "AI Tutor service is temporarily unavailable or sleeping. Please try again later."
+        }));
       }
     } finally {
       setSectionLoading((prev) => ({ ...prev, [tab]: false }));
