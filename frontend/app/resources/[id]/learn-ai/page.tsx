@@ -19,6 +19,7 @@ import { RateLimitBanner } from "@/features/learn_ai/components/RateLimitBanner"
 
 import { Card, Skeleton } from "@/components/ui/Card";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { Button } from "@/components/ui/Button";
 
 type TabType = "doubts" | "summaries" | "mindmap" | "flashcards" | "tools" | "quiz";
 
@@ -142,6 +143,31 @@ function LearnAiWorkspaceContent({ params }: { params: Promise<{ id: string }> }
           message="Could not load AI Tutor Workspace metadata."
           onRetry={refetch}
         />
+      </div>
+    );
+  }
+
+  if (baseWorkspace.pdf_url?.includes("ncert.nic.in")) {
+    return (
+      <div className="max-w-5xl mx-auto py-12 px-4 text-center space-y-6">
+        <Card className="p-8 space-y-4 max-w-xl mx-auto border-rose-100 dark:border-rose-950/60 bg-rose-50/50 dark:bg-rose-950/10">
+          <div className="mx-auto h-12 w-12 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+            <AlertTriangle className="h-6 w-6" />
+          </div>
+          <h2 className="text-xl font-bold text-rose-800 dark:text-rose-400">
+            Learn with AI Not Available
+          </h2>
+          <p className="text-sm text-rose-700/80 dark:text-rose-400/80 leading-relaxed">
+            Learn with AI is not available with this PDF/link because the NCERT website restricts external access to its document streams.
+          </p>
+          <div className="pt-2">
+            <Link href={previewHref}>
+              <Button variant="outline" size="sm" className="border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950">
+                <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to PDF Preview
+              </Button>
+            </Link>
+          </div>
+        </Card>
       </div>
     );
   }
