@@ -11,6 +11,7 @@ from app.middlewares.auth_middleware import get_current_user
 from app.models.auth import User, Role, AlumniProfile
 from app.models.mentorship import MentorshipRequest, MentorshipMessage
 from app.models.communication import Notification
+from app.services.notification_service import NotificationService
 
 router = APIRouter()
 
@@ -108,7 +109,7 @@ def request_mentorship(
     )
     db.add(m_request)
 
-    # Generate Notification for Alumni
+    # Generate In-App Notification & Email for Alumni/Volunteer
     requester_name = current_user.profile.full_name if current_user.profile else current_user.email
     notif = Notification(
         user_id=req.alumni_id,
@@ -118,6 +119,17 @@ def request_mentorship(
     )
     db.add(notif)
     db.commit()
+
+    # Email notification to Mentor
+    try:
+        NotificationService.notify_mentorship_request(
+            requester_name=requester_name,
+            recipient_user=alumni,
+            topic=req.topic.strip(),
+            message_note=req.message_note.strip() if req.message_note else None
+        )
+    except Exception:
+        pass
 
     return StandardResponse.success_response(
         data={"id": str(m_request.id), "status": "pending"},
@@ -194,6 +206,18 @@ def respond_to_mentorship_request(
     db.add(notif)
     db.commit()
 
+    # Email notification to Requester
+    if m_request.requester:
+        try:
+            NotificationService.notify_mentorship_response(
+                responder_name=alumni_name,
+                requester_user=m_request.requester,
+                topic=m_request.topic,
+                status_str=m_request.status
+            )
+        except Exception:
+            pass
+
     return StandardResponse.success_response(data={"id": str(id), "status": m_request.status}, message=msg_text)
 
 
@@ -255,6 +279,21 @@ def send_chat_message(
     )
     db.add(chat_msg)
     db.commit()
+
+    # Dispatch email notification if recipient is inactive/logged out (with 15m cooldown guard)
+    recipient_id = m_request.alumni_id if str(current_user.id) == str(m_request.requester_id) else m_request.requester_id
+    recipient_user = db.query(User).filter(User.id == recipient_id).first()
+    if recipient_user:
+        sender_name = current_user.profile.full_name if current_user.profile else current_user.email
+        try:
+            NotificationService.notify_inactive_recipient_message(
+                sender_name=sender_name,
+                recipient_user=recipient_user,
+                conversation_id=str(id),
+                message_text=chat_msg.message
+            )
+        except Exception:
+            pass
 
     return StandardResponse.success_response(
         data={"id": str(chat_msg.id), "message": chat_msg.message, "created_at": chat_msg.created_at.isoformat()},

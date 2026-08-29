@@ -129,14 +129,53 @@ class NotificationService:
             cls._dispatch_email(admin.email, subject, html)
 
     @classmethod
-    def notify_inactive_recipient_message(cls, sender_name: str, recipient_user: User, conversation_id: str):
-        """Sends chat notification email if recipient has been inactive > 2 minutes with 15-minute cooldown."""
+    def notify_mentorship_request(cls, requester_name: str, recipient_user: User, topic: str, message_note: Optional[str] = None):
+        """Notifies mentor/volunteer via email when a new mentorship inquiry/request is submitted."""
+        subject = f"🤝 New Mentorship Request from {requester_name} - SAMIDHA E-GURU"
+        note_html = f"<p style='background: #f0f9ff; border-left: 4px solid #0284c7; padding: 10px; font-style: italic;'>\"{message_note}\"</p>" if message_note else ""
+        frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000")
+        html = f"""
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px;">
+            <h2 style="color: #0284c7;">New Mentorship Request Received</h2>
+            <p>Hello,</p>
+            <p><strong>{requester_name}</strong> has requested 1-on-1 mentorship guidance from you on SAMIDHA E-GURU.</p>
+            <p><strong>Topic:</strong> {topic}</p>
+            {note_html}
+            <p style="margin-top: 15px;"><a href="{frontend_url}/alumni" style="display: inline-block; background-color: #0284c7; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold;">View & Accept Request</a></p>
+        </div>
+        """
+        cls._dispatch_email(recipient_user.email, subject, html)
+
+    @classmethod
+    def notify_mentorship_response(cls, responder_name: str, requester_user: User, topic: str, status_str: str):
+        """Notifies student via email when a mentor accepts or declines their request."""
+        status_color = "#16a34a" if status_str == "accepted" else "#dc2626"
+        status_upper = status_str.upper()
+        subject = f"Mentorship Request {status_upper}: {topic} - SAMIDHA E-GURU"
+        frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000")
+        html = f"""
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px;">
+            <h2 style="color: {status_color};">Mentorship Request {status_upper}</h2>
+            <p>Hello,</p>
+            <p><strong>{responder_name}</strong> has <strong>{status_str}</strong> your mentorship request for topic: <em>"{topic}"</em>.</p>
+            {"<p>You can now open the chat room from your portal and start messaging!</p>" if status_str == "accepted" else ""}
+            <p style="margin-top: 15px;"><a href="{frontend_url}/dashboard" style="display: inline-block; background-color: #0284c7; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold;">Open Portal</a></p>
+        </div>
+        """
+        cls._dispatch_email(requester_user.email, subject, html)
+
+    @classmethod
+    def notify_inactive_recipient_message(cls, sender_name: str, recipient_user: User, conversation_id: str, message_text: Optional[str] = None):
+        """Sends chat notification email if recipient has been inactive > 2 minutes with 15-minute cooldown per conversation."""
         now = datetime.now(timezone.utc)
 
-        # Check online status (active within 2 minutes)
+        # Check online status safely
         if recipient_user.last_seen_at:
-            time_diff = (now - recipient_user.last_seen_at.replace(tzinfo=timezone.utc)).total_seconds()
-            if time_diff < 120:  # Online within 2 minutes
+            last_seen = recipient_user.last_seen_at
+            if last_seen.tzinfo is None:
+                last_seen = last_seen.replace(tzinfo=timezone.utc)
+            time_diff = (now - last_seen).total_seconds()
+            if time_diff < 120:  # Recipient active within last 2 minutes
                 return
 
         # Enforce 15-minute cooldown per conversation
@@ -145,14 +184,17 @@ class NotificationService:
             return
 
         _chat_cooldowns[conversation_id] = now
+        frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000")
+        msg_preview = f"<blockquote style='background: #f8fafc; border-left: 4px solid #0284c7; padding: 10px; font-style: italic; color: #475569;'>\"{message_text}\"</blockquote>" if message_text else ""
 
         subject = f"✉️ New Message from {sender_name} on SAMIDHA E-GURU"
         html = f"""
-        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px;">
             <h3 style="color: #0284c7;">You received a new message!</h3>
             <p>Hello,</p>
-            <p><strong>{sender_name}</strong> sent you a mentorship message on SAMIDHA E-GURU.</p>
-            <p>Log in to your account to reply.</p>
+            <p><strong>{sender_name}</strong> sent you a mentorship message on SAMIDHA E-GURU:</p>
+            {msg_preview}
+            <p style="margin-top: 15px;"><a href="{frontend_url}/dashboard" style="display: inline-block; background-color: #0284c7; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold;">Log In to Reply</a></p>
         </div>
         """
         cls._dispatch_email(recipient_user.email, subject, html)
