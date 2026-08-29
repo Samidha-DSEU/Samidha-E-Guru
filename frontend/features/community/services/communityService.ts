@@ -20,6 +20,11 @@ export const communityService = {
     return res.data;
   },
 
+  async deletePost(postId: string) {
+    const res = await apiClient.delete<StandardResponse<{ id: string }>>(`/community/posts/${postId}`);
+    return res.data;
+  },
+
   async likePost(postId: string) {
     const res = await apiClient.post<StandardResponse<{ liked: boolean; likes_count: number }>>(`/community/posts/${postId}/like`);
     return res.data;

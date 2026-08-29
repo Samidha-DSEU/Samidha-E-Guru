@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { MessageSquare, ThumbsUp, MessageCircle, Share2, Award, Plus, X, Loader2, User } from "lucide-react";
+import { MessageSquare, ThumbsUp, MessageCircle, Share2, Award, Plus, X, Loader2, User, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
@@ -24,6 +24,7 @@ export default function CommunityPage() {
   const [error, setError] = useState<string | null>(null);
   const [customPostType, setCustomPostType] = useState("");
   const [likingPosts, setLikingPosts] = useState<Set<string>>(new Set());
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
   // Comments State
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
@@ -132,6 +133,23 @@ export default function CommunityPage() {
         newSet.delete(postId);
         return newSet;
       });
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!confirm("Are you sure you want to delete this community post?")) return;
+
+    try {
+      setDeletingPostId(postId);
+      await communityService.deletePost(postId);
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+      import("react-hot-toast").then((toast) => toast.default.success("Post deleted successfully"));
+    } catch (err: any) {
+      import("react-hot-toast").then((toast) =>
+        toast.default.error(err.response?.data?.detail || err.response?.data?.message || "Failed to delete post")
+      );
+    } finally {
+      setDeletingPostId(null);
     }
   };
 
@@ -247,25 +265,47 @@ export default function CommunityPage() {
                 <p className="text-sm text-zinc-500">Be the first to share a question or article with the community.</p>
               </Card>
             ) : (
-              posts.map((post, idx) => (
-                <ScrollReveal key={post.id} direction="up" delay={idx * 100}>
-                  <Card className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center font-bold text-sm overflow-hidden border border-sky-200 dark:border-sky-800">
-                        {post.author_avatar ? (
-                          <img src={post.author_avatar} alt={post.author_name || "Author"} className="w-full h-full object-cover" />
-                        ) : (
-                          (post.author_name || "User").slice(0, 2).toUpperCase()
+              posts.map((post, idx) => {
+                const isPostAuthor = user?.id && post.author_id && String(user.id) === String(post.author_id);
+                const isAdminOrSuper = user?.role?.name === "admin" || user?.role?.name === "super_admin";
+                const canDelete = isPostAuthor || isAdminOrSuper;
+
+                return (
+                  <ScrollReveal key={post.id} direction="up" delay={idx * 100}>
+                    <Card className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center font-bold text-sm overflow-hidden border border-sky-200 dark:border-sky-800">
+                            {post.author_avatar ? (
+                              <img src={post.author_avatar} alt={post.author_name || "Author"} className="w-full h-full object-cover" />
+                            ) : (
+                              (post.author_name || "User").slice(0, 2).toUpperCase()
+                            )}
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-sm">{post.author_name || "Community Member"}</h4>
+                            <span className="text-[11px] text-sky-600 dark:text-sky-400 font-medium inline-flex items-center gap-1 capitalize">
+                              <Award className="h-3 w-3" />
+                              {(post.author_role || "member").replace("_", " ")}
+                            </span>
+                          </div>
+                        </div>
+
+                        {canDelete && (
+                          <button
+                            onClick={() => handleDeletePost(post.id)}
+                            disabled={deletingPostId === post.id}
+                            className="p-2 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                            title="Delete Post"
+                          >
+                            {deletingPostId === post.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-rose-500" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
                         )}
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-sm">{post.author_name || "Community Member"}</h4>
-                        <span className="text-[11px] text-sky-600 dark:text-sky-400 font-medium inline-flex items-center gap-1 capitalize">
-                          <Award className="h-3 w-3" />
-                          {(post.author_role || "member").replace("_", " ")}
-                        </span>
-                      </div>
-                    </div>
 
                     <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
                       {post.title}
@@ -330,8 +370,9 @@ export default function CommunityPage() {
                     )}
                   </Card>
                 </ScrollReveal>
-              ))
-            )}
+              );
+            })
+          )}
           </div>
 
           {/* Sidebar Mentorship Topics */}

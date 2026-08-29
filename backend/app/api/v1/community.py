@@ -103,6 +103,34 @@ def create_post(
     return StandardResponse.success_response(data=post_data, message="Post created successfully.")
 
 
+@router.delete("/posts/{post_id}", response_model=StandardResponse[dict])
+def delete_post(
+    post_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    is_author = str(post.author_id) == str(current_user.id)
+    is_admin_or_super = current_user.role and current_user.role.name in ["admin", "super_admin"]
+
+    if not is_author and not is_admin_or_super:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to delete this post."
+        )
+
+    db.delete(post)
+    db.commit()
+
+    return StandardResponse.success_response(
+        data={"id": str(post_id)},
+        message="Community post deleted successfully."
+    )
+
+
 @router.post("/posts/{post_id}/like", response_model=StandardResponse[dict])
 def like_post(
     post_id: UUID,
